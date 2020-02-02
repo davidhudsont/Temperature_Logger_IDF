@@ -18,9 +18,11 @@
 #include "bspSpi.h"
 #include <string.h>
 #include "DEADONRTC.h"
-
+#include "TMP102.h"
 
 #define BLINK_GPIO (5)
+
+QueueHandle_t alarm_queue;
 
 void delay(uint32_t time_ms)
 {
@@ -40,82 +42,42 @@ void Print_DateTime(DEADONRTC * rtc)
 
 }
 
-void blink_task(void *pvParameter)
-{
-    /* Configure the IOMUX register for pad BLINK_GPIO (some pads are
-       muxed to GPIO on reset already, but some default to other
-       functions and need to be switched to GPIO. Consult the
-       Technical Reference for a list of pads and their default
-       functions.)
-    */
-    printf("Blink Task Start!\n");
-
-    gpio_pad_select_gpio(BLINK_GPIO);
-    /* Set the GPIO as a push/pull output */
-    gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
-    while(1) {
-        /* Blink off (output low) */
-        gpio_set_level(BLINK_GPIO, 0);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        printf("Blink Off!\n");
-        /* Blink on (output high) */
-        gpio_set_level(BLINK_GPIO, 1);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        printf("Blink On!\n");
-        fflush(stdout);
-    }
-}
-
-void rtc_task(void *pvParameter)
-{
-    printf("DEADON RTC Task Start!\n");
-    DEADONRTC rtc;
-    memset(&rtc, 0, sizeof(DEADONRTC));
-
-    volatile int clock_speed = 4*1000*1000; // Clock speed 4MHz
-
-    esp_err_t err = false;
-    err = BSP_SPI_Init(clock_speed);
-    if (err != ESP_OK)
-    {
-        printf("Spi Configuration Error\n");
-    }
-    
-    //DEADON_RTC_WRITE_DATETIME(0, 33, 16, 7, 19, 1, 20);
-    DEADON_RTC_WRITE_BUILD_DATETIME();
-    delay(1000);
-    static int last_seconds = -1;
-
-    while (1)
-    {
-
-        DEADON_RTC_READ_DATETIME(&rtc);
-
-        if (last_seconds != rtc.raw_time[0])
-        {
-            /*
-            for (int i =0; i<7; i++)
-            {
-                printf("RAW TIME [%d]: 0x%x\n", i, (unsigned int) rtc.raw_time[i]);
-            }
-            */
-            Print_DateTime(&rtc);
-            last_seconds = rtc.raw_time[0];
-        }
-        delay(100);
-    }
-}
-
 
 void rtc_intr_task(void *pvParameter)
 {
     printf("DEADON RTC Task Start!\n");
     DEADONRTC rtc;
     char msg;
+    uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
+    uint8_t data[6] = {0};
     DEADON_RTC_Begin(&rtc);
     
-    //DEADON_RTC_WRITE_DATETIME(0, 33, 16, 7, 19, 1, 20);
-    DEADON_RTC_WRITE_BUILD_DATETIME();
+    DEADON_RTC_SRAM_Burst_Read(0x00, data, 6);
+    bool power_lost = true;
+    for (int i=0; i<6; i++)
+    {
+        if (data[i] != code[i])
+        {
+            power_lost = true;
+            break;
+        }
+        else
+        {
+            power_lost = false;
+        }
+    }
+
+    if (power_lost)
+    {
+        printf("Lost Power!\n");
+        DEADON_RTC_SRAM_Burst_Write(0x00, code, 6);
+        DEADON_RTC_WRITE_BUILD_DATETIME();
+    }
+    else 
+    {
+        printf("Power Not Lost\n");
+    }
+
     DEADON_RTC_ISR_Init(&rtc);
     delay(1000);
     DEADON_RTC_WRITE_ALARM1(10, 0, 0, 0, ALARM1_SECONDS_MATCH);
@@ -153,40 +115,52 @@ void rtc_intr_task(void *pvParameter)
     }
 }
 
-void rtc_sram_task(void *pvParameter)
+void tmp102_sleep_task(void *pvParameter)
 {
-    printf("DEADON RTC Task Start!\n");
-    DEADONRTC rtc;
-    uint8_t data[] = {0x12,0xFE,0xAB,0x35,0xFA,0xE6};
+    printf("Initialize Device\n");
+    TMP102_STRUCT tmp102_device;
 
-    DEADON_RTC_Begin(&rtc);
+    TMP102_Begin(&tmp102_device);
+
+    TMP102_Set_Conversion_Rate(&tmp102_device, CONVERSION_MODE_1);
+    delay(100);
+    TMP102_Sleep(&tmp102_device, true);
+    delay(300);
+
+    bool oneshot = false;
     
-    //DEADON_RTC_WRITE_DATETIME(0, 33, 16, 7, 19, 1, 20);
-    DEADON_RTC_WRITE_BUILD_DATETIME();
-    delay(1000);
-    DEADON_RTC_SRAM_Burst_Write(0x23, data, 6);
     while (1)
     {
-        uint8_t sram_data[6] = {0};
-        DEADON_RTC_SRAM_Burst_Read(0x23, sram_data, 6);
-        printf("SRAM Data:\n");
-        for (int i=0; i<6; i++)
+        if (oneshot == false)
         {
-            printf("\tSRAM[0x%x] = 0x%x\n",(unsigned int)(i+0x23),(unsigned int) sram_data[i]);
+            TMP102_Set_OneShot(&tmp102_device);
+            oneshot = true;
         }
-        delay(1000);
+        delay(100);
+        bool tmponeshot = TMP102_Get_OneShot(&tmp102_device);
 
+        if (tmponeshot)
+        {
+            TMP102_Read_Temperature(&tmp102_device);
+            float temperature = TMP102_Get_Temperature(&tmp102_device);
+            printf("Temperature = %f C\n", temperature);
+            temperature = TMP102_Get_TemperatureF(&tmp102_device);
+            printf("Temperature = %f F\n", temperature);
+            oneshot = false;
+        }
+        delay(900);
     }
 }
+
+
 
 void app_main()
 {
     printf("Starting Tasks!\n");
+    //alarm_queue = xQueueCreate(3, 1);
 
-    //xTaskCreate(&blink_task, "blink_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
-    //xTaskCreate(&rtc_task, "rtc_task", configMINIMAL_STACK_SIZE*3, NULL, 5, NULL);
-    //xTaskCreate(&rtc_intr_task, "rtc_intr_task", configMINIMAL_STACK_SIZE*3, NULL, 5, NULL);
-    xTaskCreate(&rtc_sram_task, "rtc_sram_task", configMINIMAL_STACK_SIZE*3, NULL, 5, NULL);
+    xTaskCreate(&rtc_intr_task, "rtc_intr_task", configMINIMAL_STACK_SIZE*3, NULL, 5, NULL);
+    xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE*4, NULL, 6, NULL);
 
 
 }
