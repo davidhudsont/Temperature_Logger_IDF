@@ -109,6 +109,8 @@ void rtc_intr_task(void *pvParameter)
                 printf("ALARM2:\n\t");
                 DEADON_RTC_READ_DATETIME(&rtc);
                 Print_DateTime(&rtc);
+                char tmp_ready = 'r';
+                xQueueSend(alarm_queue, (void *)&tmp_ready, 30);
             }   
             msg = ' ';
         }
@@ -119,7 +121,7 @@ void tmp102_sleep_task(void *pvParameter)
 {
     printf("Initialize Device\n");
     TMP102_STRUCT tmp102_device;
-
+    char msg;
     TMP102_Begin(&tmp102_device);
 
     TMP102_Set_Conversion_Rate(&tmp102_device, CONVERSION_MODE_1);
@@ -131,24 +133,30 @@ void tmp102_sleep_task(void *pvParameter)
     
     while (1)
     {
-        if (oneshot == false)
+        xQueueReceive(alarm_queue, &msg, 30);
+        if (msg == 'r')
         {
-            TMP102_Set_OneShot(&tmp102_device);
-            oneshot = true;
-        }
-        delay(100);
-        bool tmponeshot = TMP102_Get_OneShot(&tmp102_device);
+            if (oneshot == false)
+            {
+                TMP102_Set_OneShot(&tmp102_device);
+                oneshot = true;
+            }
+            delay(100);
+            bool tmponeshot = TMP102_Get_OneShot(&tmp102_device);
 
-        if (tmponeshot)
-        {
-            TMP102_Read_Temperature(&tmp102_device);
-            float temperature = TMP102_Get_Temperature(&tmp102_device);
-            printf("Temperature = %f C\n", temperature);
-            temperature = TMP102_Get_TemperatureF(&tmp102_device);
-            printf("Temperature = %f F\n", temperature);
-            oneshot = false;
+            if (tmponeshot)
+            {
+                TMP102_Read_Temperature(&tmp102_device);
+                float temperature = TMP102_Get_Temperature(&tmp102_device);
+                printf("Temperature = %f C\n", temperature);
+                temperature = TMP102_Get_TemperatureF(&tmp102_device);
+                printf("Temperature = %f F\n", temperature);
+                oneshot = false;
+            }
+            msg = ' ';
         }
-        delay(900);
+
+
     }
 }
 
@@ -157,7 +165,7 @@ void tmp102_sleep_task(void *pvParameter)
 void app_main()
 {
     printf("Starting Tasks!\n");
-    //alarm_queue = xQueueCreate(3, 1);
+    alarm_queue = xQueueCreate(3, 1);
 
     xTaskCreate(&rtc_intr_task, "rtc_intr_task", configMINIMAL_STACK_SIZE*3, NULL, 5, NULL);
     xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE*4, NULL, 6, NULL);
