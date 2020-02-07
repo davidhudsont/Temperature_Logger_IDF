@@ -1,8 +1,7 @@
 /**
  * @file main.c
  * @author David Hudson
- * @brief 
- * @version 0.2
+ * @brief Main Application for Temperature Logger
  * @date 2019-11-15
  * 
  * 
@@ -20,15 +19,38 @@
 #include "DEADONRTC.h"
 #include "TMP102.h"
 
+/**
+ * @brief Message sent between tasks
+ * 
+ */
+typedef struct MESSAGE_STRUCT
+{
+    char id;
+    void* device;
+} MESSAGE_STRUCT;
+
 #define BLINK_GPIO (5)
 
-QueueHandle_t alarm_queue;
+QueueHandle_t device_queue; // Queue to send device objects between tasks
 
+QueueHandle_t alarm_queue; // Sends message when an alarm has been triggered
+
+/**
+ * @brief Delays a task for the passed
+ *        in parameter time_ms in milliseconds
+ * 
+ * @param time_ms 
+ */
 void delay(uint32_t time_ms)
 {
     vTaskDelay( time_ms / portTICK_PERIOD_MS);
 }
 
+/**
+ * @brief Print the current datetime.
+ * 
+ * @param rtc - DEADONTRC device structure
+ */
 void Print_DateTime(DEADONRTC * rtc)
 {
     uint8_t hours = rtc->hours;
@@ -43,6 +65,39 @@ void Print_DateTime(DEADONRTC * rtc)
 }
 
 
+void openlog_task(void *pvParameter)
+{
+    printf("OPENLOG Task Start!\n");
+    MESSAGE_STRUCT * message_reciever;
+    uint8_t * buffer = (uint8_t *) malloc(sizeof(MESSAGE_STRUCT));
+    //char *line = (char *) malloc(500);
+
+    while (1)
+    {
+        xQueueReceive(device_queue, buffer, 30);
+        message_reciever = (MESSAGE_STRUCT *)buffer;
+
+        if (message_reciever->id == 'r')
+        {
+            DEADONRTC * rtc = (DEADONRTC *)message_reciever->device;
+            Print_DateTime(rtc);
+            message_reciever->id = ' ';
+        }
+        else if (message_reciever->id == 't')
+        {
+            TMP102_STRUCT *tmp = (TMP102_STRUCT*) message_reciever->device;
+            float temperature = TMP102_Get_Temperature(tmp);
+            printf("Temperature = %f C\n", temperature);
+            temperature = TMP102_Get_TemperatureF(tmp);
+            printf("Temperature = %f F\n", temperature);
+            message_reciever->id = ' ';
+        }
+        
+    }
+
+}
+
+
 void rtc_intr_task(void *pvParameter)
 {
     printf("DEADON RTC Task Start!\n");
@@ -50,6 +105,7 @@ void rtc_intr_task(void *pvParameter)
     char msg;
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
     uint8_t data[6] = {0};
+    MESSAGE_STRUCT device_message;
     DEADON_RTC_Begin(&rtc);
     
     DEADON_RTC_SRAM_Burst_Read(0x00, data, 6);
@@ -100,17 +156,19 @@ void rtc_intr_task(void *pvParameter)
 
             if (alarm1_flag)
             {
-                printf("ALARM1:\n\t");
+                printf("ALARM1 Triggered\n");
                 DEADON_RTC_READ_DATETIME(&rtc);
                 Print_DateTime(&rtc);
             }
             if (alarm2_flag)
             {
-                printf("ALARM2:\n\t");
+                printf("ALARM2 Triggered\n");
                 DEADON_RTC_READ_DATETIME(&rtc);
-                Print_DateTime(&rtc);
                 char tmp_ready = 'r';
                 xQueueSend(alarm_queue, (void *)&tmp_ready, 30);
+                device_message.id = 'r';
+                device_message.device = (void*)&rtc;
+                xQueueSend(device_queue, &device_message, 30);
             }   
             msg = ' ';
         }
@@ -122,6 +180,7 @@ void tmp102_sleep_task(void *pvParameter)
     printf("Initialize Device\n");
     TMP102_STRUCT tmp102_device;
     char msg;
+    MESSAGE_STRUCT device_message;
     TMP102_Begin(&tmp102_device);
 
     TMP102_Set_Conversion_Rate(&tmp102_device, CONVERSION_MODE_1);
@@ -147,10 +206,10 @@ void tmp102_sleep_task(void *pvParameter)
             if (tmponeshot)
             {
                 TMP102_Read_Temperature(&tmp102_device);
-                float temperature = TMP102_Get_Temperature(&tmp102_device);
-                printf("Temperature = %f C\n", temperature);
-                temperature = TMP102_Get_TemperatureF(&tmp102_device);
-                printf("Temperature = %f F\n", temperature);
+                printf("Temperature has been Read\n");
+                device_message.id = 't';
+                device_message.device = (void *)&tmp102_device;
+                xQueueSend(device_queue, &device_message, 30);
                 oneshot = false;
             }
             msg = ' ';
@@ -165,10 +224,12 @@ void tmp102_sleep_task(void *pvParameter)
 void app_main()
 {
     printf("Starting Tasks!\n");
+    device_queue = xQueueCreate(3, sizeof(MESSAGE_STRUCT));
     alarm_queue = xQueueCreate(3, 1);
 
     xTaskCreate(&rtc_intr_task, "rtc_intr_task", configMINIMAL_STACK_SIZE*3, NULL, 5, NULL);
     xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE*4, NULL, 6, NULL);
+    xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE*4, NULL, 7, NULL);
 
 
 }

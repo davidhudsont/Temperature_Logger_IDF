@@ -7,6 +7,9 @@
         "gpio.h": "c",
         "rfm69registers.h": "c",
         "bspspi.h": "c",
-        "chrono": "c"
+        "chrono": "c",
+        "queue.h": "c",
+        "freertos.h": "c",
+        "ringbuf.h": "c"
     }
 }
