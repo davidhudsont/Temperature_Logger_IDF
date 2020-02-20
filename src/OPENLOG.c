@@ -29,6 +29,17 @@ void OPENLOG_Begin(OPENLOG_STRUCT * openlog_dev)
 
 
 /**
+ * @brief Flush UART device communicating with the OpenLog
+ * 
+ * @param openlog_dev 
+ */
+void OPENLOG_UART_FLUSH(OPENLOG_STRUCT * openlog_dev)
+{
+    uart_flush(openlog_dev->uart_dev.port);
+}
+
+
+/**
  * @brief Enter Command Mode
  * 
  * @param openlog_dev 

@@ -18,6 +18,7 @@
 #include <string.h>
 #include "DEADONRTC.h"
 #include "TMP102.h"
+#include "OPENLOG.h"
 
 /**
  * @brief Message sent between tasks
@@ -65,7 +66,7 @@ void Print_DateTime(DEADONRTC * rtc)
 }
 
 
-void openlog_task(void *pvParameter)
+void openlog_task_dummy(void *pvParameter)
 {
     printf("OPENLOG Task Start!\n");
     MESSAGE_STRUCT * message_reciever;
@@ -93,6 +94,76 @@ void openlog_task(void *pvParameter)
             message_reciever->id = ' ';
         }
         
+    }
+
+}
+
+void openlog_task(void *pvParameter)
+{
+    printf("OPENLOG Task Start!\n");
+    DEADONRTC rtc_dev;
+    TMP102_STRUCT tmp102_dev;
+    memset(&rtc_dev, 0, sizeof(DEADONRTC));
+    memset(&tmp102_dev, 0, sizeof(TMP102_STRUCT));
+
+    // Start the Openlog Device
+    OPENLOG_STRUCT openlog_dev;
+    OPENLOG_Begin(&openlog_dev);
+    OPENLOG_UART_FLUSH(&openlog_dev);
+    OPENLOG_EnterCommandMode(&openlog_dev);
+
+    MESSAGE_STRUCT * message_reciever;
+    uint8_t * buffer = (uint8_t *) malloc(sizeof(MESSAGE_STRUCT));
+    char *line = (char *) malloc(500);
+
+    OPENLOG_EnterAppendFileMode(&openlog_dev, "DATA_LOG.txt");
+    int task_counter = 0;
+
+    while (1)
+    {
+        xQueueReceive(device_queue, buffer, 30);
+        message_reciever = (MESSAGE_STRUCT *)buffer;
+
+        if (message_reciever->id == 'r')
+        {
+            DEADONRTC * rtc = (DEADONRTC *)message_reciever->device;
+            Print_DateTime(rtc);
+            rtc_dev.hours   = rtc->hours;
+            rtc_dev.hours   = rtc->hours;
+            rtc_dev.minutes = rtc->minutes;
+            rtc_dev.seconds = rtc->seconds;
+            rtc_dev.date    = rtc->date;
+            rtc_dev.month   = rtc->month;
+            rtc_dev.year    = rtc->year;
+            message_reciever->id = ' ';
+            task_counter++;
+
+        }
+        else if (message_reciever->id == 't')
+        {
+            TMP102_STRUCT *tmp = (TMP102_STRUCT*) message_reciever->device;
+            float temperature = TMP102_Get_Temperature(tmp);
+            printf("Temperature = %f C\n", temperature);
+            temperature = TMP102_Get_TemperatureF(tmp);
+            printf("Temperature = %f F\n", temperature);
+            tmp102_dev.temperature = tmp->temperature;
+            message_reciever->id = ' ';
+            task_counter++;
+        }
+        if (task_counter >= 2)
+        {
+            uint8_t hours   = rtc_dev.hours;
+            uint8_t minutes = rtc_dev.minutes;
+            uint8_t seconds = rtc_dev.seconds;
+            uint8_t date    = rtc_dev.date;
+            uint8_t month   = rtc_dev.month;
+            uint8_t year    = rtc_dev.year;
+            float tempc     = TMP102_Get_Temperature(&tmp102_dev);
+            float tempf     = TMP102_Get_TemperatureF(&tmp102_dev);
+
+            sprintf(line, "%02d:%02d:%02d, %02d-%02d-%04d, %fC, %fF",hours, minutes, seconds, month, date, year+2000, tempc, tempf);            
+            OPENLOG_WriteLineToFile(&openlog_dev, line);
+        }
     }
 
 }
@@ -229,7 +300,8 @@ void app_main()
 
     xTaskCreate(&rtc_intr_task, "rtc_intr_task", configMINIMAL_STACK_SIZE*3, NULL, 5, NULL);
     xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE*4, NULL, 6, NULL);
-    xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE*4, NULL, 7, NULL);
+    //xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE*4, NULL, 7, NULL);
+    xTaskCreate(&openlog_task_dummy, "openlog_task_dummy", configMINIMAL_STACK_SIZE*4, NULL, 7, NULL);
 
 
 }

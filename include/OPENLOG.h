@@ -37,6 +37,8 @@ typedef struct OPENLOG_STRUCT {
 
 void OPENLOG_Begin(OPENLOG_STRUCT * openlog_dev);
 
+void OPENLOG_UART_FLUSH(OPENLOG_STRUCT * openlog_dev);
+
 void OPENLOG_EnterCommandMode(OPENLOG_STRUCT * openlog_dev);
 void OPENLOG_ListCommands(OPENLOG_STRUCT * openlog_dev);
 
