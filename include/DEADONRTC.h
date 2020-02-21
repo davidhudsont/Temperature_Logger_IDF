@@ -58,14 +58,11 @@ typedef struct DEADONRTC
 
 void DEADON_RTC_Begin(DEADONRTC * rtc);
 
-void DEADON_RTC_WRITE_SECONDS(uint8_t minutes);
+void DEADON_RTC_WRITE_SECONDS(uint8_t second);
 uint8_t DEADON_RTC_READ_SECONDS();
 
-void DEADON_RTC_SET_SECONDS(uint8_t minutes);
-uint8_t DEADON_RTC_GET_SECONDS();
-
-void DEADON_RTC_SET_MINUTES(uint8_t minutes);
-uint8_t DEADON_RTC_GET_MINUTES();
+void DEADON_RTC_WRITE_MINUTES(uint8_t minutes);
+uint8_t DEADON_RTC_READ_MINUTES();
 
 void DEADON_RTC_READ_DATETIME(DEADONRTC * rtc);
 void DEADON_RTC_WRITE_DATETIME(uint8_t seconds, uint8_t minutes, uint8_t hours,

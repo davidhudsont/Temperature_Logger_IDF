@@ -253,6 +253,16 @@ void rtc_intr_task(void *pvParameter)
             Print_DateTime(&rtc);
             cmd_msg.id = ' ';
         }
+        if (cmd_msg.id == 's')
+        {
+            DEADON_RTC_WRITE_SECONDS(cmd_msg.arg1);
+            cmd_msg.id = ' ';
+        }
+        if (cmd_msg.id == 'm')
+        {
+            DEADON_RTC_WRITE_MINUTES(cmd_msg.arg1);
+            cmd_msg.id = ' ';
+        }
     }
 }
 

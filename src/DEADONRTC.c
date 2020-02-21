@@ -190,11 +190,9 @@ void DEADON_RTC_WRITE_BUILD_DATETIME()
 
 
 
-void DEADON_RTC_WRITE_SECONDS(uint8_t minutes)
+void DEADON_RTC_WRITE_SECONDS(uint8_t seconds)
 {
-    uint8_t reg_data;
-    reg_data = DECtoBCD(minutes);
-    DEADON_RTC_Register_Write(REG_SECONDS, reg_data);
+    DEADON_RTC_Register_Write(REG_SECONDS, DECtoBCD(seconds));
 
 }
 
@@ -208,14 +206,13 @@ uint8_t DEADON_RTC_READ_SECONDS()
 }
 
 
-void DEADON_RTC_SET_MINUTES(uint8_t minutes)
+void DEADON_RTC_WRITE_MINUTES(uint8_t minutes)
 {
-    uint8_t reg_data = DECtoBCD(minutes);
-    DEADON_RTC_Register_Write(REG_MINUTES, reg_data);
+    DEADON_RTC_Register_Write(REG_MINUTES, DECtoBCD(minutes));
 
 }
 
-uint8_t DEADON_RTC_GET_MINUTES()
+uint8_t DEADON_RTC_READ_MINUTES()
 {
     uint8_t reg_data = DEADON_RTC_Register_Read(REG_MINUTES);
     uint8_t minutes = BCDtoDEC(reg_data);

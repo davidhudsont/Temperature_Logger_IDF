@@ -27,7 +27,9 @@ QueueHandle_t openlog_command_queue; // Queue to send device objects between tas
 
 typedef struct COMMAND_MESSAGE_STRUCT {
     char id;
-    int  data;
+    int  arg1;
+    int  arg2;
+    int  arg3;
 } COMMAND_MESSAGE_STRUCT;
 
 void register_system(void);

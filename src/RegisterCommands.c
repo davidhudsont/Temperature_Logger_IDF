@@ -8,6 +8,10 @@ static void register_time(void);
 static void register_blink(void);
 static void register_getdatetime(void);
 
+/**
+ * @brief Register all the console commands
+ * 
+ */
 void register_system(void)
 {
     register_version();
@@ -24,8 +28,6 @@ void register_queues(void)
     rtc_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT)); 
 
 }
-
-
 
 
 /* 'version' command */
@@ -122,15 +124,16 @@ static void register_arguments(void)
 static struct {
     struct arg_int *seconds;
     struct arg_int *minutes;
-    struct arg_int *hours;
-    struct arg_int *hour_12_N24;
+    struct arg_int *hours12;
+    struct arg_int *hours24;
     struct arg_end *end;
 } time_args;
 
-static int set_datetime(int argc, char**argv)
+static int set_time(int argc, char**argv)
 {
     int nerrors = arg_parse(argc, argv, (void **) &time_args);
-
+    COMMAND_MESSAGE_STRUCT msg;
+    
     if (nerrors != 0) 
     {
         arg_print_errors(stderr, time_args.end, argv[0]);
@@ -139,44 +142,50 @@ static int set_datetime(int argc, char**argv)
 
     if (time_args.seconds->count)
     {
-        printf("Seconds: %d\n", time_args.seconds->ival[0]);
+        printf("Set Seconds to: %d\n", time_args.seconds->ival[0]);
+        msg.id = 's';
+        msg.arg1 = time_args.seconds->ival[0];
     }
     else if (time_args.minutes->count)
     {
-        printf("Minutes: %d\n", time_args.minutes->ival[0]);
+        int minutes = time_args.minutes->ival[0];
+        printf("Minutes: %d\n", minutes);
+        msg.id = 'm';
+        msg.arg1 = minutes;
     }
-    else if (time_args.hours->count)
+    else if (time_args.hours12->count)
     {
-        printf("Hours: %d\n", time_args.hours->ival[0]);
+        bool am_npm = time_args.hours12->ival[1];
+        int hours = time_args.hours12->ival[0];
+        printf("Hours: %d, %s\n", hours, ( am_npm ? "PM" : "AM"));
+        msg.id = 'h';
+        msg.arg1 = hours;
+        msg.arg2 = am_npm;
     }
-    else if (time_args.hour_12_N24->count)
+    else if (time_args.hours24->count)
     {
-        if (time_args.hour_12_N24->ival[0])
-        {
-            printf("12 Hour Clock\n");
-        }
-        else
-        {
-            printf("24 Hour Clock\n");
-        }
+        int hours = time_args.hours24->ival[0];
+        printf("Hours: %d\n", hours);
+        msg.arg1 = hours;
         
     }
+    xQueueSend(rtc_command_queue, (void*)&msg, 30);
     return 0;
 }
 
 static void register_time(void)
 {
-    time_args.seconds     = arg_int0("s",  "seconds", "<s>", "Set seconds!");
-    time_args.minutes     = arg_int0("m",  "minutes", "<m>", "Set minutes!");
-    time_args.hours       = arg_int0("h",  "hours",   "<h>", "Set hours!");
-    time_args.hour_12_N24 = arg_int0("f",  "format",  "<0|1>", "Set clock format!");
-    time_args.end         = arg_end(4);
+    time_args.seconds = arg_int0("s",  "seconds", "<s>", "Set seconds!");
+    time_args.minutes = arg_int0("m",  "minutes", "<m>", "Set minutes!");
+    time_args.hours12 = arg_int0("h",  "hours12",   "<h>, <0 AM|1 PM>", "Set hours in 12 hour format!");
+    time_args.hours24 = arg_int0("t",  "hours24",  "<h>", "Set hours in 24 hour format!");
+    time_args.end     = arg_end(4);
 
     esp_console_cmd_t cmd;
     cmd.command = "time";
-    cmd.help = "Set the date time!";
+    cmd.help = "Set the time!";
     cmd.hint = NULL;
-    cmd.func = &set_datetime;
+    cmd.func = &set_time;
     cmd.argtable = &time_args;
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
