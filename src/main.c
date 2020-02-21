@@ -19,6 +19,8 @@
 #include "DEADONRTC.h"
 #include "TMP102.h"
 #include "OPENLOG.h"
+#include "bspConsole.h"
+#include "esp_log.h"
 
 /**
  * @brief Message sent between tasks
@@ -174,6 +176,7 @@ void rtc_intr_task(void *pvParameter)
     printf("DEADON RTC Task Start!\n");
     DEADONRTC rtc;
     char msg;
+    COMMAND_MESSAGE_STRUCT cmd_msg;
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
     uint8_t data[6] = {0};
     MESSAGE_STRUCT device_message;
@@ -220,6 +223,7 @@ void rtc_intr_task(void *pvParameter)
     while (1)
     {
         xQueueReceive(queue, &msg, 10);
+        xQueueReceive(rtc_command_queue, (COMMAND_MESSAGE_STRUCT*)&cmd_msg, 30);
         if (msg == 'r')
         {
             bool alarm1_flag = DEADON_RTC_READ_ALARM1_FLAG(&rtc);
@@ -242,6 +246,12 @@ void rtc_intr_task(void *pvParameter)
                 xQueueSend(device_queue, &device_message, 30);
             }   
             msg = ' ';
+        }
+        if (cmd_msg.id == 'p')
+        {
+            DEADON_RTC_READ_DATETIME(&rtc);
+            Print_DateTime(&rtc);
+            cmd_msg.id = ' ';
         }
     }
 }
@@ -291,17 +301,81 @@ void tmp102_sleep_task(void *pvParameter)
 }
 
 
+void console_task(void *pvParameter)
+{
+    Start_Console();
+
+    Register_Console_Commands();
+
+    const char* prompt = LOG_COLOR_I "esp> " LOG_RESET_COLOR;
+
+    printf("\n"
+        "This is an example of ESP-IDF console component.\n"
+        "Type 'help' to get the list of commands.\n"
+        "Use UP/DOWN arrows to navigate through command history.\n"
+        "Press TAB when typing command name to auto-complete.\n");
+
+    int probe_status = linenoiseProbe();
+    if (probe_status)
+    {
+        printf("\n"
+            "Your terminal application does not support escape sequences.\n"
+            "Line editing and history features are disabled.\n"
+            "On Windows, try using Putty instead.\n");
+        linenoiseSetDumbMode(1);
+
+        prompt = "esp32> ";
+
+    }
+
+    while (1)
+    {
+        char* line = linenoise(prompt);
+        if (line == NULL)
+        {
+            continue;
+        }
+        
+        linenoiseHistoryAdd(line);
+
+        // Try to run a command
+        int ret;
+        esp_err_t err = esp_console_run(line, &ret);
+        if (err == ESP_ERR_NOT_FOUND)
+        {
+            printf("Unrecognized Command\n");
+        }
+        else if (err == ESP_ERR_INVALID_ARG)
+        {
+
+        }
+        else if (err == ESP_OK && ret != ESP_OK)
+        {
+            printf("Command returned non-zero error code: 0x%x (%s)\n", ret, esp_err_to_name(ret));
+        }
+        else if (err != ESP_OK) 
+        {
+            printf("Internal error: %s\n", esp_err_to_name(err));
+        }
+
+        linenoiseFree(line);
+    }
+
+}
+
 
 void app_main()
 {
     printf("Starting Tasks!\n");
     device_queue = xQueueCreate(3, sizeof(MESSAGE_STRUCT));
     alarm_queue = xQueueCreate(3, 1);
+    register_queues();
 
     xTaskCreate(&rtc_intr_task, "rtc_intr_task", configMINIMAL_STACK_SIZE*3, NULL, 5, NULL);
     xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE*4, NULL, 6, NULL);
     //xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE*4, NULL, 7, NULL);
     xTaskCreate(&openlog_task_dummy, "openlog_task_dummy", configMINIMAL_STACK_SIZE*4, NULL, 7, NULL);
 
+    xTaskCreate(&console_task, "console_task", configMINIMAL_STACK_SIZE*4, NULL, 7, NULL);
 
 }
