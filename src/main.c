@@ -63,7 +63,16 @@ void Print_DateTime(DEADONRTC * rtc)
     uint8_t month = rtc->month;
     uint8_t year = rtc->year;
 
-    printf("%02d:%02d:%02d, %02d-%02d-%04d\n",hours, minutes, seconds, month, date, year+2000);
+    if (rtc->hour12_not24)
+    {
+        bool PM_notAM = rtc->PM_notAM;
+        printf("%02d:%02d:%02d %s, %02d-%02d-%04d\n",hours, minutes, seconds, (PM_notAM ? "PM" : "AM"), month, date, year+2000);    
+    }
+    else
+    {
+        printf("%02d:%02d:%02d, %02d-%02d-%04d\n",hours, minutes, seconds, month, date, year+2000);    
+    }
+    
 
 }
 
@@ -247,22 +256,29 @@ void rtc_intr_task(void *pvParameter)
             }   
             msg = ' ';
         }
+        // Evaulate Console Commands
         if (cmd_msg.id == 'p')
         {
             DEADON_RTC_READ_DATETIME(&rtc);
             Print_DateTime(&rtc);
-            cmd_msg.id = ' ';
         }
         if (cmd_msg.id == 's')
         {
             DEADON_RTC_WRITE_SECONDS(cmd_msg.arg1);
-            cmd_msg.id = ' ';
         }
         if (cmd_msg.id == 'm')
         {
             DEADON_RTC_WRITE_MINUTES(cmd_msg.arg1);
-            cmd_msg.id = ' ';
         }
+        if (cmd_msg.id == 'h')
+        {
+            DEADON_RTC_WRITE_12HOURS(cmd_msg.arg1, cmd_msg.arg2);
+        }
+        if (cmd_msg.id == 't')
+        {
+            DEADON_RTC_WRITE_24HOURS(cmd_msg.arg1);
+        }
+        cmd_msg.id = ' ';
     }
 }
 

@@ -64,6 +64,9 @@ uint8_t DEADON_RTC_READ_SECONDS();
 void DEADON_RTC_WRITE_MINUTES(uint8_t minutes);
 uint8_t DEADON_RTC_READ_MINUTES();
 
+void DEADON_RTC_WRITE_12HOURS(uint8_t hours, bool PM_NotAM);
+void DEADON_RTC_WRITE_24HOURS(uint8_t hours);
+
 void DEADON_RTC_READ_DATETIME(DEADONRTC * rtc);
 void DEADON_RTC_WRITE_DATETIME(uint8_t seconds, uint8_t minutes, uint8_t hours,
                                 uint8_t day, uint8_t date, uint8_t month,

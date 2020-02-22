@@ -13,7 +13,7 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
-#include "RegisterCommands.h"
+#include "ConsoleCommands.h"
 
 
 void Start_Console();

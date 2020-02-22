@@ -19,7 +19,6 @@
 #include "sdkconfig.h"
 
 
-QueueHandle_t blink_queue; // Queue to send device objects between tasks
 QueueHandle_t rtc_command_queue; // Queue to send device objects between tasks
 QueueHandle_t tmp_command_queue; // Queue to send device objects between tasks
 QueueHandle_t openlog_command_queue; // Queue to send device objects between tasks

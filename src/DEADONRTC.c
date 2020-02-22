@@ -221,6 +221,38 @@ uint8_t DEADON_RTC_READ_MINUTES()
 }
 
 
+// input : hours 1-12
+void DEADON_RTC_WRITE_12HOURS(uint8_t hours, bool PM_NotAM)
+{
+    uint8_t reg_data = 0x00;
+    if (hours > 12)
+        hours = 12;
+    if (hours < 1)
+        hours = 1;
+    if (PM_NotAM)
+    {
+        reg_data |= HOUR_12_N24;
+        reg_data |= PM_NOTAM;
+        reg_data |= DECtoBCD(hours);
+    }
+    else
+    {
+        reg_data |= HOUR_12_N24;
+        reg_data |= DECtoBCD(hours);
+    }
+    DEADON_RTC_Register_Write(REG_HOURS, reg_data);
+}
+
+
+// input : hours 0-23
+void DEADON_RTC_WRITE_24HOURS(uint8_t hours)
+{
+    if (hours > 23)
+        hours = 23;
+    DEADON_RTC_Register_Write(REG_HOURS, DECtoBCD(hours));
+}
+
+
 /**
  * @brief 
  * 

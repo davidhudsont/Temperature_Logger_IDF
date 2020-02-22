@@ -53,10 +53,10 @@
 #define MINUTES_BITS            0x0F   
 
 // Hours Register Bits
-#define HOUR_12_N24             0x40
-#define PM_NOTAM                0x20
-#define HOURS_BITS_24           0x3F
-#define HOURS_BITS_12           0x1F
+#define HOUR_12_N24             0x40  // Mask for reading whether it's in 12 hour or 24 hour mode
+#define PM_NOTAM                0x20  // Mask for reading whether it's am or pm in 12 hour mode
+#define HOURS_BITS_24           0x3F  // Mask for reading BITS 0-5 in 24 Hour mode
+#define HOURS_BITS_12           0x1F  // Mask for reading BITS 0-4 in 12 Hour mode
 
 
 // Months
