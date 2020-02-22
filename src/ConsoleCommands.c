@@ -1,4 +1,13 @@
 
+/**
+ * @file ConsoleCommands.c
+ * @author David Hudson
+ * @brief Implementation file that contains all the functions
+ *        to be registered as console commands.
+ * @date 2020-02-21
+ * 
+ */
+
 #include "ConsoleCommands.h"
 
 
@@ -17,7 +26,10 @@ void register_system(void)
     register_getdatetime();
 }
 
-
+/**
+ * @brief Create the console command queues
+ * 
+ */
 void register_queues(void)
 {
     rtc_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT)); 
@@ -25,7 +37,9 @@ void register_queues(void)
 }
 
 
-/* 'version' command */
+/**
+ * @brief Get the version of the chip
+ */
 static int get_version(int argc, char **argv)
 {
     esp_chip_info_t info;
@@ -65,6 +79,11 @@ static struct {
     struct arg_end *end;
 } time_args;
 
+
+/**
+ * @brief Set the time of the RTC.
+ * 
+ */
 static int set_time(int argc, char**argv)
 {
     int nerrors = arg_parse(argc, argv, (void **) &time_args);
@@ -135,9 +154,6 @@ static void register_time(void)
 /**
  * @brief Get the current date and time
  * 
- * @param argc 
- * @param argv 
- * @return int 
  */
 static int get_datetime(int argc, char **argv)
 {

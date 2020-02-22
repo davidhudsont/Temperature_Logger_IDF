@@ -355,11 +355,10 @@ bool DEADON_RTC_READ_ALARM1_FLAG(DEADONRTC * rtc)
 
 
 /**
- * @brief 
+ * @brief Read Alarm 2 flag
  * 
- * @param rtc 
- * @return true 
- * @return false 
+ * @param rtc - DEADONRTC device structure
+ * @return true if flag was set, false otherwise
  */
 bool DEADON_RTC_READ_ALARM2_FLAG(DEADONRTC * rtc)
 {
@@ -380,7 +379,7 @@ bool DEADON_RTC_READ_ALARM2_FLAG(DEADONRTC * rtc)
 
 
 /**
- * @brief 
+ * @brief Alarm ISR Handler
  * 
  * @param arg 
  */
@@ -394,7 +393,7 @@ static void IRAM_ATTR alert_isr_handler(void * arg)
 
 
 /**
- * @brief 
+ * @brief Initialize ISR for Alert Pin
  * 
  * @param rtc 
  */
@@ -425,7 +424,7 @@ void DEADON_RTC_ISR_Init(DEADONRTC * rtc)
 
 
 /**
- * @brief 
+ * @brief Enable the RTC's interrupts
  * 
  * @param rtc 
  * @param enable 
@@ -452,11 +451,11 @@ void DEADON_RTC_Enable_Interrupt(DEADONRTC * rtc, bool enable)
 
 
 /**
- * @brief 
+ * @brief Enable Alarm 1 and/or Alarm 2
  * 
- * @param rtc 
- * @param alarm1 
- * @param alarm2 
+ * @param rtc - DEADONRTC device structure
+ * @param alarm1 - enable alarm 1 if true
+ * @param alarm2 - enable alarm 2 if true
  */
 void DEADON_RTC_Enable_Alarms(DEADONRTC * rtc, bool alarm1, bool alarm2)
 {
@@ -481,9 +480,9 @@ void DEADON_RTC_Enable_Alarms(DEADONRTC * rtc, bool alarm1, bool alarm2)
 
 
 /**
- * @brief 
- * 
- * @param address 
+ * @brief Read the RTC's SRAM at a specified address
+ * @note The size of the memoy if 256 bytes
+ * @param address range: 0x00 - 0xff
  * @return uint8_t 
  */
 uint8_t DEADON_RTC_SRAM_Read(uint8_t address)
@@ -495,10 +494,10 @@ uint8_t DEADON_RTC_SRAM_Read(uint8_t address)
 
 
 /**
- * @brief 
- * 
- * @param address 
- * @param data 
+ * @brief Write to the RTC's SRAM at a specified address
+ * @note The size of the memoy if 256 bytes
+ * @param address range: 0x00 - 0xff
+ * @param data - The data we want to write 
  */
 void DEADON_RTC_SRAM_Write(uint8_t address, uint8_t data)
 {
@@ -509,11 +508,11 @@ void DEADON_RTC_SRAM_Write(uint8_t address, uint8_t data)
 
 
 /**
- * @brief 
- * 
- * @param address 
- * @param data 
- * @param len 
+ * @brief Read the RTC's SRAM at a specified address
+ * @note The size of the memoy if 256 bytes
+ * @param address - Starting address
+ * @param data - data buffer
+ * @param len - Number of bytes to read
  */
 void DEADON_RTC_SRAM_Burst_Read(uint8_t address, uint8_t * data, uint32_t len)
 {
@@ -523,11 +522,11 @@ void DEADON_RTC_SRAM_Burst_Read(uint8_t address, uint8_t * data, uint32_t len)
 
 
 /**
- * @brief 
- * 
- * @param address 
- * @param data 
- * @param len 
+ * @brief Write the RTC's SRAM at a specified address
+ * @note The size of the memoy if 256 bytes
+ * @param address - Starting address
+ * @param data - data buffer
+ * @param len - Number of bytes to write
  */
 void DEADON_RTC_SRAM_Burst_Write(uint8_t address, uint8_t * data, uint32_t len)
 {
@@ -537,7 +536,7 @@ void DEADON_RTC_SRAM_Burst_Write(uint8_t address, uint8_t * data, uint32_t len)
 
 
 /**
- * @brief 
+ * @brief Read a register
  * 
  * @param register_address 
  * @return uint8_t 
@@ -550,7 +549,7 @@ uint8_t DEADON_RTC_Register_Read(uint8_t register_address)
 
 
 /**
- * @brief 
+ * @brief Write to a register
  * 
  * @param register_address 
  * @param data 
@@ -562,7 +561,7 @@ void DEADON_RTC_Register_Write(uint8_t register_address, uint8_t data)
 
 
 /**
- * @brief 
+ * @brief Read multiple registers
  * 
  * @param address 
  * @param data 
@@ -576,7 +575,7 @@ void DEADON_RTC_Register_Burst_Read(uint8_t address, uint8_t * data, uint32_t le
 
 
 /**
- * @brief 
+ * @brief Write to multiple registers
  * 
  * @param address 
  * @param data 

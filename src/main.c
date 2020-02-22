@@ -190,7 +190,7 @@ void rtc_intr_task(void *pvParameter)
     uint8_t data[6] = {0};
     MESSAGE_STRUCT device_message;
     DEADON_RTC_Begin(&rtc);
-    
+    // Check for power lost
     DEADON_RTC_SRAM_Burst_Read(0x00, data, 6);
     bool power_lost = true;
     for (int i=0; i<6; i++)
@@ -205,7 +205,7 @@ void rtc_intr_task(void *pvParameter)
             power_lost = false;
         }
     }
-
+    // If power was lost write the code to the sram
     if (power_lost)
     {
         printf("Lost Power!\n");
@@ -216,7 +216,7 @@ void rtc_intr_task(void *pvParameter)
     {
         printf("Power Not Lost\n");
     }
-
+    // Setup the RTC interrupts
     DEADON_RTC_ISR_Init(&rtc);
     delay(1000);
     DEADON_RTC_WRITE_ALARM1(10, 0, 0, 0, ALARM1_SECONDS_MATCH);
@@ -225,7 +225,7 @@ void rtc_intr_task(void *pvParameter)
     DEADON_RTC_Enable_Interrupt(&rtc, true);
     delay(100);
     DEADON_RTC_Enable_Alarms(&rtc, true, true);
-
+    // Clear the ALARM flags early
     DEADON_RTC_READ_ALARM1_FLAG(&rtc);
     DEADON_RTC_READ_ALARM2_FLAG(&rtc);
 
@@ -233,6 +233,7 @@ void rtc_intr_task(void *pvParameter)
     {
         xQueueReceive(queue, &msg, 10);
         xQueueReceive(rtc_command_queue, (COMMAND_MESSAGE_STRUCT*)&cmd_msg, 30);
+        // Evaluate Alarm Interrupts
         if (msg == 'r')
         {
             bool alarm1_flag = DEADON_RTC_READ_ALARM1_FLAG(&rtc);
