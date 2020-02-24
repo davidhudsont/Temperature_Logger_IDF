@@ -172,7 +172,7 @@ void openlog_task(void *pvParameter)
             float tempc     = TMP102_Get_Temperature(&tmp102_dev);
             float tempf     = TMP102_Get_TemperatureF(&tmp102_dev);
 
-            sprintf(line, "%02d:%02d:%02d, %02d-%02d-%04d, %fC, %fF",hours, minutes, seconds, month, date, year+2000, tempc, tempf);            
+            sprintf(line, "%02d:%02d:%02d, %02d-%02d-%04d, %fC, %fF\n",hours, minutes, seconds, month, date, year+2000, tempc, tempf);            
             OPENLOG_WriteLineToFile(&openlog_dev, line);
         }
     }
@@ -337,7 +337,13 @@ void console_task(void *pvParameter)
     const char* prompt = LOG_COLOR_I "esp> " LOG_RESET_COLOR;
 
     printf("\n"
-        "This is an example of ESP-IDF console component.\n"
+            "***************************"
+            "*      ESP 32 Console     *"
+            "*    Temperature Logger   *"
+            "***************************"
+            "\n");
+
+    printf("\n"
         "Type 'help' to get the list of commands.\n"
         "Use UP/DOWN arrows to navigate through command history.\n"
         "Press TAB when typing command name to auto-complete.\n");
@@ -398,10 +404,10 @@ void app_main()
     alarm_queue = xQueueCreate(3, 1);
     register_queues();
 
-    xTaskCreate(&rtc_intr_task, "rtc_intr_task", configMINIMAL_STACK_SIZE*3, NULL, 5, NULL);
-    xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE*4, NULL, 6, NULL);
-    //xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE*4, NULL, 7, NULL);
-    xTaskCreate(&openlog_task_dummy, "openlog_task_dummy", configMINIMAL_STACK_SIZE*4, NULL, 7, NULL);
+    xTaskCreate(&rtc_intr_task, "rtc_intr_task", configMINIMAL_STACK_SIZE*3, NULL, 4, NULL);
+    xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE*4, NULL, 5, NULL);
+    //xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE*4, NULL, 6, NULL);
+    xTaskCreate(&openlog_task_dummy, "openlog_task_dummy", configMINIMAL_STACK_SIZE*4, NULL, 6, NULL);
 
     xTaskCreate(&console_task, "console_task", configMINIMAL_STACK_SIZE*4, NULL, 7, NULL);
 

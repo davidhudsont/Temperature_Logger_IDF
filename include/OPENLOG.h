@@ -11,6 +11,10 @@
 #define _OPEN_LOG_H_
 
 #include "bspUART.h"
+#include "driver/gpio.h"
+
+
+#define DTR_PIN_NUM (GPIO_NUM_4)
 
 
 /**
@@ -37,6 +41,7 @@ typedef struct OPENLOG_STRUCT {
 
 void OPENLOG_Begin(OPENLOG_STRUCT * openlog_dev);
 
+void OPENLOG_RESET();
 void OPENLOG_UART_FLUSH(OPENLOG_STRUCT * openlog_dev);
 
 void OPENLOG_EnterCommandMode(OPENLOG_STRUCT * openlog_dev);

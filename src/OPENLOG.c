@@ -19,11 +19,27 @@
  */
 void OPENLOG_Begin(OPENLOG_STRUCT * openlog_dev)
 {
+    gpio_pad_select_gpio(DTR_PIN_NUM);
+    gpio_set_direction(DTR_PIN_NUM, GPIO_MODE_OUTPUT);
+
     UART_CONFIG(&openlog_dev->uart_dev, 9600, UART2_TX_PIN_NUM, UART2_RX_PIN_NUM, UART_NUM_2);
 
     openlog_dev->buffer = (char*) malloc(BUFFER_SIZE);
 
     UART_START_DEVICE(&openlog_dev->uart_dev);
+
+    gpio_set_level(DTR_PIN_NUM, 0);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    gpio_set_level(DTR_PIN_NUM, 1);
+
+}
+
+
+void OPENLOG_RESET()
+{
+    gpio_set_level(DTR_PIN_NUM, 0);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    gpio_set_level(DTR_PIN_NUM, 1);
 
 }
 
