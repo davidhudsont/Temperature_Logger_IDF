@@ -121,7 +121,11 @@ void openlog_task(void *pvParameter)
     OPENLOG_STRUCT openlog_dev;
     OPENLOG_Begin(&openlog_dev);
     OPENLOG_UART_FLUSH(&openlog_dev);
+    delay(300);
     OPENLOG_EnterCommandMode(&openlog_dev);
+    delay(300);
+    UART_Write_Bytes(&openlog_dev.uart_dev, (uint8_t *)"\r", 1);
+    delay(300);
 
     MESSAGE_STRUCT * message_reciever;
     uint8_t * buffer = (uint8_t *) malloc(sizeof(MESSAGE_STRUCT));
@@ -139,7 +143,6 @@ void openlog_task(void *pvParameter)
         {
             DEADONRTC * rtc = (DEADONRTC *)message_reciever->device;
             Print_DateTime(rtc);
-            rtc_dev.hours   = rtc->hours;
             rtc_dev.hours   = rtc->hours;
             rtc_dev.minutes = rtc->minutes;
             rtc_dev.seconds = rtc->seconds;
@@ -171,9 +174,10 @@ void openlog_task(void *pvParameter)
             uint8_t year    = rtc_dev.year;
             float tempc     = TMP102_Get_Temperature(&tmp102_dev);
             float tempf     = TMP102_Get_TemperatureF(&tmp102_dev);
-
-            sprintf(line, "%02d:%02d:%02d, %02d-%02d-%04d, %fC, %fF\n",hours, minutes, seconds, month, date, year+2000, tempc, tempf);            
+            printf("Write a line to the openlog!!!!\n");
+            sprintf(line, "%02d:%02d:%02d, %02d-%02d-%04d, %2.3fC, %3.3fF\n",hours, minutes, seconds, month, date, year+2000, tempc, tempf);            
             OPENLOG_WriteLineToFile(&openlog_dev, line);
+            task_counter = 0;
         }
     }
 
@@ -406,8 +410,8 @@ void app_main()
 
     xTaskCreate(&rtc_intr_task, "rtc_intr_task", configMINIMAL_STACK_SIZE*3, NULL, 4, NULL);
     xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE*4, NULL, 5, NULL);
-    //xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE*4, NULL, 6, NULL);
-    xTaskCreate(&openlog_task_dummy, "openlog_task_dummy", configMINIMAL_STACK_SIZE*4, NULL, 6, NULL);
+    xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE*4, NULL, 6, NULL);
+    //xTaskCreate(&openlog_task_dummy, "openlog_task_dummy", configMINIMAL_STACK_SIZE*4, NULL, 6, NULL);
 
     xTaskCreate(&console_task, "console_task", configMINIMAL_STACK_SIZE*4, NULL, 7, NULL);
 
