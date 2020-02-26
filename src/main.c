@@ -337,10 +337,10 @@ void console_task(void *pvParameter)
     const char* prompt = LOG_COLOR_I "esp> " LOG_RESET_COLOR;
 
     printf("\n"
-            "***************************"
-            "*      ESP 32 Console     *"
-            "*    Temperature Logger   *"
-            "***************************"
+            "***************************\n"
+            "*      ESP 32 Console     *\n"
+            "*    Temperature Logger   *\n"
+            "***************************\n"
             "\n");
 
     printf("\n"
