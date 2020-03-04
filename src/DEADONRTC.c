@@ -253,6 +253,56 @@ void DEADON_RTC_WRITE_24HOURS(uint8_t hours)
 }
 
 
+void DEADON_RTC_WRITE_DAYS(DAYS days)
+{
+    DEADON_RTC_Register_Write(REG_DAYS, BCDtoDEC((uint8_t)days));
+}
+
+
+void DEADON_RTC_WRITE_DATE(uint8_t date)
+{
+    int year = BCDtoDEC(DEADON_RTC_Register_Read(REG_YEAR))+2000;
+    int month = BCDtoDEC(DEADON_RTC_Register_Read(REG_MONTH));
+    // Credit to : http://www.codecodex.com/wiki/Calculate_the_number_of_days_in_a_month
+    // This protects against invalid months
+    int numberOfDays;
+    if (month == 4 || month == 6 || month == 9 || month == 11)
+        numberOfDays = 30;
+    else if (month == 2)
+    { 
+        bool isLeapYear = (((year % 4) == 0) && ((year % 100) != 0)) || ((year % 400) == 0);
+        if (isLeapYear)
+            numberOfDays = 29;
+        else
+            numberOfDays = 28;
+    }
+    else
+        numberOfDays = 31;
+
+    if (date > numberOfDays)
+        date = numberOfDays;
+
+    DEADON_RTC_Register_Write(REG_DATE,DECtoBCD(date));
+}
+
+
+void DEADON_RTC_WRITE_MONTH(uint8_t month)
+{
+    if (month > 12)
+        month = 12;
+    DEADON_RTC_Register_Write(REG_MONTH,DECtoBCD(month));
+
+}
+
+
+void DEADON_RTC_WRITE_YEAR(uint8_t year)
+{
+    if (year > 99)
+        year = 99;
+    DEADON_RTC_Register_Write(REG_YEAR,DECtoBCD(year));
+ 
+}
+
 /**
  * @brief 
  * 

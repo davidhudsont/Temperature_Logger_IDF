@@ -262,28 +262,41 @@ void rtc_intr_task(void *pvParameter)
             msg = ' ';
         }
         // Evaulate Console Commands
-        if (cmd_msg.id == 'p')
+        switch (cmd_msg.id)
         {
+        case COMMAND_GET_DATETIME:
             DEADON_RTC_READ_DATETIME(&rtc);
             Print_DateTime(&rtc);
-        }
-        if (cmd_msg.id == 's')
-        {
+            break;
+        case COMMAND_SET_SECONDS:
             DEADON_RTC_WRITE_SECONDS(cmd_msg.arg1);
-        }
-        if (cmd_msg.id == 'm')
-        {
+            break;
+        case COMMAND_SET_MINUTES:
             DEADON_RTC_WRITE_MINUTES(cmd_msg.arg1);
-        }
-        if (cmd_msg.id == 'h')
-        {
+            break;
+        case COMMAND_SET_12HOURS:
             DEADON_RTC_WRITE_12HOURS(cmd_msg.arg1, cmd_msg.arg2);
-        }
-        if (cmd_msg.id == 't')
-        {
+            break;
+        case COMMAND_SET_24HOURS:
             DEADON_RTC_WRITE_24HOURS(cmd_msg.arg1);
+            break;
+        case COMMAND_SET_WEEKDAY:
+            DEADON_RTC_WRITE_DAYS((DAYS)cmd_msg.arg1);
+            break;
+        case COMMAND_SET_DATE:
+            DEADON_RTC_WRITE_DATE(cmd_msg.arg1);
+            break;
+        case COMMAND_SET_MONTH:
+            DEADON_RTC_WRITE_MONTH(cmd_msg.arg1);
+            break;
+        case COMMAND_SET_YEAR:
+            DEADON_RTC_WRITE_YEAR(cmd_msg.arg1);
+            break;
+        default:
+            break;
         }
-        cmd_msg.id = ' ';
+
+        cmd_msg.id = COMMAND_NULL;
     }
 }
 
