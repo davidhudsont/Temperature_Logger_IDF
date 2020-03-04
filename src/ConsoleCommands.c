@@ -15,6 +15,7 @@ static void register_version(void);
 static void register_time(void);
 static void register_date(void);
 static void register_getdatetime(void);
+static void register_temperature(void);
 
 /**
  * @brief Register all the console commands
@@ -26,6 +27,7 @@ void register_system(void)
     register_time();
     register_date();
     register_getdatetime();
+    register_temperature();
 }
 
 /**
@@ -35,7 +37,7 @@ void register_system(void)
 void register_queues(void)
 {
     rtc_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT)); 
-
+    tmp_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
 }
 
 
@@ -248,6 +250,55 @@ static void register_getdatetime(void)
         .help = "Print the Date & Time",
         .hint = NULL,
         .func = &get_datetime,
+    };
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+
+static struct {
+    struct arg_lit *tempf;
+    struct arg_lit *tempc;
+    struct arg_end *end;
+} temperature_args;
+
+
+static int get_temperature(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **) &temperature_args);
+    COMMAND_MESSAGE_STRUCT msg;
+    
+    if (nerrors != 0) 
+    {
+        arg_print_errors(stderr, temperature_args.end, argv[0]);
+        return 1;
+    }
+
+    if (temperature_args.tempf->count)
+    {
+        msg.id = COMMAND_GET_TEMPF;
+    }
+    if (temperature_args.tempc->count)
+    {
+        msg.id = COMMAND_GET_TEMPC;
+    }
+
+    xQueueSend(tmp_command_queue, (void *)&msg, 30);
+    return 0;
+}
+
+
+static void register_temperature(void)
+{
+    temperature_args.tempf = arg_lit0("f", NULL, "Get temperature in Fahrenheit!");
+    temperature_args.tempc = arg_lit0("c", NULL, "Get temperature in Celsius!");
+    temperature_args.end  = arg_end(2);
+
+    const esp_console_cmd_t cmd = {
+        .command = "temperature",
+        .help = "Print the Temperature",
+        .hint = NULL,
+        .func = &get_temperature,
     };
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));

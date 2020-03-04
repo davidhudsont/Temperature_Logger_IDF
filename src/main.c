@@ -305,6 +305,7 @@ void tmp102_sleep_task(void *pvParameter)
     printf("Initialize Device\n");
     TMP102_STRUCT tmp102_device;
     char msg;
+    COMMAND_MESSAGE_STRUCT cmd_msg;
     MESSAGE_STRUCT device_message;
     TMP102_Begin(&tmp102_device);
 
@@ -318,6 +319,7 @@ void tmp102_sleep_task(void *pvParameter)
     while (1)
     {
         xQueueReceive(alarm_queue, &msg, 30);
+        xQueueReceive(tmp_command_queue, &cmd_msg, 30);
         if (msg == 'r')
         {
             if (oneshot == false)
@@ -340,7 +342,18 @@ void tmp102_sleep_task(void *pvParameter)
             msg = ' ';
         }
 
-
+        switch (cmd_msg.id)
+        {
+        case COMMAND_GET_TEMPF:
+            printf("%3.3fF\n", TMP102_Get_TemperatureF(&tmp102_device));
+            break;
+        case COMMAND_GET_TEMPC:
+            printf("%2.3fC\n", TMP102_Get_Temperature(&tmp102_device));
+            break;
+        default:
+            break;
+        }
+        cmd_msg.id = COMMAND_NULL;
     }
 }
 
