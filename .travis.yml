@@ -36,6 +36,7 @@ cache:
 install:
     - pip install -U platformio
     - platformio update
+    - platformio platform install espressif32
 
 script:
     - platformio run
