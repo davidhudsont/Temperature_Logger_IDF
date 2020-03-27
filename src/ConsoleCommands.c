@@ -13,6 +13,7 @@
 
 static void register_version(void);
 static void register_time(void);
+static void register_date(void);
 static void register_getdatetime(void);
 
 /**
@@ -23,6 +24,7 @@ void register_system(void)
 {
     register_version();
     register_time();
+    register_date();
     register_getdatetime();
 }
 
@@ -98,14 +100,14 @@ static int set_time(int argc, char**argv)
     if (time_args.seconds->count)
     {
         printf("Set Seconds to: %d\n", time_args.seconds->ival[0]);
-        msg.id = 's';
+        msg.id = COMMAND_SET_SECONDS;
         msg.arg1 = time_args.seconds->ival[0];
     }
     else if (time_args.minutes->count)
     {
         int minutes = time_args.minutes->ival[0];
         printf("Minutes: %d\n", minutes);
-        msg.id = 'm';
+        msg.id = COMMAND_SET_MINUTES;
         msg.arg1 = minutes;
     }
     else if (time_args.hours12->count)
@@ -113,7 +115,7 @@ static int set_time(int argc, char**argv)
         bool PM_notAM = time_args.hours12->ival[1];
         int hours = time_args.hours12->ival[0];
         printf("Hours: %d, %s\n", hours, ( PM_notAM ? "PM" : "AM"));
-        msg.id = 'h';
+        msg.id = COMMAND_SET_12HOURS;
         msg.arg1 = hours;
         msg.arg2 = PM_notAM;
     }
@@ -121,7 +123,7 @@ static int set_time(int argc, char**argv)
     {
         int hours = time_args.hours24->ival[0];
         printf("Hours: %d\n", hours);
-        msg.id = 't';
+        msg.id = COMMAND_SET_24HOURS;
         msg.arg1 = hours;
         
     }
@@ -151,6 +153,81 @@ static void register_time(void)
 }
 
 
+static struct {
+    struct arg_int *days;
+    struct arg_int *date;
+    struct arg_int *month;
+    struct arg_int *year;
+    struct arg_end *end;
+} date_args;
+
+
+/**
+ * @brief Set the date of the RTC.
+ * 
+ */
+static int set_date(int argc, char**argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **) &date_args);
+    COMMAND_MESSAGE_STRUCT msg;
+    
+    if (nerrors != 0) 
+    {
+        arg_print_errors(stderr, date_args.end, argv[0]);
+        return 1;
+    }
+
+    if (date_args.days->count)
+    {
+        printf("Set Days to: %d\n", date_args.days->ival[0]);
+        msg.id = COMMAND_SET_WEEKDAY;
+        msg.arg1 = date_args.days->ival[0];
+    }
+    else if (date_args.date->count)
+    {
+        int date = date_args.date->ival[0];
+        printf("Set Date to: %d\n", date);
+        msg.id = COMMAND_SET_DATE;
+        msg.arg1 = date;
+    }
+    else if (date_args.month->count)
+    {
+        int month = date_args.month->ival[0];
+        printf("Set Month to: %d\n", month);
+        msg.id = COMMAND_SET_MONTH;
+        msg.arg1 = month;
+    }
+    else if (date_args.year->count)
+    {
+        int year = date_args.year->ival[0];
+        printf("Set Year to: %d\n", year);
+        msg.id = COMMAND_SET_YEAR;
+        msg.arg1 = year;
+    }
+    xQueueSend(rtc_command_queue, (void*)&msg, 30);
+    return 0;
+}
+
+
+static void register_date(void)
+{
+    date_args.days = arg_int0("w", NULL, "<w>", "Set weekday!");
+    date_args.date = arg_int0("d", NULL, "<d>", "Set the date!");
+    date_args.month= arg_int0("m", NULL, "<m>", "Set the months!");
+    date_args.year = arg_int0("y", NULL, "<y>", "Set the year!");
+    date_args.end  = arg_end(4);
+
+    const esp_console_cmd_t cmd = {
+        .command = "date",
+        .help = "Set the date!",
+        .func = &set_date,
+        .argtable = &date_args,
+    };
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+
 /**
  * @brief Get the current date and time
  * 
@@ -158,7 +235,7 @@ static void register_time(void)
 static int get_datetime(int argc, char **argv)
 {
     COMMAND_MESSAGE_STRUCT msg;
-    msg.id = 'p';
+    msg.id = COMMAND_GET_DATETIME;
     xQueueSend(rtc_command_queue, (void *)&msg, 30);
     return 0;
 }

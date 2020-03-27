@@ -25,8 +25,21 @@ QueueHandle_t tmp_command_queue; // Queue to send device objects between tasks
 QueueHandle_t openlog_command_queue; // Queue to send device objects between tasks
 
 
+typedef enum COMMAND_ID {
+    COMMAND_NULL = -1,
+    COMMAND_SET_SECONDS = 0,
+    COMMAND_SET_MINUTES,
+    COMMAND_SET_12HOURS,
+    COMMAND_SET_24HOURS,
+    COMMAND_SET_WEEKDAY,
+    COMMAND_SET_DATE,
+    COMMAND_SET_MONTH,
+    COMMAND_SET_YEAR,
+    COMMAND_GET_DATETIME,
+} COMMAND_ID;
+
 typedef struct COMMAND_MESSAGE_STRUCT {
-    char id;
+    COMMAND_ID id;
     int  arg1;
     int  arg2;
     int  arg3;

@@ -22,6 +22,15 @@
 
 QueueHandle_t queue;
 
+typedef enum DAYS {
+    SUNDAY = 1,
+    MONDAY,
+    TUESDAY,
+    WEDNESDAY,
+    THURSDAY,
+    FRIDAY,
+    SATURDAY,
+} DAYS;
 
 typedef enum ALARM1_MODES {
     ALARM1_PER_SECOND = 0,
@@ -72,6 +81,11 @@ uint8_t DEADON_RTC_READ_MINUTES();
 
 void DEADON_RTC_WRITE_12HOURS(uint8_t hours, bool PM_NotAM);
 void DEADON_RTC_WRITE_24HOURS(uint8_t hours);
+
+void DEADON_RTC_WRITE_DAYS(DAYS days);
+void DEADON_RTC_WRITE_DATE(uint8_t date);
+void DEADON_RTC_WRITE_MONTH(uint8_t month);
+void DEADON_RTC_WRITE_YEAR(uint8_t year);
 
 void DEADON_RTC_READ_DATETIME(DEADONRTC * rtc);
 void DEADON_RTC_WRITE_DATETIME(uint8_t seconds, uint8_t minutes, uint8_t hours,

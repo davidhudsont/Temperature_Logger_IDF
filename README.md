@@ -32,7 +32,7 @@ A temperature logging device using the ESP32 Micro-controller with the IDF RTOS
 
 ![alt text][console_cap1]
 
-[console_cap1]: https://github.com/davidhudsont/Temperature_Logger_IDF/images/Console_Capture.JPG "Console Screen Capture"
+[console_cap1]: https://github.com/davidhudsont/Temperature_Logger_IDF/blob/master/images/Console_Capture.JPG "Console Screen Capture"
 
 # Links
 
