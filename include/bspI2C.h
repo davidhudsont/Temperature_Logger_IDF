@@ -8,7 +8,7 @@
  * 
  */
 
-#include "driver\i2c.h"
+#include "driver/i2c.h"
 
 
 #define SDA_PIN_NUM (21) // I2C SDA PIN Number

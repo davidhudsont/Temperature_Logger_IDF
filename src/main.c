@@ -6,6 +6,11 @@
  * 
  * 
  */
+#ifdef NATIVE
+    
+int main() { return 0;}
+
+#else
 
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
@@ -442,3 +447,5 @@ void app_main()
     xTaskCreate(&console_task, "console_task", configMINIMAL_STACK_SIZE*4, NULL, 7, NULL);
 
 }
+
+#endif
