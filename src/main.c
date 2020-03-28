@@ -162,9 +162,9 @@ void openlog_task(void *pvParameter)
         {
             TMP102_STRUCT *tmp = (TMP102_STRUCT*) message_reciever->device;
             float temperature = TMP102_Get_Temperature(tmp);
-            printf("Temperature = %f C\n", temperature);
+            printf("Temperature = %2.3f C\n", temperature);
             temperature = TMP102_Get_TemperatureF(tmp);
-            printf("Temperature = %f F\n", temperature);
+            printf("Temperature = %3.3f F\n", temperature);
             tmp102_dev.temperature = tmp->temperature;
             message_reciever->id = ' ';
             task_counter++;
@@ -305,6 +305,27 @@ void rtc_intr_task(void *pvParameter)
     }
 }
 
+
+void OneShotTemperatureRead(TMP102_STRUCT * tmp102_device)
+{
+    static bool oneshot = false;
+    if (oneshot == false)
+    {
+        printf("Set the OneShot!\n");
+        TMP102_Set_OneShot(tmp102_device);
+        delay(30);
+        oneshot = TMP102_Get_OneShot(tmp102_device);
+    }
+    
+    if (oneshot)
+    {
+        TMP102_Read_Temperature(tmp102_device);
+        printf("Temperature has been Read\n");
+        oneshot = false;
+    }
+}
+
+
 void tmp102_sleep_task(void *pvParameter)
 {
     printf("Initialize Device\n");
@@ -319,40 +340,27 @@ void tmp102_sleep_task(void *pvParameter)
     TMP102_Sleep(&tmp102_device, true);
     delay(300);
 
-    bool oneshot = false;
-    
     while (1)
     {
         xQueueReceive(alarm_queue, &msg, 30);
         xQueueReceive(tmp_command_queue, &cmd_msg, 30);
         if (msg == 'r')
         {
-            if (oneshot == false)
-            {
-                TMP102_Set_OneShot(&tmp102_device);
-                oneshot = true;
-            }
-            delay(100);
-            bool tmponeshot = TMP102_Get_OneShot(&tmp102_device);
-
-            if (tmponeshot)
-            {
-                TMP102_Read_Temperature(&tmp102_device);
-                printf("Temperature has been Read\n");
-                device_message.id = 't';
-                device_message.device = (void *)&tmp102_device;
-                xQueueSend(device_queue, &device_message, 30);
-                oneshot = false;
-            }
+            OneShotTemperatureRead(&tmp102_device);
+            device_message.id = 't';
+            device_message.device = (void *)&tmp102_device;
+            xQueueSend(device_queue, &device_message, 30);
             msg = ' ';
         }
 
         switch (cmd_msg.id)
         {
         case COMMAND_GET_TEMPF:
+            OneShotTemperatureRead(&tmp102_device);
             printf("%3.3fF\n", TMP102_Get_TemperatureF(&tmp102_device));
             break;
         case COMMAND_GET_TEMPC:
+            OneShotTemperatureRead(&tmp102_device);
             printf("%2.3fC\n", TMP102_Get_Temperature(&tmp102_device));
             break;
         default:

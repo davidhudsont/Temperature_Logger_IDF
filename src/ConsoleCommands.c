@@ -299,6 +299,7 @@ static void register_temperature(void)
         .help = "Print the Temperature",
         .hint = NULL,
         .func = &get_temperature,
+        .argtable = &temperature_args,
     };
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
