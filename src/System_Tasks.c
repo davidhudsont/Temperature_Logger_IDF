@@ -79,34 +79,36 @@ void openlog_task(void *pvParameter)
 
     while (1)
     {
-        xQueueReceive(device_queue, buffer, 30);
         message_reciever = (MESSAGE_STRUCT *)buffer;
 
-        if (message_reciever->id == 'r')
+        if (xQueueReceive(device_queue, buffer, 30))
         {
-            DEADONRTC * rtc = (DEADONRTC *)message_reciever->device;
-            Print_DateTime(rtc);
-            rtc_dev.hours   = rtc->hours;
-            rtc_dev.minutes = rtc->minutes;
-            rtc_dev.seconds = rtc->seconds;
-            rtc_dev.date    = rtc->date;
-            rtc_dev.month   = rtc->month;
-            rtc_dev.year    = rtc->year;
-            message_reciever->id = ' ';
-            task_counter++;
+            if (message_reciever->id == 'r')
+            {
+                DEADONRTC * rtc = (DEADONRTC *)message_reciever->device;
+                Print_DateTime(rtc);
+                rtc_dev.hours   = rtc->hours;
+                rtc_dev.minutes = rtc->minutes;
+                rtc_dev.seconds = rtc->seconds;
+                rtc_dev.date    = rtc->date;
+                rtc_dev.month   = rtc->month;
+                rtc_dev.year    = rtc->year;
+                task_counter++;
 
+            }
+            else if (message_reciever->id == 't')
+            {
+                TMP102_STRUCT *tmp = (TMP102_STRUCT*) message_reciever->device;
+                float temperature = TMP102_Get_Temperature(tmp);
+                printf("Temperature = %2.3f C\n", temperature);
+                temperature = TMP102_Get_TemperatureF(tmp);
+                printf("Temperature = %3.3f F\n", temperature);
+                tmp102_dev.temperature = tmp->temperature;
+                task_counter++;
+            }
         }
-        else if (message_reciever->id == 't')
-        {
-            TMP102_STRUCT *tmp = (TMP102_STRUCT*) message_reciever->device;
-            float temperature = TMP102_Get_Temperature(tmp);
-            printf("Temperature = %2.3f C\n", temperature);
-            temperature = TMP102_Get_TemperatureF(tmp);
-            printf("Temperature = %3.3f F\n", temperature);
-            tmp102_dev.temperature = tmp->temperature;
-            message_reciever->id = ' ';
-            task_counter++;
-        }
+
+
         if (task_counter >= 2)
         {
             uint8_t hours   = rtc_dev.hours;
@@ -127,29 +129,19 @@ void openlog_task(void *pvParameter)
 }
 
 
-void rtc_intr_task(void *pvParameter)
+void DEADON_RTC_Power_On_Test()
 {
-    printf("DEADON RTC Task Start!\n");
-    DEADONRTC rtc;
-    char msg;
-    COMMAND_MESSAGE_STRUCT cmd_msg;
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
     uint8_t data[6] = {0};
-    MESSAGE_STRUCT device_message;
-    DEADON_RTC_Begin(&rtc);
     // Check for power lost
     DEADON_RTC_SRAM_Burst_Read(0x00, data, 6);
-    bool power_lost = true;
+    bool power_lost = false;
     for (int i=0; i<6; i++)
     {
         if (data[i] != code[i])
         {
             power_lost = true;
             break;
-        }
-        else
-        {
-            power_lost = false;
         }
     }
     // If power was lost write the code to the sram
@@ -163,83 +155,104 @@ void rtc_intr_task(void *pvParameter)
     {
         printf("Power Not Lost\n");
     }
+}
+
+void DEADON_RTC_Start_Alarms(DEADONRTC * rtc)
+{
     // Setup the RTC interrupts
-    DEADON_RTC_ISR_Init(&rtc);
+    DEADON_RTC_ISR_Init(rtc);
     delay(1000);
     DEADON_RTC_WRITE_ALARM1(10, 0, 0, 0, ALARM1_SECONDS_MATCH);
     DEADON_RTC_WRITE_ALARM2(0,0,0,ALARM2_PER_MIN);
     delay(100);
-    DEADON_RTC_Enable_Interrupt(&rtc, true);
+    DEADON_RTC_Enable_Interrupt(rtc, true);
     delay(100);
-    DEADON_RTC_Enable_Alarms(&rtc, true, true);
+    DEADON_RTC_Enable_Alarms(rtc, true, true);
     // Clear the ALARM flags early
-    DEADON_RTC_READ_ALARM1_FLAG(&rtc);
-    DEADON_RTC_READ_ALARM2_FLAG(&rtc);
+    DEADON_RTC_READ_ALARM1_FLAG(rtc);
+    DEADON_RTC_READ_ALARM2_FLAG(rtc);
+}
+
+void rtc_intr_task(void *pvParameter)
+{
+    printf("DEADON RTC Task Start!\n");
+    DEADONRTC rtc;
+    char msg;
+    MESSAGE_STRUCT device_message;
+    COMMAND_MESSAGE_STRUCT cmd_msg;
+    DEADON_RTC_Begin(&rtc);
+    
+    DEADON_RTC_Power_On_Test();
+
+    DEADON_RTC_Start_Alarms(&rtc);
 
     while (1)
     {
-        xQueueReceive(queue, &msg, 10);
-        xQueueReceive(rtc_command_queue, (COMMAND_MESSAGE_STRUCT*)&cmd_msg, 30);
         // Evaluate Alarm Interrupts
-        if (msg == 'r')
+        if (xQueueReceive(queue, &msg, 10))
         {
-            bool alarm1_flag = DEADON_RTC_READ_ALARM1_FLAG(&rtc);
-            bool alarm2_flag = DEADON_RTC_READ_ALARM2_FLAG(&rtc);
-
-            if (alarm1_flag)
+            if (msg == 'r')
             {
-                printf("ALARM1 Triggered\n");
-                DEADON_RTC_READ_DATETIME(&rtc);
-                Print_DateTime(&rtc);
+                bool alarm1_flag = DEADON_RTC_READ_ALARM1_FLAG(&rtc);
+                bool alarm2_flag = DEADON_RTC_READ_ALARM2_FLAG(&rtc);
+
+                if (alarm1_flag)
+                {
+                    printf("ALARM1 Triggered\n");
+                    DEADON_RTC_READ_DATETIME(&rtc);
+                    Print_DateTime(&rtc);
+                }
+                if (alarm2_flag)
+                {
+                    printf("ALARM2 Triggered\n");
+                    DEADON_RTC_READ_DATETIME(&rtc);
+                    char tmp_ready = 'r';
+                    xQueueSend(alarm_queue, (void *)&tmp_ready, 30);
+                    device_message.id = 'r';
+                    device_message.device = (void*)&rtc;
+                    xQueueSend(device_queue, &device_message, 30);
+                }   
             }
-            if (alarm2_flag)
-            {
-                printf("ALARM2 Triggered\n");
-                DEADON_RTC_READ_DATETIME(&rtc);
-                char tmp_ready = 'r';
-                xQueueSend(alarm_queue, (void *)&tmp_ready, 30);
-                device_message.id = 'r';
-                device_message.device = (void*)&rtc;
-                xQueueSend(device_queue, &device_message, 30);
-            }   
-            msg = ' ';
-        }
-        // Evaulate Console Commands
-        switch (cmd_msg.id)
-        {
-        case COMMAND_GET_DATETIME:
-            DEADON_RTC_READ_DATETIME(&rtc);
-            Print_DateTime(&rtc);
-            break;
-        case COMMAND_SET_SECONDS:
-            DEADON_RTC_WRITE_SECONDS(cmd_msg.arg1);
-            break;
-        case COMMAND_SET_MINUTES:
-            DEADON_RTC_WRITE_MINUTES(cmd_msg.arg1);
-            break;
-        case COMMAND_SET_12HOURS:
-            DEADON_RTC_WRITE_12HOURS(cmd_msg.arg1, cmd_msg.arg2);
-            break;
-        case COMMAND_SET_24HOURS:
-            DEADON_RTC_WRITE_24HOURS(cmd_msg.arg1);
-            break;
-        case COMMAND_SET_WEEKDAY:
-            DEADON_RTC_WRITE_DAYS((DAYS)cmd_msg.arg1);
-            break;
-        case COMMAND_SET_DATE:
-            DEADON_RTC_WRITE_DATE(cmd_msg.arg1);
-            break;
-        case COMMAND_SET_MONTH:
-            DEADON_RTC_WRITE_MONTH(cmd_msg.arg1);
-            break;
-        case COMMAND_SET_YEAR:
-            DEADON_RTC_WRITE_YEAR(cmd_msg.arg1);
-            break;
-        default:
-            break;
         }
 
-        cmd_msg.id = COMMAND_NULL;
+        // Evaulate Console Commands
+        if (xQueueReceive(rtc_command_queue, (COMMAND_MESSAGE_STRUCT*)&cmd_msg, 30))
+        {
+            switch (cmd_msg.id)
+            {
+                case COMMAND_GET_DATETIME:
+                    DEADON_RTC_READ_DATETIME(&rtc);
+                    Print_DateTime(&rtc);
+                    break;
+                case COMMAND_SET_SECONDS:
+                    DEADON_RTC_WRITE_SECONDS(cmd_msg.arg1);
+                    break;
+                case COMMAND_SET_MINUTES:
+                    DEADON_RTC_WRITE_MINUTES(cmd_msg.arg1);
+                    break;
+                case COMMAND_SET_12HOURS:
+                    DEADON_RTC_WRITE_12HOURS(cmd_msg.arg1, cmd_msg.arg2);
+                    break;
+                case COMMAND_SET_24HOURS:
+                    DEADON_RTC_WRITE_24HOURS(cmd_msg.arg1);
+                    break;
+                case COMMAND_SET_WEEKDAY:
+                    DEADON_RTC_WRITE_DAYS((DAYS)cmd_msg.arg1);
+                    break;
+                case COMMAND_SET_DATE:
+                    DEADON_RTC_WRITE_DATE(cmd_msg.arg1);
+                    break;
+                case COMMAND_SET_MONTH:
+                    DEADON_RTC_WRITE_MONTH(cmd_msg.arg1);
+                    break;
+                case COMMAND_SET_YEAR:
+                    DEADON_RTC_WRITE_YEAR(cmd_msg.arg1);
+                    break;
+                default:
+                    break;
+            }
+        }
+
     }
 }
 
@@ -280,31 +293,35 @@ void tmp102_sleep_task(void *pvParameter)
 
     while (1)
     {
-        xQueueReceive(alarm_queue, &msg, 30);
-        xQueueReceive(tmp_command_queue, &cmd_msg, 30);
-        if (msg == 'r')
+        
+        if ( xQueueReceive(alarm_queue, &msg, 30) )
         {
-            OneShotTemperatureRead(&tmp102_device);
-            device_message.id = 't';
-            device_message.device = (void *)&tmp102_device;
-            xQueueSend(device_queue, &device_message, 30);
-            msg = ' ';
+            if (msg == 'r')
+            {
+                OneShotTemperatureRead(&tmp102_device);
+                device_message.id = 't';
+                device_message.device = (void *)&tmp102_device;
+                xQueueSend(device_queue, &device_message, 30);
+            }
         }
 
-        switch (cmd_msg.id)
+        if ( xQueueReceive(tmp_command_queue, &cmd_msg, 30) )
         {
-        case COMMAND_GET_TEMPF:
-            OneShotTemperatureRead(&tmp102_device);
-            printf("%3.3fF\n", TMP102_Get_TemperatureF(&tmp102_device));
-            break;
-        case COMMAND_GET_TEMPC:
-            OneShotTemperatureRead(&tmp102_device);
-            printf("%2.3fC\n", TMP102_Get_Temperature(&tmp102_device));
-            break;
-        default:
-            break;
+            switch (cmd_msg.id)
+            {
+                case COMMAND_GET_TEMPF:
+                    OneShotTemperatureRead(&tmp102_device);
+                    printf("%3.3fF\n", TMP102_Get_TemperatureF(&tmp102_device));
+                    break;
+                case COMMAND_GET_TEMPC:
+                    OneShotTemperatureRead(&tmp102_device);
+                    printf("%2.3fC\n", TMP102_Get_Temperature(&tmp102_device));
+                    break;
+                default:
+                    break;
+            }
         }
-        cmd_msg.id = COMMAND_NULL;
+        
     }
 }
 
