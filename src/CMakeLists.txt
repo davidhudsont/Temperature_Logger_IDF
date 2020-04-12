@@ -10,7 +10,8 @@ set(app_sources
 	"bspI2C.c"
 	"bspSpi.c"
 	"bspUART.c"
-	"main.c"
+    "System_Tasks.c"
+    "main.c"
 )
 
 idf_component_register(SRCS ${app_sources})
