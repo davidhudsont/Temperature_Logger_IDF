@@ -60,6 +60,13 @@ void openlog_task(void *pvParameter)
     memset(&rtc_dev, 0, sizeof(DEADONRTC));
     memset(&tmp102_dev, 0, sizeof(TMP102_STRUCT));
 
+    MESSAGE_STRUCT * message_reciever;
+    COMMAND_MESSAGE_STRUCT command_msg;
+    bool stop_logging_flag = true;
+    uint8_t * buffer = (uint8_t *) malloc(sizeof(MESSAGE_STRUCT));
+    char *line = (char *) malloc(500);
+    int task_counter = 0;
+
     // Start the Openlog Device
     OPENLOG_STRUCT openlog_dev;
     OPENLOG_Begin(&openlog_dev);
@@ -69,20 +76,18 @@ void openlog_task(void *pvParameter)
     delay(300);
     UART_Write_Bytes(&openlog_dev.uart_dev, (uint8_t *)"\r", 1);
     delay(300);
-
-    MESSAGE_STRUCT * message_reciever;
-    uint8_t * buffer = (uint8_t *) malloc(sizeof(MESSAGE_STRUCT));
-    char *line = (char *) malloc(500);
-
     OPENLOG_EnterAppendFileMode(&openlog_dev, "DATA_LOG.txt");
-    int task_counter = 0;
 
     while (1)
     {
-        message_reciever = (MESSAGE_STRUCT *)buffer;
-
-        if (xQueueReceive(device_queue, buffer, 30))
+        if (xQueueReceive(openlog_command_queue, &command_msg, 30))
         {
+            stop_logging_flag = command_msg.arg1;   
+        }
+
+        if (xQueueReceive(device_queue, buffer, 30) && !stop_logging_flag)
+        {
+            message_reciever = (MESSAGE_STRUCT *)buffer;
             if (message_reciever->id == 'r')
             {
                 DEADONRTC * rtc = (DEADONRTC *)message_reciever->device;
