@@ -8,7 +8,6 @@
 
 #include "bspConsole.h"
 
-
 void Start_Console()
 {
     // Drain stdout before reconfiguring it
@@ -23,20 +22,20 @@ void Start_Console()
     // Move the caret to the beginning of the next line on '\n'
     esp_vfs_dev_uart_set_tx_line_endings(ESP_LINE_ENDINGS_CRLF);
 
-    // Configure the UART Port for the ESP32 Console 
+    // Configure the UART Port for the ESP32 Console
     uart_config_t uart_config;
-    uart_config.baud_rate = CONFIG_CONSOLE_UART_BAUDRATE;
+    uart_config.baud_rate = CONFIG_ESP_CONSOLE_UART_BAUDRATE;
     uart_config.data_bits = UART_DATA_8_BITS;
     uart_config.parity = UART_PARITY_DISABLE;
     uart_config.stop_bits = UART_STOP_BITS_1;
 
     // Install the uart driver
-    uart_driver_install(CONFIG_CONSOLE_UART_NUM, 256, 0, 0, NULL, 0);
-    uart_param_config(CONFIG_CONSOLE_UART_NUM, &uart_config);
+    uart_driver_install(CONFIG_ESP_CONSOLE_UART_NUM, 256, 0, 0, NULL, 0);
+    uart_param_config(CONFIG_ESP_CONSOLE_UART_NUM, &uart_config);
 
     // Tell VFS to use UART Driver
-    esp_vfs_dev_uart_use_driver(CONFIG_CONSOLE_UART_NUM);
-     
+    esp_vfs_dev_uart_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
+
     // Configure the console
     esp_console_config_t console_config;
     console_config.max_cmdline_length = 256;
@@ -45,17 +44,16 @@ void Start_Console()
 
     // Initiailize the console
     esp_console_init(&console_config);
-    
+
     // Configure linenoise line completion lbirary
     linenoiseSetMultiLine(1);
 
     // Tell linenoise where to get command completions and hints
     linenoiseSetCompletionCallback(&esp_console_get_completion);
-    linenoiseSetHintsCallback((linenoiseHintsCallback*) &esp_console_get_hint);
+    linenoiseSetHintsCallback((linenoiseHintsCallback *)&esp_console_get_hint);
 
     // Set command history size
     linenoiseHistorySetMaxLen(100);
-
 }
 
 // Register the consoles commands after the console is started
