@@ -19,13 +19,12 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
-
-QueueHandle_t rtc_command_queue; // Queue to send device objects between tasks
-QueueHandle_t tmp_command_queue; // Queue to send device objects between tasks
+QueueHandle_t rtc_command_queue;     // Queue to send device objects between tasks
+QueueHandle_t tmp_command_queue;     // Queue to send device objects between tasks
 QueueHandle_t openlog_command_queue; // Queue to send device objects between tasks
 
-
-typedef enum COMMAND_ID {
+typedef enum COMMAND_ID
+{
     COMMAND_NULL = -1,
     COMMAND_SET_SECONDS = 0,
     COMMAND_SET_MINUTES,
@@ -41,15 +40,15 @@ typedef enum COMMAND_ID {
     COMMAND_STOP_LOG,
 } COMMAND_ID;
 
-typedef struct COMMAND_MESSAGE_STRUCT {
+typedef struct COMMAND_MESSAGE_STRUCT
+{
     COMMAND_ID id;
-    int  arg1;
-    int  arg2;
-    int  arg3;
+    int arg1;
+    int arg2;
+    int arg3;
 } COMMAND_MESSAGE_STRUCT;
 
 void register_system(void);
 void register_queues(void);
-
 
 #endif

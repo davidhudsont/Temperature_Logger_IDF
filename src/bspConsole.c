@@ -1,10 +1,3 @@
-/**
- * @file bspConsole.c
- * @author David Hudson
- * @brief 
- * @date 2020-02-22
- * 
- */
 
 #include "bspConsole.h"
 

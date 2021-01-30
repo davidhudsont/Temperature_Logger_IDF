@@ -1,10 +1,3 @@
-/**
- * @file System_Tasks.c
- * @author David Hudson
- * @brief 
- * @date 2020-04-12
- * 
- */
 
 #include "System_Tasks.h"
 

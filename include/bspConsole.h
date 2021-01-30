@@ -1,4 +1,6 @@
 
+#ifndef _BSP_CONSOLE_H_
+#define _BSP_CONSOLE_H_
 
 #include <stdio.h>
 #include <string.h>
@@ -15,7 +17,7 @@
 #include "sdkconfig.h"
 #include "ConsoleCommands.h"
 
-
 void Start_Console();
 void Register_Console_Commands();
 
+#endif
