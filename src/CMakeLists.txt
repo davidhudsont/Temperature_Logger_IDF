@@ -8,6 +8,8 @@ set(app_sources
     "TMP102.c"
     "bspConsole.c"
     "bspI2C.c"
+    "BSP_I2C.cpp"
+    "BSP_SPI.cpp"
     "bspSpi.c"
     "bspUART.c"
     "System_Tasks.c"
