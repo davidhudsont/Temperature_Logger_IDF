@@ -3,9 +3,13 @@
  * @brief Main Application for Temperature Logger
  * 
  */
+
 #ifdef NATIVE
 
-int main() { return 0; }
+int main()
+{
+    return 0;
+}
 
 #else
 
@@ -14,10 +18,14 @@ int main() { return 0; }
 #include "sdkconfig.h"
 #include "System_Tasks.h"
 
+extern "C"
+{
+    void app_main(void);
+}
+
 void app_main()
 {
     printf("Starting Tasks!\n");
-
     Create_Task_Queues();
     Create_Tasks();
 }

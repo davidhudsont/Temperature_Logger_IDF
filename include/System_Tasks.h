@@ -28,7 +28,15 @@ QueueHandle_t device_queue; // Queue to send device objects between tasks
 
 QueueHandle_t alarm_queue; // Sends message when an alarm has been triggered
 
-void Create_Task_Queues(void);
-void Create_Tasks(void);
+#ifdef __cplusplus
+  extern "C" {
+#endif
+
+void Create_Task_Queues();
+void Create_Tasks();
+
+#ifdef __cplusplus
+  }
+#endif
 
 #endif
