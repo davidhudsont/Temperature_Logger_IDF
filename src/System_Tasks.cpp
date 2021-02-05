@@ -1,5 +1,16 @@
 
 #include "System_Tasks.h"
+#include <stdio.h>
+#include <string.h>
+#include "sdkconfig.h"
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "DEADONRTC.h"
+#include "TMP102.h"
+#include "OPENLOG.h"
+#include "bspConsole.h"
 
 // Used to communicate between tasks
 typedef struct MESSAGE_STRUCT
@@ -35,7 +46,6 @@ void Create_Tasks(void)
 /**
  * @brief Delays a task for the passed
  *        in parameter time_ms in milliseconds
- * 
  * @param time_ms 
  */
 void delay(uint32_t time_ms)
@@ -45,21 +55,20 @@ void delay(uint32_t time_ms)
 
 /**
  * @brief Print the current datetime.
- * 
  * @param rtc - DEADONTRC device structure
  */
-void Print_DateTime(DEADONRTC *rtc)
+void Print_DateTime(RTCDS3234 &rtc)
 {
-    uint8_t hours = rtc->hours;
-    uint8_t minutes = rtc->minutes;
-    uint8_t seconds = rtc->seconds;
-    uint8_t date = rtc->date;
-    uint8_t month = rtc->month;
-    uint8_t year = rtc->year;
+    uint8_t hours = rtc.hours;
+    uint8_t minutes = rtc.minutes;
+    uint8_t seconds = rtc.seconds;
+    uint8_t date = rtc.date;
+    uint8_t month = rtc.month;
+    uint8_t year = rtc.year;
 
-    if (rtc->hour12_not24)
+    if (rtc.hour12_not24)
     {
-        bool PM_notAM = rtc->PM_notAM;
+        bool PM_notAM = rtc.PM_notAM;
         printf("%02d:%02d:%02d %s, %02d-%02d-%04d\n", hours, minutes, seconds, (PM_notAM ? "PM" : "AM"), month, date, year + 2000);
     }
     else
@@ -146,12 +155,12 @@ static void openlog_task(void *pvParameter)
     }
 }
 */
-void DEADON_RTC_Power_On_Test()
+void Power_On_Test(RTCDS3234 &rtc)
 {
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
     uint8_t data[6] = {0};
     // Check for power lost
-    DEADON_RTC_SRAM_Burst_Read(0x00, data, 6);
+    rtc.SRAM_Burst_Read(0x00, data, 6);
     bool power_lost = false;
     for (int i = 0; i < 6; i++)
     {
@@ -165,8 +174,8 @@ void DEADON_RTC_Power_On_Test()
     if (power_lost)
     {
         printf("Lost Power!\n");
-        DEADON_RTC_SRAM_Burst_Write(0x00, code, 6);
-        DEADON_RTC_WRITE_BUILD_DATETIME();
+        rtc.SRAM_Burst_Write(0x00, code, 6);
+        rtc.WRITE_BUILD_DATETIME();
     }
     else
     {
@@ -174,34 +183,33 @@ void DEADON_RTC_Power_On_Test()
     }
 }
 
-void DEADON_RTC_Start_Alarms(DEADONRTC *rtc)
+void Start_Alarms(RTCDS3234 &rtc)
 {
     // Setup the RTC interrupts
-    DEADON_RTC_ISR_Init(rtc);
+    rtc.ISR_Init();
     delay(1000);
-    DEADON_RTC_WRITE_ALARM1(10, 0, 0, 0, ALARM1_SECONDS_MATCH);
-    DEADON_RTC_WRITE_ALARM2(0, 0, 0, ALARM2_PER_MIN);
+    rtc.WRITE_ALARM1(10, 0, 0, 0, ALARM1_SECONDS_MATCH);
+    rtc.WRITE_ALARM2(0, 0, 0, ALARM2_PER_MIN);
     delay(100);
-    DEADON_RTC_Enable_Interrupt(rtc, true);
+    rtc.Enable_Interrupt(true);
     delay(100);
-    DEADON_RTC_Enable_Alarms(rtc, true, true);
+    rtc.Enable_Alarms(true, true);
     // Clear the ALARM flags early
-    DEADON_RTC_READ_ALARM1_FLAG(rtc);
-    DEADON_RTC_READ_ALARM2_FLAG(rtc);
+    rtc.READ_ALARM1_FLAG();
+    rtc.READ_ALARM2_FLAG();
 }
 
 static void rtc_intr_task(void *pvParameter)
 {
     printf("DEADON RTC Task Start!\n");
-    DEADONRTC rtc;
+    RTCDS3234 rtc;
     char msg;
     MESSAGE_STRUCT device_message;
     COMMAND_MESSAGE_STRUCT cmd_msg;
-    DEADON_RTC_Begin(&rtc);
+    rtc.Begin();
 
-    DEADON_RTC_Power_On_Test();
-
-    DEADON_RTC_Start_Alarms(&rtc);
+    Power_On_Test(rtc);
+    Start_Alarms(rtc);
 
     while (1)
     {
@@ -210,24 +218,24 @@ static void rtc_intr_task(void *pvParameter)
         {
             if (msg == 'r')
             {
-                bool alarm1_flag = DEADON_RTC_READ_ALARM1_FLAG(&rtc);
-                bool alarm2_flag = DEADON_RTC_READ_ALARM2_FLAG(&rtc);
+                bool alarm1_flag = rtc.READ_ALARM1_FLAG();
+                bool alarm2_flag = rtc.READ_ALARM2_FLAG();
 
                 if (alarm1_flag)
                 {
                     printf("ALARM1 Triggered\n");
-                    DEADON_RTC_READ_DATETIME(&rtc);
-                    Print_DateTime(&rtc);
+                    rtc.READ_DATETIME();
+                    Print_DateTime(rtc);
                 }
                 if (alarm2_flag)
                 {
                     printf("ALARM2 Triggered\n");
-                    DEADON_RTC_READ_DATETIME(&rtc);
+                    rtc.READ_DATETIME();
                     char tmp_ready = 'r';
                     xQueueSend(alarm_queue, (void *)&tmp_ready, 30);
-                    device_message.id = 'r';
-                    device_message.device = (void *)&rtc;
-                    xQueueSend(device_queue, &device_message, 30);
+                    //device_message.id = 'r';
+                    //device_message.device = (void *)&rtc;
+                    //xQueueSend(device_queue, &device_message, 30);
                 }
             }
         }
@@ -238,32 +246,32 @@ static void rtc_intr_task(void *pvParameter)
             switch (cmd_msg.id)
             {
             case COMMAND_GET_DATETIME:
-                DEADON_RTC_READ_DATETIME(&rtc);
-                Print_DateTime(&rtc);
+                rtc.READ_DATETIME();
+                Print_DateTime(rtc);
                 break;
             case COMMAND_SET_SECONDS:
-                DEADON_RTC_WRITE_SECONDS(cmd_msg.arg1);
+                rtc.WRITE_SECONDS(cmd_msg.arg1);
                 break;
             case COMMAND_SET_MINUTES:
-                DEADON_RTC_WRITE_MINUTES(cmd_msg.arg1);
+                rtc.WRITE_MINUTES(cmd_msg.arg1);
                 break;
             case COMMAND_SET_12HOURS:
-                DEADON_RTC_WRITE_12HOURS(cmd_msg.arg1, cmd_msg.arg2);
+                rtc.WRITE_12HOURS(cmd_msg.arg1, cmd_msg.arg2);
                 break;
             case COMMAND_SET_24HOURS:
-                DEADON_RTC_WRITE_24HOURS(cmd_msg.arg1);
+                rtc.WRITE_24HOURS(cmd_msg.arg1);
                 break;
             case COMMAND_SET_WEEKDAY:
-                DEADON_RTC_WRITE_DAYS((DAYS)cmd_msg.arg1);
+                rtc.WRITE_DAYS((DAYS)cmd_msg.arg1);
                 break;
             case COMMAND_SET_DATE:
-                DEADON_RTC_WRITE_DATE(cmd_msg.arg1);
+                rtc.WRITE_DATE(cmd_msg.arg1);
                 break;
             case COMMAND_SET_MONTH:
-                DEADON_RTC_WRITE_MONTH(cmd_msg.arg1);
+                rtc.WRITE_MONTH(cmd_msg.arg1);
                 break;
             case COMMAND_SET_YEAR:
-                DEADON_RTC_WRITE_YEAR(cmd_msg.arg1);
+                rtc.WRITE_YEAR(cmd_msg.arg1);
                 break;
             default:
                 break;

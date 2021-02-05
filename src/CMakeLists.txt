@@ -3,7 +3,7 @@
 
 set(app_sources
     "ConsoleCommands.c"
-    "DEADONRTC.c"
+    "DEADONRTC.cpp"
     "OPENLOG.c"
     "TMP102.cpp"
     "bspConsole.c"

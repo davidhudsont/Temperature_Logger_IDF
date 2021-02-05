@@ -78,52 +78,39 @@ static uint8_t DECtoBCD(uint8_t dec)
     return bcd;
 }
 
-/**
- * @brief Initialize the RTC device structure
- *        and start the SPI bus.
- * 
- * @param rtc 
- */
-void DEADON_RTC_Begin(DEADONRTC *rtc)
+void RTCDS3234::Begin()
 {
-    memset(rtc, 0, sizeof(DEADONRTC));
-
     volatile int clock_speed = 4 * 1000 * 1000; // Clock speed 4MHz
     esp_err_t err = false;
-    err = BSP_SPI_Init(clock_speed);
+    err = spi.Init(clock_speed);
     if (err != ESP_OK)
     {
         printf("Spi Configuration Error\n");
     }
 }
 
-/**
- * @brief Read the current data and time from the RTC.
- * 
- * @param rtc 
- */
-void DEADON_RTC_READ_DATETIME(DEADONRTC *rtc)
+void RTCDS3234::READ_DATETIME()
 {
-    DEADON_RTC_Register_Burst_Read(REG_SECONDS, rtc->raw_time, 7);
+    Register_Burst_Read(REG_SECONDS, raw_time, 7);
 
-    rtc->seconds = BCDtoDEC(rtc->raw_time[0]);
-    rtc->minutes = BCDtoDEC(rtc->raw_time[1]);
+    seconds = BCDtoDEC(raw_time[0]);
+    minutes = BCDtoDEC(raw_time[1]);
 
-    rtc->hour12_not24 = (rtc->raw_time[2] & HOUR_12_N24) == HOUR_12_N24;
-    if (rtc->hour12_not24)
+    hour12_not24 = (raw_time[2] & HOUR_12_N24) == HOUR_12_N24;
+    if (hour12_not24)
     {
-        rtc->PM_notAM = (rtc->raw_time[2] & PM_NOTAM) == PM_NOTAM;
-        rtc->hours = BCDtoDEC(rtc->raw_time[2] & HOURS_BITS_12);
+        PM_notAM = (raw_time[2] & PM_NOTAM) == PM_NOTAM;
+        hours = BCDtoDEC(raw_time[2] & HOURS_BITS_12);
     }
     else
     {
-        rtc->hours = BCDtoDEC(rtc->raw_time[2] & HOURS_BITS_24);
+        hours = BCDtoDEC(raw_time[2] & HOURS_BITS_24);
     }
-    rtc->day = BCDtoDEC(rtc->raw_time[3]);
-    rtc->date = BCDtoDEC(rtc->raw_time[4]);
-    rtc->century = (rtc->raw_time[5] & CENTURY_BIT) == CENTURY_BIT;
-    rtc->month = BCDtoDEC(rtc->raw_time[5] & MONTHS_BITS);
-    rtc->year = BCDtoDEC(rtc->raw_time[6]);
+    day = BCDtoDEC(raw_time[3]);
+    date = BCDtoDEC(raw_time[4]);
+    century = (raw_time[5] & CENTURY_BIT) == CENTURY_BIT;
+    month = BCDtoDEC(raw_time[5] & MONTHS_BITS);
+    year = BCDtoDEC(raw_time[6]);
 }
 
 /**
@@ -137,7 +124,7 @@ void DEADON_RTC_READ_DATETIME(DEADONRTC *rtc)
  * @param month 
  * @param year 
  */
-void DEADON_RTC_WRITE_DATETIME(uint8_t seconds, uint8_t minutes, uint8_t hours,
+void RTCDS3234::WRITE_DATETIME(uint8_t seconds, uint8_t minutes, uint8_t hours,
                                uint8_t day, uint8_t date, uint8_t month, uint8_t year)
 {
     uint8_t time_config[7];
@@ -150,14 +137,10 @@ void DEADON_RTC_WRITE_DATETIME(uint8_t seconds, uint8_t minutes, uint8_t hours,
     time_config[5] = DECtoBCD(month);
     time_config[6] = DECtoBCD(year);
 
-    DEADON_RTC_Register_Burst_Write(REG_SECONDS, time_config, 7);
+    Register_Burst_Write(REG_SECONDS, time_config, 7);
 }
 
-/**
- * @brief Get the date and time from the build date
- * 
- */
-void DEADON_RTC_WRITE_BUILD_DATETIME()
+void RTCDS3234::WRITE_BUILD_DATETIME()
 {
     uint8_t time_config[7];
 
@@ -177,35 +160,34 @@ void DEADON_RTC_WRITE_BUILD_DATETIME()
     weekday += 1; // Library defines Sunday=1, Saturday=7
     time_config[3] = DECtoBCD(weekday);
 
-    DEADON_RTC_Register_Burst_Write(REG_SECONDS, time_config, 7);
+    Register_Burst_Write(REG_SECONDS, time_config, 7);
 }
 
-void DEADON_RTC_WRITE_SECONDS(uint8_t seconds)
+void RTCDS3234::WRITE_SECONDS(uint8_t seconds)
 {
-    DEADON_RTC_Register_Write(REG_SECONDS, DECtoBCD(seconds));
+    Register_Write(REG_SECONDS, DECtoBCD(seconds));
 }
 
-uint8_t DEADON_RTC_READ_SECONDS()
+uint8_t RTCDS3234::READ_SECONDS()
 {
-    uint8_t reg_data = DEADON_RTC_Register_Read(REG_SECONDS);
+    uint8_t reg_data = Register_Read(REG_SECONDS);
     uint8_t seconds = BCDtoDEC(reg_data);
     return seconds;
 }
 
-void DEADON_RTC_WRITE_MINUTES(uint8_t minutes)
+void RTCDS3234::WRITE_MINUTES(uint8_t minutes)
 {
-    DEADON_RTC_Register_Write(REG_MINUTES, DECtoBCD(minutes));
+    Register_Write(REG_MINUTES, DECtoBCD(minutes));
 }
 
-uint8_t DEADON_RTC_READ_MINUTES()
+uint8_t RTCDS3234::READ_MINUTES()
 {
-    uint8_t reg_data = DEADON_RTC_Register_Read(REG_MINUTES);
+    uint8_t reg_data = Register_Read(REG_MINUTES);
     uint8_t minutes = BCDtoDEC(reg_data);
     return minutes;
 }
 
-// input : hours 1-12
-void DEADON_RTC_WRITE_12HOURS(uint8_t hours, bool PM_NotAM)
+void RTCDS3234::WRITE_12HOURS(uint8_t hours, bool PM_NotAM)
 {
     uint8_t reg_data = 0x00;
     if (hours > 12)
@@ -223,26 +205,25 @@ void DEADON_RTC_WRITE_12HOURS(uint8_t hours, bool PM_NotAM)
         reg_data |= HOUR_12_N24;
         reg_data |= DECtoBCD(hours);
     }
-    DEADON_RTC_Register_Write(REG_HOURS, reg_data);
+    Register_Write(REG_HOURS, reg_data);
 }
 
-// input : hours 0-23
-void DEADON_RTC_WRITE_24HOURS(uint8_t hours)
+void RTCDS3234::WRITE_24HOURS(uint8_t hours)
 {
     if (hours > 23)
         hours = 23;
-    DEADON_RTC_Register_Write(REG_HOURS, DECtoBCD(hours));
+    Register_Write(REG_HOURS, DECtoBCD(hours));
 }
 
-void DEADON_RTC_WRITE_DAYS(DAYS days)
+void RTCDS3234::WRITE_DAYS(DAYS days)
 {
-    DEADON_RTC_Register_Write(REG_DAYS, BCDtoDEC((uint8_t)days));
+    Register_Write(REG_DAYS, BCDtoDEC((uint8_t)days));
 }
 
-void DEADON_RTC_WRITE_DATE(uint8_t date)
+void RTCDS3234::WRITE_DATE(uint8_t date)
 {
-    int year = BCDtoDEC(DEADON_RTC_Register_Read(REG_YEAR)) + 2000;
-    int month = BCDtoDEC(DEADON_RTC_Register_Read(REG_MONTH));
+    int year = BCDtoDEC(RTCDS3234::Register_Read(REG_YEAR)) + 2000;
+    int month = BCDtoDEC(RTCDS3234::Register_Read(REG_MONTH));
     // Credit to : http://www.codecodex.com/wiki/Calculate_the_number_of_days_in_a_month
     // This protects against invalid months
     int numberOfDays;
@@ -262,33 +243,24 @@ void DEADON_RTC_WRITE_DATE(uint8_t date)
     if (date > numberOfDays)
         date = numberOfDays;
 
-    DEADON_RTC_Register_Write(REG_DATE, DECtoBCD(date));
+    Register_Write(REG_DATE, DECtoBCD(date));
 }
 
-void DEADON_RTC_WRITE_MONTH(uint8_t month)
+void RTCDS3234::WRITE_MONTH(uint8_t month)
 {
     if (month > 12)
         month = 12;
-    DEADON_RTC_Register_Write(REG_MONTH, DECtoBCD(month));
+    Register_Write(REG_MONTH, DECtoBCD(month));
 }
 
-void DEADON_RTC_WRITE_YEAR(uint8_t year)
+void RTCDS3234::WRITE_YEAR(uint8_t year)
 {
     if (year > 99)
         year = 99;
-    DEADON_RTC_Register_Write(REG_YEAR, DECtoBCD(year));
+    Register_Write(REG_YEAR, DECtoBCD(year));
 }
 
-/**
- * @brief 
- * 
- * @param seconds 
- * @param minutes 
- * @param hours 
- * @param date 
- * @param mode 
- */
-void DEADON_RTC_WRITE_ALARM1(uint8_t seconds, uint8_t minutes,
+void RTCDS3234::WRITE_ALARM1(uint8_t seconds, uint8_t minutes,
                              uint8_t hours, uint8_t date, ALARM1_MODES mode)
 {
     uint8_t alarm_config[4] = {0};
@@ -315,18 +287,10 @@ void DEADON_RTC_WRITE_ALARM1(uint8_t seconds, uint8_t minutes,
         break;
     }
 
-    DEADON_RTC_Register_Burst_Write(REG_ALARM1_SECONDS, alarm_config, 4);
+    Register_Burst_Write(REG_ALARM1_SECONDS, alarm_config, 4);
 }
 
-/**
- * @brief 
- * 
- * @param minutes 
- * @param hours 
- * @param date 
- * @param mode 
- */
-void DEADON_RTC_WRITE_ALARM2(uint8_t minutes,
+void RTCDS3234::WRITE_ALARM2(uint8_t minutes,
                              uint8_t hours, uint8_t date, ALARM2_MODES mode)
 {
     uint8_t alarm_config[3] = {0};
@@ -350,25 +314,18 @@ void DEADON_RTC_WRITE_ALARM2(uint8_t minutes,
         break;
     }
 
-    DEADON_RTC_Register_Burst_Write(REG_ALRAM2_MINUTES, alarm_config, 3);
+    Register_Burst_Write(REG_ALRAM2_MINUTES, alarm_config, 3);
 }
 
-/**
- * @brief 
- * 
- * @param rtc 
- * @return true 
- * @return false 
- */
-bool DEADON_RTC_READ_ALARM1_FLAG(DEADONRTC *rtc)
+bool RTCDS3234::READ_ALARM1_FLAG()
 {
-    uint8_t status = DEADON_RTC_Register_Read(REG_CONTROL_STATUS);
+    uint8_t status = Register_Read(REG_CONTROL_STATUS);
 
     if ((status & A1F_BIT) == A1F_BIT)
     {
         uint8_t mask = 0xFE;
         status &= mask;
-        DEADON_RTC_Register_Write(REG_CONTROL_STATUS, status);
+        Register_Write(REG_CONTROL_STATUS, status);
         return true;
     }
     else
@@ -377,21 +334,15 @@ bool DEADON_RTC_READ_ALARM1_FLAG(DEADONRTC *rtc)
     }
 }
 
-/**
- * @brief Read Alarm 2 flag
- * 
- * @param rtc - DEADONRTC device structure
- * @return true if flag was set, false otherwise
- */
-bool DEADON_RTC_READ_ALARM2_FLAG(DEADONRTC *rtc)
+bool RTCDS3234::READ_ALARM2_FLAG()
 {
-    uint8_t status = DEADON_RTC_Register_Read(REG_CONTROL_STATUS);
+    uint8_t status = Register_Read(REG_CONTROL_STATUS);
 
     if ((status & A2F_BIT) == A2F_BIT)
     {
         uint8_t mask = 0xFD;
         status &= mask;
-        DEADON_RTC_Register_Write(REG_CONTROL_STATUS, status);
+        Register_Write(REG_CONTROL_STATUS, status);
         return true;
     }
     else
@@ -412,44 +363,33 @@ static void IRAM_ATTR alert_isr_handler(void *arg)
     xQueueSendFromISR(queue, (void *)&msg, &base);
 }
 
-/**
- * @brief Initialize ISR for Alert Pin
- * 
- * @param rtc 
- */
-void DEADON_RTC_ISR_Init(DEADONRTC *rtc)
+void RTCDS3234::ISR_Init()
 {
     gpio_config_t io_conf;
 
     queue = xQueueCreate(3, 1);
 
-    io_conf.intr_type = GPIO_PIN_INTR_NEGEDGE;
+    io_conf.intr_type = (gpio_int_type_t)GPIO_INTR_NEGEDGE;
 
     io_conf.pin_bit_mask = 1ULL << DEADON_ALERT_PIN_NUM;
 
     io_conf.mode = GPIO_MODE_INPUT;
 
-    io_conf.pull_down_en = false;
-    io_conf.pull_up_en = true;
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
 
     gpio_config(&io_conf);
 
-    gpio_set_intr_type(DEADON_ALERT_PIN_NUM, GPIO_PIN_INTR_NEGEDGE);
+    gpio_set_intr_type(DEADON_ALERT_PIN_NUM, GPIO_INTR_NEGEDGE);
 
     gpio_install_isr_service(DEADON_RTC_INTR_FLAGS_DEFAULT);
 
-    gpio_isr_handler_add(DEADON_ALERT_PIN_NUM, alert_isr_handler, (void *)rtc);
+    gpio_isr_handler_add(DEADON_ALERT_PIN_NUM, alert_isr_handler, (void *)NULL);
 }
 
-/**
- * @brief Enable the RTC's interrupts
- * 
- * @param rtc 
- * @param enable 
- */
-void DEADON_RTC_Enable_Interrupt(DEADONRTC *rtc, bool enable)
+void RTCDS3234::Enable_Interrupt(bool enable)
 {
-    uint8_t config = DEADON_RTC_Register_Read(REG_CONTROL);
+    uint8_t config = Register_Read(REG_CONTROL);
     uint8_t mask = 0xFB;
     config &= mask;
 
@@ -462,20 +402,13 @@ void DEADON_RTC_Enable_Interrupt(DEADONRTC *rtc, bool enable)
         config |= 0x00;
     }
 
-    DEADON_RTC_Register_Write(REG_CONTROL, config);
-    rtc->intr_enable = enable;
+    Register_Write(REG_CONTROL, config);
+    intr_enable = enable;
 }
 
-/**
- * @brief Enable Alarm 1 and/or Alarm 2
- * 
- * @param rtc - DEADONRTC device structure
- * @param alarm1 - enable alarm 1 if true
- * @param alarm2 - enable alarm 2 if true
- */
-void DEADON_RTC_Enable_Alarms(DEADONRTC *rtc, bool alarm1, bool alarm2)
+void RTCDS3234::Enable_Alarms(bool alarm1, bool alarm2)
 {
-    uint8_t config = DEADON_RTC_Register_Read(REG_CONTROL);
+    uint8_t config = Register_Read(REG_CONTROL);
     uint8_t mask = 0xFC;
     config &= mask;
 
@@ -488,104 +421,52 @@ void DEADON_RTC_Enable_Alarms(DEADONRTC *rtc, bool alarm1, bool alarm2)
         config |= A2IE_BIT;
     }
 
-    DEADON_RTC_Register_Write(REG_CONTROL, config);
-    rtc->alarm1_enable = alarm1;
-    rtc->alarm2_enable = alarm2;
+    Register_Write(REG_CONTROL, config);
+    alarm1_enable = alarm1;
+    alarm2_enable = alarm2;
 }
 
-/**
- * @brief Read the RTC's SRAM at a specified address
- * @note The size of the memoy if 256 bytes
- * @param address range: 0x00 - 0xff
- * @return uint8_t 
- */
-uint8_t DEADON_RTC_SRAM_Read(uint8_t address)
+uint8_t RTCDS3234::SRAM_Read(uint8_t address)
 {
-    DEADON_RTC_Register_Write(REG_SRAM_ADDR, address);
-    return DEADON_RTC_Register_Read(REG_SRAM_DATA);
+    Register_Write(REG_SRAM_ADDR, address);
+    return Register_Read(REG_SRAM_DATA);
 }
 
-/**
- * @brief Write to the RTC's SRAM at a specified address
- * @note The size of the memoy if 256 bytes
- * @param address range: 0x00 - 0xff
- * @param data - The data we want to write 
- */
-void DEADON_RTC_SRAM_Write(uint8_t address, uint8_t data)
+void RTCDS3234::SRAM_Write(uint8_t address, uint8_t data)
 {
-    DEADON_RTC_Register_Write(REG_SRAM_ADDR, address);
-    DEADON_RTC_Register_Write(REG_SRAM_DATA, address);
+    Register_Write(REG_SRAM_ADDR, address);
+    Register_Write(REG_SRAM_DATA, address);
 }
 
-/**
- * @brief Read the RTC's SRAM at a specified address
- * @note The size of the memoy if 256 bytes
- * @param address - Starting address
- * @param data - data buffer
- * @param len - Number of bytes to read
- */
-void DEADON_RTC_SRAM_Burst_Read(uint8_t address, uint8_t *data, uint32_t len)
+void RTCDS3234::SRAM_Burst_Read(uint8_t address, uint8_t *data, uint32_t len)
 {
-    DEADON_RTC_Register_Write(REG_SRAM_ADDR, address);
-    DEADON_RTC_Register_Burst_Read(REG_SRAM_DATA, data, len);
+    Register_Write(REG_SRAM_ADDR, address);
+    Register_Burst_Read(REG_SRAM_DATA, data, len);
 }
 
-/**
- * @brief Write the RTC's SRAM at a specified address
- * @note The size of the memoy if 256 bytes
- * @param address - Starting address
- * @param data - data buffer
- * @param len - Number of bytes to write
- */
-void DEADON_RTC_SRAM_Burst_Write(uint8_t address, uint8_t *data, uint32_t len)
+void RTCDS3234::SRAM_Burst_Write(uint8_t address, uint8_t *data, uint32_t len)
 {
-    DEADON_RTC_Register_Write(REG_SRAM_ADDR, address);
-    DEADON_RTC_Register_Burst_Write(REG_SRAM_DATA, data, len);
+    Register_Write(REG_SRAM_ADDR, address);
+    Register_Burst_Write(REG_SRAM_DATA, data, len);
 }
 
-/**
- * @brief Read a register
- * 
- * @param register_address 
- * @return uint8_t 
- */
-uint8_t DEADON_RTC_Register_Read(uint8_t register_address)
+uint8_t RTCDS3234::Register_Read(uint8_t register_address)
 {
-    uint8_t data = SPI_readReg(register_address & 0x7F);
+    uint8_t data = spi.readReg(register_address & 0x7F);
     return data;
 }
 
-/**
- * @brief Write to a register
- * 
- * @param register_address 
- * @param data 
- */
-void DEADON_RTC_Register_Write(uint8_t register_address, uint8_t data)
+void RTCDS3234::Register_Write(uint8_t register_address, uint8_t data)
 {
-    SPI_writeReg(register_address | 0x80, data);
+    spi.writeReg(register_address | 0x80, data);
 }
 
-/**
- * @brief Read multiple registers
- * 
- * @param address 
- * @param data 
- * @param len 
- */
-void DEADON_RTC_Register_Burst_Read(uint8_t address, uint8_t *data, uint32_t len)
+void RTCDS3234::Register_Burst_Read(uint8_t address, uint8_t *data, uint32_t len)
 {
-    SPI_Burst_Read(address & 0x7F, data, len);
+    spi.burstRead(address & 0x7F, data, len);
 }
 
-/**
- * @brief Write to multiple registers
- * 
- * @param address 
- * @param data 
- * @param len 
- */
-void DEADON_RTC_Register_Burst_Write(uint8_t address, uint8_t *data, uint32_t len)
+void RTCDS3234::Register_Burst_Write(uint8_t address, uint8_t *data, uint32_t len)
 {
-    SPI_Burst_Write(address | 0x80, data, len);
+    spi.burstWrite(address | 0x80, data, len);
 }
