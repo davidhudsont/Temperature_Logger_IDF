@@ -21,7 +21,7 @@ namespace BSP
         i2c_config_t m_config;
 
     public:
-        I2C();
+        void Setup();
 
         /**
          * @brief Write a byte to a I2C device's register

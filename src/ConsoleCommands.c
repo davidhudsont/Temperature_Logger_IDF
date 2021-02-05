@@ -2,12 +2,29 @@
 
 #include "ConsoleCommands.h"
 
+static QueueHandle_t rtc_command_queue;     // Queue to send device objects between tasks
+static QueueHandle_t tmp_command_queue;     // Queue to send device objects between tasks
+static QueueHandle_t openlog_command_queue; // Queue to send device objects between tasks
+
 static void register_version(void);
 static void register_time(void);
 static void register_date(void);
 static void register_getdatetime(void);
 static void register_temperature(void);
 static void register_openlog_control(void);
+
+int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg)
+{
+    return xQueueReceive(rtc_command_queue, msg, 30);
+}
+int recieve_tmp_command(COMMAND_MESSAGE_STRUCT *msg)
+{
+    return xQueueReceive(tmp_command_queue, msg, 30);
+}
+int recieve_openlog_command(COMMAND_MESSAGE_STRUCT *msg)
+{
+    return xQueueReceive(openlog_command_queue, msg, 30);
+}
 
 /**
  * @brief Register all the console commands

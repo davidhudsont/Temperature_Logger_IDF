@@ -45,6 +45,13 @@
 #define BUILD_SECOND_1 (__TIME__[7] - 0x30)
 #define BUILD_SECOND ((BUILD_SECOND_0 * 10) + BUILD_SECOND_1)
 
+QueueHandle_t queue;
+
+int get_queue(char *msg)
+{
+    return xQueueReceive(queue, msg, 10);
+}
+
 /**
  * @brief Convert a Binary Coded Decimal number
  *        into a decimal number

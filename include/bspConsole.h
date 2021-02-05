@@ -17,7 +17,16 @@
 #include "sdkconfig.h"
 #include "ConsoleCommands.h"
 
-void Start_Console();
-void Register_Console_Commands();
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+    void Start_Console();
+    void Register_Console_Commands();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

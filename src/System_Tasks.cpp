@@ -1,6 +1,17 @@
 
 #include "System_Tasks.h"
 
+// Used to communicate between tasks
+typedef struct MESSAGE_STRUCT
+{
+    char id;
+    void *device;
+} MESSAGE_STRUCT;
+
+static QueueHandle_t device_queue; // Queue to send device objects between tasks
+
+static QueueHandle_t alarm_queue; // Sends message when an alarm has been triggered
+
 static void openlog_task(void *pvParameter);
 static void tmp102_sleep_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
@@ -16,8 +27,8 @@ void Create_Task_Queues(void)
 void Create_Tasks(void)
 {
     xTaskCreate(&rtc_intr_task, "rtc_intr_task", configMINIMAL_STACK_SIZE * 3, NULL, 4, NULL);
-    xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE * 4, NULL, 5, NULL);
-    xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
+    xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
+    //xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
     xTaskCreate(&console_task, "console_task", configMINIMAL_STACK_SIZE * 4, NULL, 7, NULL);
 }
 
@@ -56,7 +67,7 @@ void Print_DateTime(DEADONRTC *rtc)
         printf("%02d:%02d:%02d, %02d-%02d-%04d\n", hours, minutes, seconds, month, date, year + 2000);
     }
 }
-
+/*
 static void openlog_task(void *pvParameter)
 {
     printf("OPENLOG Task Start!\n");
@@ -134,7 +145,7 @@ static void openlog_task(void *pvParameter)
         }
     }
 }
-
+*/
 void DEADON_RTC_Power_On_Test()
 {
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
@@ -195,7 +206,7 @@ static void rtc_intr_task(void *pvParameter)
     while (1)
     {
         // Evaluate Alarm Interrupts
-        if (xQueueReceive(queue, &msg, 10))
+        if (get_queue(&msg))
         {
             if (msg == 'r')
             {
@@ -222,7 +233,7 @@ static void rtc_intr_task(void *pvParameter)
         }
 
         // Evaulate Console Commands
-        if (xQueueReceive(rtc_command_queue, (COMMAND_MESSAGE_STRUCT *)&cmd_msg, 30))
+        if (recieve_rtc_command(&cmd_msg))
         {
             switch (cmd_msg.id)
             {
@@ -261,20 +272,20 @@ static void rtc_intr_task(void *pvParameter)
     }
 }
 
-static void OneShotTemperatureRead(TMP102_STRUCT *tmp102_device)
+static void OneShotTemperatureRead(TMP102 &tmp102_device)
 {
     static bool oneshot = false;
     if (oneshot == false)
     {
         printf("Set the OneShot!\n");
-        TMP102_Set_OneShot(tmp102_device);
+        tmp102_device.Set_OneShot();
         delay(30);
-        oneshot = TMP102_Get_OneShot(tmp102_device);
+        oneshot = tmp102_device.Get_OneShot();
     }
 
     if (oneshot)
     {
-        TMP102_Read_Temperature(tmp102_device);
+        tmp102_device.Read_Temperature();
         printf("Temperature has been Read\n");
         oneshot = false;
     }
@@ -282,16 +293,16 @@ static void OneShotTemperatureRead(TMP102_STRUCT *tmp102_device)
 
 static void tmp102_sleep_task(void *pvParameter)
 {
-    printf("Initialize Device\n");
-    TMP102_STRUCT tmp102_device;
+    TMP102 tmp102_device;
     char msg;
     COMMAND_MESSAGE_STRUCT cmd_msg;
     MESSAGE_STRUCT device_message;
-    TMP102_Begin(&tmp102_device);
 
-    TMP102_Set_Conversion_Rate(&tmp102_device, CONVERSION_MODE_1);
+    printf("Initialize Device\n");
+    tmp102_device.Begin();
+    tmp102_device.Set_Conversion_Rate(CONVERSION_MODE_1);
     delay(100);
-    TMP102_Sleep(&tmp102_device, true);
+    tmp102_device.Sleep(true);
     delay(300);
 
     while (1)
@@ -301,24 +312,24 @@ static void tmp102_sleep_task(void *pvParameter)
         {
             if (msg == 'r')
             {
-                OneShotTemperatureRead(&tmp102_device);
+                OneShotTemperatureRead(tmp102_device);
                 device_message.id = 't';
-                device_message.device = (void *)&tmp102_device;
+                device_message.device = nullptr;
                 xQueueSend(device_queue, &device_message, 30);
             }
         }
 
-        if (xQueueReceive(tmp_command_queue, &cmd_msg, 30))
+        if (recieve_tmp_command(&cmd_msg))
         {
             switch (cmd_msg.id)
             {
             case COMMAND_GET_TEMPF:
-                OneShotTemperatureRead(&tmp102_device);
-                printf("%3.3fF\n", TMP102_Get_TemperatureF(&tmp102_device));
+                OneShotTemperatureRead(tmp102_device);
+                printf("%3.3fF\n", tmp102_device.Get_TemperatureF());
                 break;
             case COMMAND_GET_TEMPC:
-                OneShotTemperatureRead(&tmp102_device);
-                printf("%2.3fC\n", TMP102_Get_Temperature(&tmp102_device));
+                OneShotTemperatureRead(tmp102_device);
+                printf("%2.3fC\n", tmp102_device.Get_Temperature());
                 break;
             default:
                 break;
@@ -334,6 +345,8 @@ static void console_task(void *pvParameter)
     Register_Console_Commands();
 
     const char *prompt = LOG_COLOR_I "esp> " LOG_RESET_COLOR;
+
+    delay(500);
 
     printf("\n"
            "***************************\n"
