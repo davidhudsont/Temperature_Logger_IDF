@@ -2,17 +2,15 @@
 # without default 'CMakeLists.txt' file.
 
 set(app_sources
-    "ConsoleCommands.c"
-    "DEADONRTC.cpp"
-    "OPENLOG.c"
-    "TMP102.cpp"
-    "bspConsole.c"
-    "bspI2C.c"
     "BSP_I2C.cpp"
     "BSP_SPI.cpp"
-    "bspSpi.c"
-    "bspUART.c"
+    "TMP102.cpp"
+    "DEADONRTC.cpp"
     "System_Tasks.cpp"
+    "bspConsole.c"
+    "ConsoleCommands.c"
+    "OPENLOG.c"
+    "bspUART.c"
     "main.cpp"
 )
 
