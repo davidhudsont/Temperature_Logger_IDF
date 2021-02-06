@@ -9,16 +9,6 @@
 #ifndef __REGISTER_COMMANDS_H_
 #define __REGISTER_COMMANDS_H_
 
-#include <stdio.h>
-#include <string.h>
-#include "esp_log.h"
-#include "esp_console.h"
-#include "esp_system.h"
-#include "esp_spi_flash.h"
-#include "argtable3/argtable3.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/queue.h"
-
 typedef enum COMMAND_ID
 {
     COMMAND_NULL = -1,
@@ -44,19 +34,11 @@ typedef struct COMMAND_MESSAGE_STRUCT
     int arg3;
 } COMMAND_MESSAGE_STRUCT;
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-    int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg);
-    int recieve_tmp_command(COMMAND_MESSAGE_STRUCT *msg);
-    int recieve_openlog_command(COMMAND_MESSAGE_STRUCT *msg);
+int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg);
+int recieve_tmp_command(COMMAND_MESSAGE_STRUCT *msg);
+int recieve_openlog_command(COMMAND_MESSAGE_STRUCT *msg);
 
-    void register_system(void);
-    void register_queues(void);
-
-#ifdef __cplusplus
-}
-#endif
+void register_system(void);
+void register_queues(void);
 
 #endif

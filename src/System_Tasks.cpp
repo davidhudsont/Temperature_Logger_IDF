@@ -1,4 +1,5 @@
 
+#include "ConsoleCommands.h"
 #include "System_Tasks.h"
 #include <stdio.h>
 #include <string.h>
@@ -11,6 +12,8 @@
 #include "TMP102.h"
 #include "OPENLOG.h"
 #include "bspConsole.h"
+#include "linenoise/linenoise.h"
+#include "esp_console.h"
 
 // Used to communicate between tasks
 typedef struct MESSAGE_STRUCT
