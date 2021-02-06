@@ -19,6 +19,7 @@ static void register_date(void);
 static void register_getdatetime(void);
 static void register_temperature(void);
 static void register_openlog_control(void);
+static void register_adjust_log_level_command(void);
 
 int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg)
 {
@@ -44,6 +45,7 @@ void register_system(void)
     register_getdatetime();
     register_temperature();
     register_openlog_control();
+    register_adjust_log_level_command();
 }
 
 /**
@@ -81,6 +83,7 @@ static void register_version(void)
         .help = "Get version of chip and SDK",
         .hint = NULL,
         .func = &get_version,
+        .argtable = NULL,
     };
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
@@ -220,6 +223,7 @@ static void register_date(void)
     const esp_console_cmd_t cmd = {
         .command = "date",
         .help = "Set the date!",
+        .hint = NULL,
         .func = &set_date,
         .argtable = &date_args,
     };
@@ -242,6 +246,7 @@ static void register_getdatetime(void)
         .help = "Print the Date & Time",
         .hint = NULL,
         .func = &get_datetime,
+        .argtable = NULL,
     };
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
@@ -333,6 +338,56 @@ static void register_openlog_control(void)
         .hint = NULL,
         .func = &openlog_control,
         .argtable = &openlog_args,
+    };
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+static struct
+{
+    struct arg_int *level;
+    struct arg_str *tag;
+    struct arg_end *end;
+} level_args;
+
+static int set_log_level(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&level_args);
+
+    if (nerrors != 0)
+    {
+        arg_print_errors(stderr, level_args.end, argv[0]);
+        return 1;
+    }
+
+    if (level_args.level->count)
+    {
+        int loglevel = level_args.level->ival[0];
+        if (loglevel >= ESP_LOG_NONE && loglevel <= ESP_LOG_VERBOSE)
+        {
+            esp_log_level_set("*", (esp_log_level_t)loglevel);
+            printf("Setting Log Level %d\n", loglevel);
+        }
+        else
+        {
+            printf("Invalid Log Level %d\n", loglevel);
+        }
+    }
+    return 0;
+}
+
+static void register_adjust_log_level_command(void)
+{
+    level_args.level = arg_int0("l", NULL, "0..5", "Set the log level");
+    level_args.tag = arg_str0("t", NULL, "string", "Set log level based on tag");
+    level_args.end = arg_end(2);
+
+    const esp_console_cmd_t cmd = {
+        .command = "loglevel",
+        .help = "Set log level",
+        .hint = NULL,
+        .func = &set_log_level,
+        .argtable = &level_args,
     };
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));

@@ -72,11 +72,11 @@ void Print_DateTime(RTCDS3234 &rtc)
     if (rtc.hour12_not24)
     {
         bool PM_notAM = rtc.PM_notAM;
-        printf("%02d:%02d:%02d %s, %02d-%02d-%04d\n", hours, minutes, seconds, (PM_notAM ? "PM" : "AM"), month, date, year + 2000);
+        ESP_LOGI("RTC", "%02d:%02d:%02d %s, %02d-%02d-%04d", hours, minutes, seconds, (PM_notAM ? "PM" : "AM"), month, date, year + 2000);
     }
     else
     {
-        printf("%02d:%02d:%02d, %02d-%02d-%04d\n", hours, minutes, seconds, month, date, year + 2000);
+        ESP_LOGI("RTC", "%02d:%02d:%02d, %02d-%02d-%04d", hours, minutes, seconds, month, date, year + 2000);
     }
 }
 /*
@@ -176,13 +176,13 @@ void Power_On_Test(RTCDS3234 &rtc)
     // If power was lost write the code to the sram
     if (power_lost)
     {
-        printf("Lost Power!\n");
+        ESP_LOGW("RTC", "Lost Power!");
         rtc.SRAM_Burst_Write(0x00, code, 6);
         rtc.WRITE_BUILD_DATETIME();
     }
     else
     {
-        printf("Power Not Lost\n");
+        ESP_LOGI("RTC", "Power Not Lost");
     }
 }
 
@@ -204,7 +204,7 @@ void Start_Alarms(RTCDS3234 &rtc)
 
 static void rtc_intr_task(void *pvParameter)
 {
-    printf("DEADON RTC Task Start!\n");
+    ESP_LOGI("RTC", "RTC Task Start!");
     RTCDS3234 rtc;
     char msg;
     MESSAGE_STRUCT device_message;
@@ -226,13 +226,13 @@ static void rtc_intr_task(void *pvParameter)
 
                 if (alarm1_flag)
                 {
-                    printf("ALARM1 Triggered\n");
+                    ESP_LOGI("RTC", "ALARM1 Triggered");
                     rtc.READ_DATETIME();
                     Print_DateTime(rtc);
                 }
                 if (alarm2_flag)
                 {
-                    printf("ALARM2 Triggered\n");
+                    ESP_LOGI("RTC", "ALARM2 Triggered");
                     rtc.READ_DATETIME();
                     char tmp_ready = 'r';
                     xQueueSend(alarm_queue, (void *)&tmp_ready, 30);
@@ -288,7 +288,7 @@ static void OneShotTemperatureRead(TMP102 &tmp102_device)
     static bool oneshot = false;
     if (oneshot == false)
     {
-        printf("Set the OneShot!\n");
+        ESP_LOGI("TMP", "Set the OneShot!");
         tmp102_device.Set_OneShot();
         delay(30);
         oneshot = tmp102_device.Get_OneShot();
@@ -297,7 +297,7 @@ static void OneShotTemperatureRead(TMP102 &tmp102_device)
     if (oneshot)
     {
         tmp102_device.Read_Temperature();
-        printf("Temperature has been Read\n");
+        ESP_LOGI("TMP", "Temperature has been Read");
         oneshot = false;
     }
 }
@@ -309,7 +309,7 @@ static void tmp102_sleep_task(void *pvParameter)
     COMMAND_MESSAGE_STRUCT cmd_msg;
     MESSAGE_STRUCT device_message;
 
-    printf("Initialize Device\n");
+    ESP_LOGI("TMP", "TMP102 Task Start!");
     tmp102_device.Begin();
     tmp102_device.Set_Conversion_Rate(CONVERSION_MODE_1);
     delay(100);
@@ -332,15 +332,18 @@ static void tmp102_sleep_task(void *pvParameter)
 
         if (recieve_tmp_command(&cmd_msg))
         {
+            float temperature = 0;
             switch (cmd_msg.id)
             {
             case COMMAND_GET_TEMPF:
                 OneShotTemperatureRead(tmp102_device);
-                printf("%3.3fF\n", tmp102_device.Get_TemperatureF());
+                temperature = tmp102_device.Get_TemperatureF();
+                ESP_LOGI("TMP", "%3.3fF", temperature);
                 break;
             case COMMAND_GET_TEMPC:
                 OneShotTemperatureRead(tmp102_device);
-                printf("%2.3fC\n", tmp102_device.Get_Temperature());
+                temperature = tmp102_device.Get_Temperature();
+                ESP_LOGI("TMP", "%2.3fC", temperature);
                 break;
             default:
                 break;
@@ -356,8 +359,6 @@ static void console_task(void *pvParameter)
     Register_Console_Commands();
 
     const char *prompt = LOG_COLOR_I "esp> " LOG_RESET_COLOR;
-
-    delay(500);
 
     printf("\n"
            "***************************\n"
