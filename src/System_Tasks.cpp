@@ -8,6 +8,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "freertos/semphr.h"
 #include "DEADONRTC.h"
 #include "TMP102.h"
 #include "bspConsole.h"
@@ -21,14 +22,7 @@ static const char *SDTAG = "SDCard";
 static std::string temperaturef;
 static std::string datetime;
 
-// Used to communicate between tasks
-typedef struct MESSAGE_STRUCT
-{
-    char id;
-    void *device;
-} MESSAGE_STRUCT;
-
-static QueueHandle_t device_queue; // Queue to send device objects between tasks
+static SemaphoreHandle_t log_semiphore;
 
 static QueueHandle_t alarm_queue; // Sends message when an alarm has been triggered
 
@@ -39,7 +33,7 @@ static void sdcard_task(void *pvParameter);
 
 void Create_Task_Queues(void)
 {
-    device_queue = xQueueCreate(3, sizeof(MESSAGE_STRUCT));
+    log_semiphore = xSemaphoreCreateBinary();
     alarm_queue = xQueueCreate(3, 1);
     register_queues();
 }
@@ -137,6 +131,12 @@ static void sdcard_task(void *pvParameter)
             {
                 sd.CloseFile();
             }
+        }
+        if (xSemaphoreTake(log_semiphore, 0))
+        {
+            ESP_LOGI("LOG", "Logging to SD Card");
+            std::string logline = datetime + ", " + temperaturef;
+            ESP_LOGI("LOG", "%s\n", logline.c_str());
         }
     }
 }
@@ -291,7 +291,6 @@ static void tmp102_sleep_task(void *pvParameter)
     TMP102 tmp102_device;
     char msg;
     COMMAND_MESSAGE_STRUCT cmd_msg;
-    MESSAGE_STRUCT device_message;
 
     ESP_LOGI("TMP", "TMP102 Task Start!");
     tmp102_device.Begin();
@@ -302,15 +301,14 @@ static void tmp102_sleep_task(void *pvParameter)
 
     while (1)
     {
-
         if (xQueueReceive(alarm_queue, &msg, 30))
         {
             if (msg == 'r')
             {
                 OneShotTemperatureRead(tmp102_device);
-                device_message.id = 't';
-                device_message.device = nullptr;
-                xQueueSend(device_queue, &device_message, 30);
+                temperaturef = tmp102_device.Get_TemperatureF_ToString();
+                ESP_LOGI("TMP", "%s", temperaturef.c_str());
+                xSemaphoreGive(log_semiphore);
             }
         }
 
@@ -322,8 +320,6 @@ static void tmp102_sleep_task(void *pvParameter)
             case COMMAND_GET_TEMPF:
                 OneShotTemperatureRead(tmp102_device);
                 temperature = tmp102_device.Get_TemperatureF();
-                temperaturef = tmp102_device.Get_TemperatureF_ToString();
-                ESP_LOGI("TMP", "%s", temperaturef.c_str());
                 break;
             case COMMAND_GET_TEMPC:
                 OneShotTemperatureRead(tmp102_device);
