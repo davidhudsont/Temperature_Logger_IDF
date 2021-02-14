@@ -4,7 +4,6 @@
 
 #include "DEADONRTC_Registers.h"
 #include "BSP_SPI.h"
-#include "freertos/queue.h"
 #include "driver/gpio.h"
 #include <string>
 
@@ -41,7 +40,7 @@ typedef enum ALARM2_MODES
 
 } ALARM2_MODES;
 
-int get_queue(char *msg);
+int GetInterruptSemiphore();
 
 class RTCDS3234
 {

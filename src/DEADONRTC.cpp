@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iomanip>
 #include "esp_log.h"
+#include "freertos/semphr.h"
 
 // Credit to SparkFun Library for the Build Dates: https://github.com/sparkfun/SparkFun_DS3234_RTC_Arduino_Library
 // Parse the __DATE__ predefined macro to generate date defaults:
@@ -48,11 +49,11 @@
 #define BUILD_SECOND_1 (__TIME__[7] - 0x30)
 #define BUILD_SECOND ((BUILD_SECOND_0 * 10) + BUILD_SECOND_1)
 
-QueueHandle_t queue;
+SemaphoreHandle_t semiphore;
 
-int get_queue(char *msg)
+int GetInterruptSemiphore()
 {
-    return xQueueReceive(queue, msg, 10);
+    return xSemaphoreTake(semiphore, 0);
 }
 
 /**
@@ -380,23 +381,19 @@ bool RTCDS3234::READ_ALARM2_FLAG()
  */
 static void IRAM_ATTR alert_isr_handler(void *arg)
 {
-    char msg = 'r';
-    BaseType_t base;
-    xQueueSendFromISR(queue, (void *)&msg, &base);
+    static BaseType_t xHigherPriorityTaskWoken;
+    xSemaphoreGiveFromISR(semiphore, &xHigherPriorityTaskWoken);
 }
 
 void RTCDS3234::ISR_Init()
 {
+
+    semiphore = xSemaphoreCreateBinary();
+
     gpio_config_t io_conf;
-
-    queue = xQueueCreate(3, 1);
-
     io_conf.intr_type = (gpio_int_type_t)GPIO_INTR_NEGEDGE;
-
     io_conf.pin_bit_mask = 1ULL << DEADON_ALERT_PIN_NUM;
-
     io_conf.mode = GPIO_MODE_INPUT;
-
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
 
