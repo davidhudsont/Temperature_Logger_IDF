@@ -23,16 +23,25 @@ typedef struct OPENLOG_STRUCT
 
 } OPENLOG_STRUCT;
 
-void OPENLOG_Begin(OPENLOG_STRUCT *openlog_dev);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-void OPENLOG_RESET();
-void OPENLOG_UART_FLUSH(OPENLOG_STRUCT *openlog_dev);
+    void OPENLOG_Begin(OPENLOG_STRUCT *openlog_dev);
 
-void OPENLOG_EnterCommandMode(OPENLOG_STRUCT *openlog_dev);
-void OPENLOG_ListCommands(OPENLOG_STRUCT *openlog_dev);
+    void OPENLOG_RESET();
+    void OPENLOG_UART_FLUSH(OPENLOG_STRUCT *openlog_dev);
 
-void OPENLOG_CreateFile(OPENLOG_STRUCT *openlog_dev, char *filename);
-void OPENLOG_EnterAppendFileMode(OPENLOG_STRUCT *openlog_dev, char *filename);
-void OPENLOG_WriteLineToFile(OPENLOG_STRUCT *openlog_dev, char *line);
+    void OPENLOG_EnterCommandMode(OPENLOG_STRUCT *openlog_dev);
+    void OPENLOG_ListCommands(OPENLOG_STRUCT *openlog_dev);
+
+    void OPENLOG_CreateFile(OPENLOG_STRUCT *openlog_dev, char *filename);
+    void OPENLOG_EnterAppendFileMode(OPENLOG_STRUCT *openlog_dev, char *filename);
+    void OPENLOG_WriteLineToFile(OPENLOG_STRUCT *openlog_dev, char *line);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

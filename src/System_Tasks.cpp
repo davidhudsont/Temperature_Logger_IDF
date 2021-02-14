@@ -1,5 +1,30 @@
 
+#include "ConsoleCommands.h"
 #include "System_Tasks.h"
+#include <stdio.h>
+#include <string.h>
+#include "sdkconfig.h"
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "DEADONRTC.h"
+#include "TMP102.h"
+#include "OPENLOG.h"
+#include "bspConsole.h"
+#include "linenoise/linenoise.h"
+#include "esp_console.h"
+
+// Used to communicate between tasks
+typedef struct MESSAGE_STRUCT
+{
+    char id;
+    void *device;
+} MESSAGE_STRUCT;
+
+static QueueHandle_t device_queue; // Queue to send device objects between tasks
+
+static QueueHandle_t alarm_queue; // Sends message when an alarm has been triggered
 
 static void openlog_task(void *pvParameter);
 static void tmp102_sleep_task(void *pvParameter);
@@ -16,15 +41,14 @@ void Create_Task_Queues(void)
 void Create_Tasks(void)
 {
     xTaskCreate(&rtc_intr_task, "rtc_intr_task", configMINIMAL_STACK_SIZE * 3, NULL, 4, NULL);
-    xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE * 4, NULL, 5, NULL);
-    xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
+    xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
+    //xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
     xTaskCreate(&console_task, "console_task", configMINIMAL_STACK_SIZE * 4, NULL, 7, NULL);
 }
 
 /**
  * @brief Delays a task for the passed
  *        in parameter time_ms in milliseconds
- * 
  * @param time_ms 
  */
 void delay(uint32_t time_ms)
@@ -34,29 +58,28 @@ void delay(uint32_t time_ms)
 
 /**
  * @brief Print the current datetime.
- * 
  * @param rtc - DEADONTRC device structure
  */
-void Print_DateTime(DEADONRTC *rtc)
+void Print_DateTime(RTCDS3234 &rtc)
 {
-    uint8_t hours = rtc->hours;
-    uint8_t minutes = rtc->minutes;
-    uint8_t seconds = rtc->seconds;
-    uint8_t date = rtc->date;
-    uint8_t month = rtc->month;
-    uint8_t year = rtc->year;
+    uint8_t hours = rtc.hours;
+    uint8_t minutes = rtc.minutes;
+    uint8_t seconds = rtc.seconds;
+    uint8_t date = rtc.date;
+    uint8_t month = rtc.month;
+    uint8_t year = rtc.year;
 
-    if (rtc->hour12_not24)
+    if (rtc.hour12_not24)
     {
-        bool PM_notAM = rtc->PM_notAM;
-        printf("%02d:%02d:%02d %s, %02d-%02d-%04d\n", hours, minutes, seconds, (PM_notAM ? "PM" : "AM"), month, date, year + 2000);
+        bool PM_notAM = rtc.PM_notAM;
+        ESP_LOGI("RTC", "%02d:%02d:%02d %s, %02d-%02d-%04d", hours, minutes, seconds, (PM_notAM ? "PM" : "AM"), month, date, year + 2000);
     }
     else
     {
-        printf("%02d:%02d:%02d, %02d-%02d-%04d\n", hours, minutes, seconds, month, date, year + 2000);
+        ESP_LOGI("RTC", "%02d:%02d:%02d, %02d-%02d-%04d", hours, minutes, seconds, month, date, year + 2000);
     }
 }
-
+/*
 static void openlog_task(void *pvParameter)
 {
     printf("OPENLOG Task Start!\n");
@@ -134,13 +157,13 @@ static void openlog_task(void *pvParameter)
         }
     }
 }
-
-void DEADON_RTC_Power_On_Test()
+*/
+void Power_On_Test(RTCDS3234 &rtc)
 {
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
     uint8_t data[6] = {0};
     // Check for power lost
-    DEADON_RTC_SRAM_Burst_Read(0x00, data, 6);
+    rtc.SRAM_Burst_Read(0x00, data, 6);
     bool power_lost = false;
     for (int i = 0; i < 6; i++)
     {
@@ -153,106 +176,105 @@ void DEADON_RTC_Power_On_Test()
     // If power was lost write the code to the sram
     if (power_lost)
     {
-        printf("Lost Power!\n");
-        DEADON_RTC_SRAM_Burst_Write(0x00, code, 6);
-        DEADON_RTC_WRITE_BUILD_DATETIME();
+        ESP_LOGW("RTC", "Lost Power!");
+        rtc.SRAM_Burst_Write(0x00, code, 6);
+        rtc.WRITE_BUILD_DATETIME();
     }
     else
     {
-        printf("Power Not Lost\n");
+        ESP_LOGI("RTC", "Power Not Lost");
     }
 }
 
-void DEADON_RTC_Start_Alarms(DEADONRTC *rtc)
+void Start_Alarms(RTCDS3234 &rtc)
 {
     // Setup the RTC interrupts
-    DEADON_RTC_ISR_Init(rtc);
+    rtc.ISR_Init();
     delay(1000);
-    DEADON_RTC_WRITE_ALARM1(10, 0, 0, 0, ALARM1_SECONDS_MATCH);
-    DEADON_RTC_WRITE_ALARM2(0, 0, 0, ALARM2_PER_MIN);
+    rtc.WRITE_ALARM1(10, 0, 0, 0, ALARM1_SECONDS_MATCH);
+    rtc.WRITE_ALARM2(0, 0, 0, ALARM2_PER_MIN);
     delay(100);
-    DEADON_RTC_Enable_Interrupt(rtc, true);
+    rtc.Enable_Interrupt(true);
     delay(100);
-    DEADON_RTC_Enable_Alarms(rtc, true, true);
+    rtc.Enable_Alarms(true, true);
     // Clear the ALARM flags early
-    DEADON_RTC_READ_ALARM1_FLAG(rtc);
-    DEADON_RTC_READ_ALARM2_FLAG(rtc);
+    rtc.READ_ALARM1_FLAG();
+    rtc.READ_ALARM2_FLAG();
 }
 
 static void rtc_intr_task(void *pvParameter)
 {
-    printf("DEADON RTC Task Start!\n");
-    DEADONRTC rtc;
+    ESP_LOGI("RTC", "RTC Task Start!");
+    RTCDS3234 rtc;
     char msg;
     MESSAGE_STRUCT device_message;
     COMMAND_MESSAGE_STRUCT cmd_msg;
-    DEADON_RTC_Begin(&rtc);
+    rtc.Begin();
 
-    DEADON_RTC_Power_On_Test();
-
-    DEADON_RTC_Start_Alarms(&rtc);
+    Power_On_Test(rtc);
+    Start_Alarms(rtc);
 
     while (1)
     {
         // Evaluate Alarm Interrupts
-        if (xQueueReceive(queue, &msg, 10))
+        if (get_queue(&msg))
         {
             if (msg == 'r')
             {
-                bool alarm1_flag = DEADON_RTC_READ_ALARM1_FLAG(&rtc);
-                bool alarm2_flag = DEADON_RTC_READ_ALARM2_FLAG(&rtc);
+                bool alarm1_flag = rtc.READ_ALARM1_FLAG();
+                bool alarm2_flag = rtc.READ_ALARM2_FLAG();
 
                 if (alarm1_flag)
                 {
-                    printf("ALARM1 Triggered\n");
-                    DEADON_RTC_READ_DATETIME(&rtc);
-                    Print_DateTime(&rtc);
+                    ESP_LOGI("RTC", "ALARM1 Triggered");
+                    rtc.READ_DATETIME();
+                    Print_DateTime(rtc);
                 }
                 if (alarm2_flag)
                 {
-                    printf("ALARM2 Triggered\n");
-                    DEADON_RTC_READ_DATETIME(&rtc);
+                    ESP_LOGI("RTC", "ALARM2 Triggered");
+                    rtc.READ_DATETIME();
                     char tmp_ready = 'r';
                     xQueueSend(alarm_queue, (void *)&tmp_ready, 30);
-                    device_message.id = 'r';
-                    device_message.device = (void *)&rtc;
-                    xQueueSend(device_queue, &device_message, 30);
+                    //device_message.id = 'r';
+                    //device_message.device = (void *)&rtc;
+                    //xQueueSend(device_queue, &device_message, 30);
                 }
             }
         }
 
         // Evaulate Console Commands
-        if (xQueueReceive(rtc_command_queue, (COMMAND_MESSAGE_STRUCT *)&cmd_msg, 30))
+        if (recieve_rtc_command(&cmd_msg))
         {
             switch (cmd_msg.id)
             {
             case COMMAND_GET_DATETIME:
-                DEADON_RTC_READ_DATETIME(&rtc);
-                Print_DateTime(&rtc);
+                rtc.READ_DATETIME();
+                Print_DateTime(rtc);
                 break;
             case COMMAND_SET_SECONDS:
-                DEADON_RTC_WRITE_SECONDS(cmd_msg.arg1);
+                rtc.WRITE_SECONDS(cmd_msg.arg1);
                 break;
             case COMMAND_SET_MINUTES:
-                DEADON_RTC_WRITE_MINUTES(cmd_msg.arg1);
+                rtc.WRITE_MINUTES(cmd_msg.arg1);
                 break;
             case COMMAND_SET_12HOURS:
-                DEADON_RTC_WRITE_12HOURS(cmd_msg.arg1, cmd_msg.arg2);
+                rtc.WRITE_12HOURS(cmd_msg.arg1, cmd_msg.arg2);
                 break;
             case COMMAND_SET_24HOURS:
-                DEADON_RTC_WRITE_24HOURS(cmd_msg.arg1);
+                rtc.WRITE_24HOURS(cmd_msg.arg1);
                 break;
             case COMMAND_SET_WEEKDAY:
-                DEADON_RTC_WRITE_DAYS((DAYS)cmd_msg.arg1);
+                rtc.WRITE_DAYS((DAYS)cmd_msg.arg1);
                 break;
             case COMMAND_SET_DATE:
-                DEADON_RTC_WRITE_DATE(cmd_msg.arg1);
+                rtc.WRITE_DATE(cmd_msg.arg1);
                 break;
             case COMMAND_SET_MONTH:
-                DEADON_RTC_WRITE_MONTH(cmd_msg.arg1);
+                rtc.WRITE_MONTH(cmd_msg.arg1);
                 break;
             case COMMAND_SET_YEAR:
-                DEADON_RTC_WRITE_YEAR(cmd_msg.arg1);
+                rtc.WRITE_YEAR(cmd_msg.arg1);
                 break;
             default:
                 break;
@@ -261,37 +283,37 @@ static void rtc_intr_task(void *pvParameter)
     }
 }
 
-static void OneShotTemperatureRead(TMP102_STRUCT *tmp102_device)
+static void OneShotTemperatureRead(TMP102 &tmp102_device)
 {
     static bool oneshot = false;
     if (oneshot == false)
     {
-        printf("Set the OneShot!\n");
-        TMP102_Set_OneShot(tmp102_device);
+        ESP_LOGI("TMP", "Set the OneShot!");
+        tmp102_device.Set_OneShot();
         delay(30);
-        oneshot = TMP102_Get_OneShot(tmp102_device);
+        oneshot = tmp102_device.Get_OneShot();
     }
 
     if (oneshot)
     {
-        TMP102_Read_Temperature(tmp102_device);
-        printf("Temperature has been Read\n");
+        tmp102_device.Read_Temperature();
+        ESP_LOGI("TMP", "Temperature has been Read");
         oneshot = false;
     }
 }
 
 static void tmp102_sleep_task(void *pvParameter)
 {
-    printf("Initialize Device\n");
-    TMP102_STRUCT tmp102_device;
+    TMP102 tmp102_device;
     char msg;
     COMMAND_MESSAGE_STRUCT cmd_msg;
     MESSAGE_STRUCT device_message;
-    TMP102_Begin(&tmp102_device);
 
-    TMP102_Set_Conversion_Rate(&tmp102_device, CONVERSION_MODE_1);
+    ESP_LOGI("TMP", "TMP102 Task Start!");
+    tmp102_device.Begin();
+    tmp102_device.Set_Conversion_Rate(CONVERSION_MODE_1);
     delay(100);
-    TMP102_Sleep(&tmp102_device, true);
+    tmp102_device.Sleep(true);
     delay(300);
 
     while (1)
@@ -301,24 +323,27 @@ static void tmp102_sleep_task(void *pvParameter)
         {
             if (msg == 'r')
             {
-                OneShotTemperatureRead(&tmp102_device);
+                OneShotTemperatureRead(tmp102_device);
                 device_message.id = 't';
-                device_message.device = (void *)&tmp102_device;
+                device_message.device = nullptr;
                 xQueueSend(device_queue, &device_message, 30);
             }
         }
 
-        if (xQueueReceive(tmp_command_queue, &cmd_msg, 30))
+        if (recieve_tmp_command(&cmd_msg))
         {
+            float temperature = 0;
             switch (cmd_msg.id)
             {
             case COMMAND_GET_TEMPF:
-                OneShotTemperatureRead(&tmp102_device);
-                printf("%3.3fF\n", TMP102_Get_TemperatureF(&tmp102_device));
+                OneShotTemperatureRead(tmp102_device);
+                temperature = tmp102_device.Get_TemperatureF();
+                ESP_LOGI("TMP", "%3.3fF", temperature);
                 break;
             case COMMAND_GET_TEMPC:
-                OneShotTemperatureRead(&tmp102_device);
-                printf("%2.3fC\n", TMP102_Get_Temperature(&tmp102_device));
+                OneShotTemperatureRead(tmp102_device);
+                temperature = tmp102_device.Get_Temperature();
+                ESP_LOGI("TMP", "%2.3fC", temperature);
                 break;
             default:
                 break;

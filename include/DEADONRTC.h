@@ -3,15 +3,13 @@
 #define _DEADON_RTC_H_
 
 #include "DEADONRTC_Registers.h"
-#include "bspSpi.h"
+#include "BSP_SPI.h"
 #include "freertos/queue.h"
 #include "driver/gpio.h"
 
 // Active Low INT_BAR
 #define DEADON_ALERT_PIN_NUM (GPIO_NUM_25) // Interrupt Pin
 #define DEADON_RTC_INTR_FLAGS_DEFAULT (0)  //
-
-QueueHandle_t queue;
 
 typedef enum DAYS
 {
@@ -42,10 +40,54 @@ typedef enum ALARM2_MODES
 
 } ALARM2_MODES;
 
-typedef struct DEADONRTC
+int get_queue(char *msg);
+
+class RTCDS3234
 {
+private:
     uint8_t raw_time[7];
 
+    bool intr_enable;
+    bool alarm1_enable;
+    bool alarm2_enable;
+
+    BSP::SPI spi;
+
+    /**
+     * @brief Read a register
+     * 
+     * @param register_address 
+     * @return uint8_t 
+     */
+    uint8_t Register_Read(uint8_t register_address);
+
+    /**
+     * @brief Write to a register
+     * 
+     * @param register_address 
+     * @param data 
+     */
+    void Register_Write(uint8_t register_address, uint8_t data);
+
+    /**
+     * @brief Read multiple bytes from registers
+     * 
+     * @param address 
+     * @param data 
+     * @param len 
+     */
+    void Register_Burst_Read(uint8_t address, uint8_t *data, uint32_t len);
+
+    /**
+     * @brief Write to bytes to registers
+     * 
+     * @param address 
+     * @param data 
+     * @param len 
+     */
+    void Register_Burst_Write(uint8_t address, uint8_t *data, uint32_t len);
+
+public:
     uint8_t seconds;
     uint8_t minutes;
     uint8_t hours;
@@ -58,58 +100,139 @@ typedef struct DEADONRTC
     bool PM_notAM;
     bool century;
 
-    bool intr_enable;
-    bool alarm1_enable;
-    bool alarm2_enable;
+    /**
+     * @brief Initialize the RTC device structure
+     *        and start the SPI bus.
+     */
+    void Begin();
 
-} DEADONRTC;
+    /**
+     * @brief Read the current data and time from the RTC.
+     */
+    void READ_DATETIME();
 
-void DEADON_RTC_Begin(DEADONRTC *rtc);
+    /**
+     * @brief Write the date and time
+     * @param seconds 
+     * @param minutes 
+     * @param hours 
+     * @param day 
+     * @param date 
+     * @param month 
+     * @param year 
+     */
+    void WRITE_DATETIME(uint8_t seconds, uint8_t minutes, uint8_t hours,
+                        uint8_t day, uint8_t date, uint8_t month,
+                        uint8_t year);
 
-void DEADON_RTC_WRITE_SECONDS(uint8_t second);
-uint8_t DEADON_RTC_READ_SECONDS();
+    /**
+     * @brief Get the date and time from the build date
+     * 
+     */
+    void WRITE_BUILD_DATETIME();
 
-void DEADON_RTC_WRITE_MINUTES(uint8_t minutes);
-uint8_t DEADON_RTC_READ_MINUTES();
+    void WRITE_SECONDS(uint8_t second);
+    uint8_t READ_SECONDS();
 
-void DEADON_RTC_WRITE_12HOURS(uint8_t hours, bool PM_NotAM);
-void DEADON_RTC_WRITE_24HOURS(uint8_t hours);
+    void WRITE_MINUTES(uint8_t minutes);
+    uint8_t READ_MINUTES();
 
-void DEADON_RTC_WRITE_DAYS(DAYS days);
-void DEADON_RTC_WRITE_DATE(uint8_t date);
-void DEADON_RTC_WRITE_MONTH(uint8_t month);
-void DEADON_RTC_WRITE_YEAR(uint8_t year);
+    // input : hours 1-12
+    void WRITE_12HOURS(uint8_t hours, bool PM_NotAM);
+    // input : hours 0-23
+    void WRITE_24HOURS(uint8_t hours);
 
-void DEADON_RTC_READ_DATETIME(DEADONRTC *rtc);
-void DEADON_RTC_WRITE_DATETIME(uint8_t seconds, uint8_t minutes, uint8_t hours,
-                               uint8_t day, uint8_t date, uint8_t month,
-                               uint8_t year);
+    void WRITE_DAYS(DAYS days);
+    void WRITE_DATE(uint8_t date);
+    void WRITE_MONTH(uint8_t month);
+    void WRITE_YEAR(uint8_t year);
 
-void DEADON_RTC_WRITE_BUILD_DATETIME();
+    /**
+     * @brief 
+     * 
+     * @param seconds 
+     * @param minutes 
+     * @param hours 
+     * @param date 
+     * @param mode 
+     */
+    void WRITE_ALARM1(uint8_t seconds, uint8_t minutes,
+                      uint8_t hours, uint8_t date, ALARM1_MODES mode);
 
-void DEADON_RTC_WRITE_ALARM1(uint8_t seconds, uint8_t minutes,
-                             uint8_t hours, uint8_t date, ALARM1_MODES mode);
+    /**
+     * @brief 
+     * 
+     * @param minutes 
+     * @param hours 
+     * @param date 
+     * @param mode 
+     */
+    void WRITE_ALARM2(uint8_t minutes,
+                      uint8_t hours, uint8_t date, ALARM2_MODES mode);
 
-void DEADON_RTC_WRITE_ALARM2(uint8_t minutes,
-                             uint8_t hours, uint8_t date, ALARM2_MODES mode);
+    /**
+     * @brief 
+    * @return true if flag was set, false otherwise
+     */
+    bool READ_ALARM1_FLAG();
 
-bool DEADON_RTC_READ_ALARM1_FLAG(DEADONRTC *rtc);
-bool DEADON_RTC_READ_ALARM2_FLAG(DEADONRTC *rtc);
+    /**
+     * @brief Read Alarm 2 flag
+     * @return true if flag was set, false otherwise
+     */
+    bool READ_ALARM2_FLAG();
 
-void DEADON_RTC_ISR_Init(DEADONRTC *rtc);
-void DEADON_RTC_Enable_Interrupt(DEADONRTC *rtc, bool enable);
-void DEADON_RTC_Enable_Alarms(DEADONRTC *rtc, bool alarm1, bool alarm2);
+    /**
+     * @brief Initialize ISR for Alert Pin
+     */
+    void ISR_Init();
 
-uint8_t DEADON_RTC_SRAM_Read(uint8_t address);
-void DEADON_RTC_SRAM_Write(uint8_t address, uint8_t data);
+    /**
+     * @brief Enable the RTC's interrupts
+     * @param bool enable 
+     */
+    void Enable_Interrupt(bool enable);
 
-void DEADON_RTC_SRAM_Burst_Read(uint8_t address, uint8_t *data, uint32_t len);
-void DEADON_RTC_SRAM_Burst_Write(uint8_t address, uint8_t *data, uint32_t len);
+    /**
+     * @brief Enable Alarm 1 and/or Alarm 2
+     * @param bool alarm1 - enable alarm 1 if true
+     * @param bool alarm2 - enable alarm 2 if true
+     */
+    void Enable_Alarms(bool alarm1, bool alarm2);
 
-uint8_t DEADON_RTC_Register_Read(uint8_t register_address);
-void DEADON_RTC_Register_Write(uint8_t register_address, uint8_t data);
+    /**
+     * @brief Read the RTC's SRAM at a specified address
+     * @note The size of the memoy if 256 bytes
+     * @param address range: 0x00 - 0xff
+     * @return uint8_t 
+     */
+    uint8_t SRAM_Read(uint8_t address);
 
-void DEADON_RTC_Register_Burst_Read(uint8_t address, uint8_t *data, uint32_t len);
-void DEADON_RTC_Register_Burst_Write(uint8_t address, uint8_t *data, uint32_t len);
+    /**
+     * @brief Write to the RTC's SRAM at a specified address
+     * @note The size of the memoy if 256 bytes
+     * @param address range: 0x00 - 0xff
+     * @param data - The data we want to write 
+     */
+    void SRAM_Write(uint8_t address, uint8_t data);
+
+    /**
+     * @brief Read the RTC's SRAM at a specified address
+     * @note The size of the memoy if 256 bytes
+     * @param address - Starting address
+     * @param data - data buffer
+     * @param len - Number of bytes to read
+     */
+    void SRAM_Burst_Read(uint8_t address, uint8_t *data, uint32_t len);
+
+    /**
+     * @brief Write the RTC's SRAM at a specified address
+     * @note The size of the memoy if 256 bytes
+     * @param address - Starting address
+     * @param data - data buffer
+     * @param len - Number of bytes to write
+     */
+    void SRAM_Burst_Write(uint8_t address, uint8_t *data, uint32_t len);
+};
 
 #endif

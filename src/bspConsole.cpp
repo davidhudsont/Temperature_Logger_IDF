@@ -1,5 +1,19 @@
 
+#include "ConsoleCommands.h"
 #include "bspConsole.h"
+#include <stdio.h>
+#include <string.h>
+#include "esp_system.h"
+#include "esp_log.h"
+#include "esp_console.h"
+#include "esp_vfs_dev.h"
+#include "driver/uart.h"
+#include "linenoise/linenoise.h"
+#include "argtable3/argtable3.h"
+#include "esp_vfs_fat.h"
+#include "nvs.h"
+#include "nvs_flash.h"
+#include "sdkconfig.h"
 
 void Start_Console()
 {
@@ -11,9 +25,9 @@ void Start_Console()
     setvbuf(stdin, NULL, _IONBF, 0);
 
     // Minicom, screen, idf_monitor send CR when ENTER key is pressed
-    esp_vfs_dev_uart_set_rx_line_endings(ESP_LINE_ENDINGS_CR);
+    esp_vfs_dev_uart_port_set_rx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CR);
     // Move the caret to the beginning of the next line on '\n'
-    esp_vfs_dev_uart_set_tx_line_endings(ESP_LINE_ENDINGS_CRLF);
+    esp_vfs_dev_uart_port_set_tx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CRLF);
 
     // Configure the UART Port for the ESP32 Console
     uart_config_t uart_config;
@@ -21,10 +35,11 @@ void Start_Console()
     uart_config.data_bits = UART_DATA_8_BITS;
     uart_config.parity = UART_PARITY_DISABLE;
     uart_config.stop_bits = UART_STOP_BITS_1;
+    uart_config.source_clk = UART_SCLK_REF_TICK;
 
     // Install the uart driver
-    uart_driver_install(CONFIG_ESP_CONSOLE_UART_NUM, 256, 0, 0, NULL, 0);
-    uart_param_config(CONFIG_ESP_CONSOLE_UART_NUM, &uart_config);
+    ESP_ERROR_CHECK(uart_driver_install(CONFIG_ESP_CONSOLE_UART_NUM, 256, 0, 0, NULL, 0));
+    ESP_ERROR_CHECK(uart_param_config(CONFIG_ESP_CONSOLE_UART_NUM, &uart_config));
 
     // Tell VFS to use UART Driver
     esp_vfs_dev_uart_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
@@ -36,7 +51,7 @@ void Start_Console()
     console_config.hint_color = atoi(LOG_COLOR_CYAN);
 
     // Initiailize the console
-    esp_console_init(&console_config);
+    ESP_ERROR_CHECK(esp_console_init(&console_config));
 
     // Configure linenoise line completion lbirary
     linenoiseSetMultiLine(1);
@@ -47,6 +62,9 @@ void Start_Console()
 
     // Set command history size
     linenoiseHistorySetMaxLen(100);
+
+    // Don't return empty lines
+    linenoiseAllowEmpty(false);
 }
 
 // Register the consoles commands after the console is started
