@@ -1,6 +1,8 @@
 
 #include "TMP102.h"
 #include "string.h"
+#include <iomanip>
+#include <sstream>
 
 void TMP102::Begin()
 {
@@ -126,6 +128,24 @@ float TMP102::Get_Temperature()
 float TMP102::Get_TemperatureF()
 {
     return temperature * (9.0f / 5.0f) + 32.0f;
+}
+
+std::string TMP102::Get_TemperatureF_ToString()
+{
+    std::stringstream ss;
+    char degreeSymbol = char(248);
+
+    ss << std::setprecision(5) << Get_TemperatureF() << degreeSymbol << "F";
+    return ss.str();
+}
+
+std::string TMP102::Get_TemperatureC_ToString()
+{
+    std::stringstream ss;
+    char degreeSymbol = char(248);
+
+    ss << std::setprecision(5) << Get_TemperatureF() << degreeSymbol << "C";
+    return ss.str();
 }
 
 uint8_t TMP102::Read_Register(uint8_t address)

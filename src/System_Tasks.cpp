@@ -18,7 +18,7 @@
 #include <sys/stat.h>
 
 static const char *SDTAG = "SDCard";
-static std::string temperature;
+static std::string temperaturef;
 static std::string datetime;
 
 // Used to communicate between tasks
@@ -60,30 +60,6 @@ void Create_Tasks(void)
 void delay(uint32_t time_ms)
 {
     vTaskDelay(time_ms / portTICK_PERIOD_MS);
-}
-
-/**
- * @brief Print the current datetime.
- * @param rtc - DEADONTRC device structure
- */
-void Print_DateTime(RTCDS3234 &rtc)
-{
-    uint8_t hours = rtc.hours;
-    uint8_t minutes = rtc.minutes;
-    uint8_t seconds = rtc.seconds;
-    uint8_t date = rtc.date;
-    uint8_t month = rtc.month;
-    uint8_t year = rtc.year;
-
-    if (rtc.hour12_not24)
-    {
-        bool PM_notAM = rtc.PM_notAM;
-        ESP_LOGI("RTC", "%02d:%02d:%02d %s, %02d-%02d-%04d", hours, minutes, seconds, (PM_notAM ? "PM" : "AM"), month, date, year + 2000);
-    }
-    else
-    {
-        ESP_LOGI("RTC", "%02d:%02d:%02d, %02d-%02d-%04d", hours, minutes, seconds, month, date, year + 2000);
-    }
 }
 
 static void exampleFileTest()
@@ -346,7 +322,8 @@ static void tmp102_sleep_task(void *pvParameter)
             case COMMAND_GET_TEMPF:
                 OneShotTemperatureRead(tmp102_device);
                 temperature = tmp102_device.Get_TemperatureF();
-                ESP_LOGI("TMP", "%3.3fF", temperature);
+                temperaturef = tmp102_device.Get_TemperatureF_ToString();
+                ESP_LOGI("TMP", "%s", temperaturef.c_str());
                 break;
             case COMMAND_GET_TEMPC:
                 OneShotTemperatureRead(tmp102_device);
