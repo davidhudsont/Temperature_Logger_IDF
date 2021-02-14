@@ -18,6 +18,8 @@
 #include <sys/stat.h>
 
 static const char *SDTAG = "SDCard";
+static std::string temperature;
+static std::string datetime;
 
 // Used to communicate between tasks
 typedef struct MESSAGE_STRUCT
@@ -136,6 +138,7 @@ static void sdcard_task(void *pvParameter)
 {
     BSP::SD sd;
     sd.Mount();
+    std::string file_name = "TLOG.txt";
 
     while (1)
     {
@@ -149,6 +152,14 @@ static void sdcard_task(void *pvParameter)
             else if (msg.id == COMMAND_WRITE_DISK)
             {
                 exampleFileTest();
+            }
+            else if (msg.id == COMMAND_START_LOG)
+            {
+                sd.OpenFile(file_name);
+            }
+            else if (msg.id == COMMAND_STOP_LOG)
+            {
+                sd.CloseFile();
             }
         }
     }
@@ -223,12 +234,14 @@ static void rtc_intr_task(void *pvParameter)
                 {
                     ESP_LOGI("RTC", "ALARM1 Triggered");
                     rtc.READ_DATETIME();
-                    Print_DateTime(rtc);
+                    datetime = rtc.DATETIME_TOSTRING();
+                    ESP_LOGI("RTC", "%s", datetime.c_str());
                 }
                 if (alarm2_flag)
                 {
                     ESP_LOGI("RTC", "ALARM2 Triggered");
                     rtc.READ_DATETIME();
+                    datetime = rtc.DATETIME_TOSTRING();
                     char tmp_ready = 'r';
                     xQueueSend(alarm_queue, (void *)&tmp_ready, 30);
                 }
@@ -241,9 +254,12 @@ static void rtc_intr_task(void *pvParameter)
             switch (cmd_msg.id)
             {
             case COMMAND_GET_DATETIME:
+            {
                 rtc.READ_DATETIME();
-                Print_DateTime(rtc);
-                break;
+                datetime = rtc.DATETIME_TOSTRING();
+                ESP_LOGI("RTC", "%s", datetime.c_str());
+            }
+            break;
             case COMMAND_SET_SECONDS:
                 rtc.WRITE_SECONDS(cmd_msg.arg1);
                 break;

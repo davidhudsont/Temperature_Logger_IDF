@@ -354,6 +354,7 @@ static struct
 {
     struct arg_lit *disk;
     struct arg_lit *write;
+    struct arg_int *log_control;
     struct arg_end *end;
 } sdcard_args;
 
@@ -373,11 +374,17 @@ static int sdcard(int argc, char **argv)
         msg.id = COMMAND_GET_DISK;
         xQueueSend(sdcard_command_queue, (void *)&msg, 30);
     }
-    if (sdcard_args.write->count)
+    else if (sdcard_args.write->count)
     {
         COMMAND_MESSAGE_STRUCT msg;
         msg.id = COMMAND_WRITE_DISK;
         xQueueSend(sdcard_command_queue, (void *)&msg, 30);
+    }
+    else if (sdcard_args.log_control->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        int control = sdcard_args.log_control->ival[0];
+        msg.id = control ? COMMAND_START_LOG : COMMAND_STOP_LOG;
     }
 
     return 0;
@@ -388,6 +395,7 @@ static void register_sdcard_command(void)
 
     sdcard_args.disk = arg_lit0("d", NULL, "Get Disk Information");
     sdcard_args.write = arg_lit0("w", NULL, "Write a to file example");
+    sdcard_args.log_control = arg_int0("l", NULL, "0|1", "Stop/Start logging");
     sdcard_args.end = arg_end(2);
 
     const esp_console_cmd_t cmd = {

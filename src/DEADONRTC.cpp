@@ -1,6 +1,9 @@
 
 #include "DEADONRTC.h"
 #include "string.h"
+#include <sstream>
+#include <iomanip>
+#include "esp_log.h"
 
 // Credit to SparkFun Library for the Build Dates: https://github.com/sparkfun/SparkFun_DS3234_RTC_Arduino_Library
 // Parse the __DATE__ predefined macro to generate date defaults:
@@ -161,6 +164,25 @@ void RTCDS3234::WRITE_BUILD_DATETIME()
     time_config[3] = DECtoBCD(weekday);
 
     Register_Burst_Write(REG_SECONDS, time_config, 7);
+}
+
+std::string RTCDS3234::DATETIME_TOSTRING()
+{
+    std::stringstream ss;
+
+    ss << std::setfill('0') << std::setw(2) << (int)hours << ":";
+    ss << std::setfill('0') << std::setw(2) << (int)minutes << ":";
+    ss << std::setfill('0') << std::setw(2) << (int)seconds;
+    if (hour12_not24)
+    {
+        ss << " " << (PM_notAM ? "PM" : "AM");
+    }
+    ss << ", ";
+    ss << std::setfill('0') << std::setw(2) << (int)month << "-";
+    ss << std::setfill('0') << std::setw(2) << (int)date << "-";
+    ss << (int)(year + 2000);
+
+    return ss.str();
 }
 
 void RTCDS3234::WRITE_SECONDS(uint8_t seconds)

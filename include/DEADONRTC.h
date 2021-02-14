@@ -6,6 +6,7 @@
 #include "BSP_SPI.h"
 #include "freertos/queue.h"
 #include "driver/gpio.h"
+#include <string>
 
 // Active Low INT_BAR
 #define DEADON_ALERT_PIN_NUM (GPIO_NUM_25) // Interrupt Pin
@@ -130,6 +131,13 @@ public:
      * 
      */
     void WRITE_BUILD_DATETIME();
+
+    /**
+     * @brief Get Date time string
+     * 
+     * @return std::string 
+     */
+    std::string DATETIME_TOSTRING();
 
     void WRITE_SECONDS(uint8_t second);
     uint8_t READ_SECONDS();
