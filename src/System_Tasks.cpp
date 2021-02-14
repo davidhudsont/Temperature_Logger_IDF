@@ -14,6 +14,11 @@
 #include "bspConsole.h"
 #include "linenoise/linenoise.h"
 #include "esp_console.h"
+#include "BSP_SD.h"
+#include <sys/unistd.h>
+#include <sys/stat.h>
+
+static const char *SDTAG = "SDCard";
 
 // Used to communicate between tasks
 typedef struct MESSAGE_STRUCT
@@ -30,6 +35,7 @@ static void openlog_task(void *pvParameter);
 static void tmp102_sleep_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
 static void console_task(void *pvParameter);
+static void sdcard_task(void *pvParameter);
 
 void Create_Task_Queues(void)
 {
@@ -44,6 +50,8 @@ void Create_Tasks(void)
     xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     //xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
     xTaskCreate(&console_task, "console_task", configMINIMAL_STACK_SIZE * 4, NULL, 7, NULL);
+    //xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
+    xTaskCreate(&sdcard_task, "sdcard_task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
 }
 
 /**
@@ -158,6 +166,77 @@ static void openlog_task(void *pvParameter)
     }
 }
 */
+
+static void exampleFileTest()
+{
+    ESP_LOGI(SDTAG, "Opening file");
+    FILE *f = fopen(MOUNT_POINT "/hello.txt", "w");
+    if (f == NULL)
+    {
+        ESP_LOGE(SDTAG, "Failed to open file for writing");
+    }
+    else
+    {
+        fprintf(f, "Hello World!\n");
+        fclose(f);
+        ESP_LOGI(SDTAG, "File written");
+        // Check if destination file exists before renaming
+        struct stat st;
+        if (stat(MOUNT_POINT "/foo.txt", &st) == 0)
+        {
+            // Delete it if it exists
+            unlink(MOUNT_POINT "/foo.txt");
+        }
+
+        // Rename original file
+        ESP_LOGI(SDTAG, "Renaming file");
+        if (rename(MOUNT_POINT "/hello.txt", MOUNT_POINT "/foo.txt") != 0)
+        {
+            ESP_LOGE(SDTAG, "Rename failed");
+        }
+
+        // Open renamed file for reading
+        ESP_LOGI(SDTAG, "Reading file");
+        f = fopen(MOUNT_POINT "/foo.txt", "r");
+        if (f == NULL)
+        {
+            ESP_LOGE(SDTAG, "Failed to open file for reading");
+        }
+        char line[64];
+        fgets(line, sizeof(line), f);
+        fclose(f);
+        // strip newline
+        char *pos = strchr(line, '\n');
+        if (pos)
+        {
+            *pos = '\0';
+        }
+        ESP_LOGI(SDTAG, "Read from file: '%s'\n", line);
+    }
+}
+
+static void sdcard_task(void *pvParameter)
+{
+    BSP::SD sd;
+    sd.Mount();
+
+    while (1)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        if (recieve_openlog_command(&msg))
+        {
+            if (msg.id == COMMAND_GET_DISK)
+            {
+                sd.PrintDiskInfo();
+            }
+            else if (msg.id == COMMAND_WRITE_DISK)
+            {
+                exampleFileTest();
+            }
+        }
+    }
+}
+
 void Power_On_Test(RTCDS3234 &rtc)
 {
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};

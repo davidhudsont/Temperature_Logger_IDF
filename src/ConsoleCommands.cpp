@@ -20,6 +20,7 @@ static void register_getdatetime(void);
 static void register_temperature(void);
 static void register_openlog_control(void);
 static void register_adjust_log_level_command(void);
+static void register_sdcard_command(void);
 
 int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg)
 {
@@ -46,6 +47,7 @@ void register_system(void)
     register_temperature();
     register_openlog_control();
     register_adjust_log_level_command();
+    register_sdcard_command();
 }
 
 /**
@@ -389,6 +391,56 @@ static void register_adjust_log_level_command(void)
         .func = &set_log_level,
         .argtable = &level_args,
     };
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+static struct
+{
+    struct arg_lit *disk;
+    struct arg_lit *write;
+    struct arg_end *end;
+} sdcard_args;
+
+static int sdcard(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&sdcard_args);
+
+    if (nerrors != 0)
+    {
+        arg_print_errors(stderr, sdcard_args.end, argv[0]);
+        return 1;
+    }
+
+    if (sdcard_args.disk->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        msg.id = COMMAND_GET_DISK;
+        xQueueSend(openlog_command_queue, (void *)&msg, 30);
+    }
+    if (sdcard_args.write->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        msg.id = COMMAND_WRITE_DISK;
+        xQueueSend(openlog_command_queue, (void *)&msg, 30);
+    }
+
+    return 0;
+}
+
+static void register_sdcard_command(void)
+{
+
+    sdcard_args.disk = arg_lit0("d", NULL, "Get Disk Information");
+    sdcard_args.write = arg_lit0("w", NULL, "Write a to file example");
+    sdcard_args.end = arg_end(2);
+
+    const esp_console_cmd_t cmd = {
+        .command = "sd",
+        .help = "SD Card Commands",
+        .hint = NULL,
+        .func = &sdcard,
+        .argtable = &sdcard_args};
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
