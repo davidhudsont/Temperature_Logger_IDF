@@ -1,6 +1,5 @@
 
-#ifndef _DEADON_RTC_H_
-#define _DEADON_RTC_H_
+#pragma once
 
 #include "DEADONRTC_Registers.h"
 #include "BSP_SPI.h"
@@ -241,5 +240,3 @@ public:
      */
     void SRAM_Burst_Write(uint8_t address, uint8_t *data, uint32_t len);
 };
-
-#endif

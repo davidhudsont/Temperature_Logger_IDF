@@ -1,6 +1,4 @@
-
-#ifndef _TMP102Registers_H_
-#define _TMP102Registers_H_
+#pragma once
 
 // Device Addresses
 #define TMP102_DEV_ADDR_A 0x48 // A0 PIN Connection (Ground)
@@ -41,5 +39,3 @@
 #define CONVERSION_RATE2 (CONFIG_CR0)              // 1Hz
 #define CONVERSION_RATE3 (CONFIG_CR1)              // 4Hz
 #define CONVERSION_RATE4 (CONFIG_CR0 | CONFIG_CR1) // 8Hz
-
-#endif

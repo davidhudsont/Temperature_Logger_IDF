@@ -1,6 +1,4 @@
-
-#ifndef _DEADON_RTC_REGISTERS_H_
-#define _DEADON_RTC_REGISTERS_H_
+#pragma once
 
 // Register Addresses
 #define REG_SECONDS 0x00         // [R/W] Seconds Register
@@ -73,5 +71,3 @@
 #define A2M2_Bit 0x80 // Bit masks for configuring different
 #define A2M3_Bit 0x80 // alarm modes
 #define A2M4_Bit 0x80
-
-#endif

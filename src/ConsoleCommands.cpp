@@ -385,6 +385,7 @@ static int sdcard(int argc, char **argv)
         COMMAND_MESSAGE_STRUCT msg;
         int control = sdcard_args.log_control->ival[0];
         msg.id = control ? COMMAND_START_LOG : COMMAND_STOP_LOG;
+        xQueueSend(sdcard_command_queue, (void *)&msg, 30);
     }
 
     return 0;

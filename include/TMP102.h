@@ -1,6 +1,4 @@
-
-#ifndef _TMP102_H_
-#define _TMP102_H_
+#pragma once
 
 #include "BSP_I2C.h"
 #include "TMP102Registers.h"
@@ -114,5 +112,3 @@ public:
      */
     std::string Get_TemperatureC_ToString();
 };
-
-#endif

@@ -1,13 +1,4 @@
-/**
- * @file ConsoleCommands.h
- * @author David Hudson
- * @brief Header file
- * @date 2020-02-21
- * 
- */
-
-#ifndef __REGISTER_COMMANDS_H_
-#define __REGISTER_COMMANDS_H_
+#pragma once
 
 typedef enum COMMAND_ID
 {
@@ -43,5 +34,3 @@ int recieve_sdcard_command(COMMAND_MESSAGE_STRUCT *msg);
 
 void register_system(void);
 void register_queues(void);
-
-#endif

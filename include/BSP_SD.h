@@ -1,4 +1,5 @@
 #pragma once
+
 #include "esp_err.h"
 #include <string>
 #ifdef CONFIG_IDF_TARGET_ESP32
