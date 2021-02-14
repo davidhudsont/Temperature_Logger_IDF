@@ -10,7 +10,6 @@
 #include "freertos/queue.h"
 #include "DEADONRTC.h"
 #include "TMP102.h"
-#include "OPENLOG.h"
 #include "bspConsole.h"
 #include "linenoise/linenoise.h"
 #include "esp_console.h"
@@ -31,7 +30,6 @@ static QueueHandle_t device_queue; // Queue to send device objects between tasks
 
 static QueueHandle_t alarm_queue; // Sends message when an alarm has been triggered
 
-static void openlog_task(void *pvParameter);
 static void tmp102_sleep_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
 static void console_task(void *pvParameter);
@@ -48,9 +46,7 @@ void Create_Tasks(void)
 {
     xTaskCreate(&rtc_intr_task, "rtc_intr_task", configMINIMAL_STACK_SIZE * 3, NULL, 4, NULL);
     xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
-    //xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
     xTaskCreate(&console_task, "console_task", configMINIMAL_STACK_SIZE * 4, NULL, 7, NULL);
-    //xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
     xTaskCreate(&sdcard_task, "sdcard_task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
 }
 
@@ -87,85 +83,6 @@ void Print_DateTime(RTCDS3234 &rtc)
         ESP_LOGI("RTC", "%02d:%02d:%02d, %02d-%02d-%04d", hours, minutes, seconds, month, date, year + 2000);
     }
 }
-/*
-static void openlog_task(void *pvParameter)
-{
-    printf("OPENLOG Task Start!\n");
-    DEADONRTC rtc_dev;
-    TMP102_STRUCT tmp102_dev;
-    memset(&rtc_dev, 0, sizeof(DEADONRTC));
-    memset(&tmp102_dev, 0, sizeof(TMP102_STRUCT));
-
-    MESSAGE_STRUCT *message_reciever;
-    COMMAND_MESSAGE_STRUCT command_msg;
-    bool stop_logging_flag = true;
-    uint8_t *buffer = (uint8_t *)malloc(sizeof(MESSAGE_STRUCT));
-    char *line = (char *)malloc(500);
-    int task_counter = 0;
-
-    // Start the Openlog Device
-    OPENLOG_STRUCT openlog_dev;
-    OPENLOG_Begin(&openlog_dev);
-    OPENLOG_UART_FLUSH(&openlog_dev);
-    delay(300);
-    OPENLOG_EnterCommandMode(&openlog_dev);
-    delay(300);
-    UART_Write_Bytes(&openlog_dev.uart_dev, (uint8_t *)"\r", 1);
-    delay(300);
-    OPENLOG_EnterAppendFileMode(&openlog_dev, "DATA_LOG.txt");
-
-    while (1)
-    {
-        if (xQueueReceive(openlog_command_queue, &command_msg, 30))
-        {
-            stop_logging_flag = command_msg.arg1;
-        }
-
-        if (xQueueReceive(device_queue, buffer, 30) && !stop_logging_flag)
-        {
-            message_reciever = (MESSAGE_STRUCT *)buffer;
-            if (message_reciever->id == 'r')
-            {
-                DEADONRTC *rtc = (DEADONRTC *)message_reciever->device;
-                Print_DateTime(rtc);
-                rtc_dev.hours = rtc->hours;
-                rtc_dev.minutes = rtc->minutes;
-                rtc_dev.seconds = rtc->seconds;
-                rtc_dev.date = rtc->date;
-                rtc_dev.month = rtc->month;
-                rtc_dev.year = rtc->year;
-                task_counter++;
-            }
-            else if (message_reciever->id == 't')
-            {
-                TMP102_STRUCT *tmp = (TMP102_STRUCT *)message_reciever->device;
-                float temperature = TMP102_Get_Temperature(tmp);
-                printf("Temperature = %2.3f C\n", temperature);
-                temperature = TMP102_Get_TemperatureF(tmp);
-                printf("Temperature = %3.3f F\n", temperature);
-                tmp102_dev.temperature = tmp->temperature;
-                task_counter++;
-            }
-        }
-
-        if (task_counter >= 2)
-        {
-            uint8_t hours = rtc_dev.hours;
-            uint8_t minutes = rtc_dev.minutes;
-            uint8_t seconds = rtc_dev.seconds;
-            uint8_t date = rtc_dev.date;
-            uint8_t month = rtc_dev.month;
-            uint8_t year = rtc_dev.year;
-            float tempc = TMP102_Get_Temperature(&tmp102_dev);
-            float tempf = TMP102_Get_TemperatureF(&tmp102_dev);
-            printf("Write a line to the openlog!!!!\n");
-            sprintf(line, "%02d:%02d:%02d, %02d-%02d-%04d, %2.3fC, %3.3fF\n", hours, minutes, seconds, month, date, year + 2000, tempc, tempf);
-            OPENLOG_WriteLineToFile(&openlog_dev, line);
-            task_counter = 0;
-        }
-    }
-}
-*/
 
 static void exampleFileTest()
 {
@@ -223,7 +140,7 @@ static void sdcard_task(void *pvParameter)
     while (1)
     {
         COMMAND_MESSAGE_STRUCT msg;
-        if (recieve_openlog_command(&msg))
+        if (recieve_sdcard_command(&msg))
         {
             if (msg.id == COMMAND_GET_DISK)
             {
@@ -286,7 +203,6 @@ static void rtc_intr_task(void *pvParameter)
     ESP_LOGI("RTC", "RTC Task Start!");
     RTCDS3234 rtc;
     char msg;
-    MESSAGE_STRUCT device_message;
     COMMAND_MESSAGE_STRUCT cmd_msg;
     rtc.Begin();
 
@@ -315,9 +231,6 @@ static void rtc_intr_task(void *pvParameter)
                     rtc.READ_DATETIME();
                     char tmp_ready = 'r';
                     xQueueSend(alarm_queue, (void *)&tmp_ready, 30);
-                    //device_message.id = 'r';
-                    //device_message.device = (void *)&rtc;
-                    //xQueueSend(device_queue, &device_message, 30);
                 }
             }
         }

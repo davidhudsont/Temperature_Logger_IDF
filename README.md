@@ -5,7 +5,7 @@ A temperature logging device using the ESP32 Micro-controller with the IDF RTOS
 
 1. TMP102 Temperature Sensor
 2. DS3234 Real Time Clock
-3. SparkFun OpenLog
+3. SparkFun Micro SD Breakout
 
 # Console Commands
 
@@ -47,6 +47,6 @@ A temperature logging device using the ESP32 Micro-controller with the IDF RTOS
 * [DS3234 Hookup Guide](https://learn.sparkfun.com/tutorials/deadon-rtc-breakout-hookup-guide)
 
 
-## SparkFun OpenLog
+## SparkFun micro SD Card Breakout
 
-* [OpenLog Hookup Guide](https://learn.sparkfun.com/tutorials/openlog-hookup-guide)
+* [Micro SD Card Breakout](https://www.sparkfun.com/products/544)

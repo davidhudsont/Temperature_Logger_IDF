@@ -23,7 +23,6 @@ typedef enum COMMAND_ID
     COMMAND_GET_DATETIME,
     COMMAND_GET_TEMPF,
     COMMAND_GET_TEMPC,
-    COMMAND_STOP_LOG,
     COMMAND_GET_DISK,
     COMMAND_WRITE_DISK,
 } COMMAND_ID;
@@ -38,7 +37,7 @@ typedef struct COMMAND_MESSAGE_STRUCT
 
 int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg);
 int recieve_tmp_command(COMMAND_MESSAGE_STRUCT *msg);
-int recieve_openlog_command(COMMAND_MESSAGE_STRUCT *msg);
+int recieve_sdcard_command(COMMAND_MESSAGE_STRUCT *msg);
 
 void register_system(void);
 void register_queues(void);
