@@ -34,5 +34,6 @@ namespace BSP
         esp_err_t OpenFile(std::string &file_name);
         esp_err_t WriteLine(std::string &line);
         void CloseFile();
+        bool IsFileOpen();
     };
 } // namespace BSP

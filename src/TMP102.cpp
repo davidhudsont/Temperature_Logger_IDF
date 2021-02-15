@@ -133,18 +133,14 @@ float TMP102::Get_TemperatureF()
 std::string TMP102::Get_TemperatureF_ToString()
 {
     std::stringstream ss;
-    char degreeSymbol = char(248);
-
-    ss << std::setprecision(5) << Get_TemperatureF() << degreeSymbol << "F";
+    ss << std::setprecision(5) << Get_TemperatureF();
     return ss.str();
 }
 
 std::string TMP102::Get_TemperatureC_ToString()
 {
     std::stringstream ss;
-    char degreeSymbol = char(248);
-
-    ss << std::setprecision(5) << Get_TemperatureF() << degreeSymbol << "C";
+    ss << std::setprecision(5) << temperature;
     return ss.str();
 }
 

@@ -107,7 +107,7 @@ static void sdcard_task(void *pvParameter)
 {
     BSP::SD sd;
     sd.Mount();
-    std::string file_name = "TLOG.txt";
+    std::string file_name = "TLOG.csv";
 
     while (1)
     {
@@ -125,6 +125,11 @@ static void sdcard_task(void *pvParameter)
             else if (msg.id == COMMAND_START_LOG)
             {
                 sd.OpenFile(file_name);
+                if (sd.IsFileOpen())
+                {
+                    std::string column_names = "Date, Time, Temperature(F)";
+                    sd.WriteLine(column_names);
+                }
             }
             else if (msg.id == COMMAND_STOP_LOG)
             {
@@ -133,9 +138,13 @@ static void sdcard_task(void *pvParameter)
         }
         if (xSemaphoreTake(log_semiphore, 0))
         {
-            ESP_LOGI("LOG", "Logging to SD Card");
             std::string logline = datetime + ", " + temperaturef;
-            ESP_LOGI("LOG", "%s\n", logline.c_str());
+            ESP_LOGI("LOG", "%s", logline.c_str());
+            if (sd.IsFileOpen())
+            {
+                ESP_LOGI("LOG", "Logging to SD Card");
+                sd.WriteLine(logline);
+            }
         }
     }
 }
@@ -298,7 +307,7 @@ static void tmp102_task(void *pvParameter)
         {
             OneShotTemperatureRead(tmp102);
             temperaturef = tmp102.Get_TemperatureF_ToString();
-            ESP_LOGI("TMP", "%s", temperaturef.c_str());
+            ESP_LOGI("TMP", "%s%cF", temperaturef.c_str(), char(248));
             xSemaphoreGive(log_semiphore);
         }
 

@@ -110,12 +110,15 @@ namespace BSP
 
     esp_err_t SD::OpenFile(std::string &file_name)
     {
+        std::string full_file_path = MOUNT_POINT "/" + file_name;
+
         if (initialized && f == NULL)
         {
-            f = fopen(file_name.c_str(), "w");
+            f = fopen(full_file_path.c_str(), "w");
             if (f == NULL)
             {
                 ESP_LOGE(SDTAG, "Failed to open file for writing");
+                ESP_LOGE(SDTAG, "File Path: %s", full_file_path.c_str());
                 return ESP_FAIL;
             }
             return ESP_OK;
@@ -139,6 +142,11 @@ namespace BSP
         {
             fclose(f);
         }
+    }
+
+    bool SD::IsFileOpen()
+    {
+        return f != NULL;
     }
 
 } // namespace BSP
