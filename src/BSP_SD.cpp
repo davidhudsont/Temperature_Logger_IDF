@@ -144,6 +144,19 @@ namespace BSP
         }
     }
 
+    void SD::DeleteFile(std::string &file_name)
+    {
+        std::string full_file_path = MOUNT_POINT "/" + file_name;
+
+        // Check if destination file exists before deleting
+        struct stat st;
+        if (stat(full_file_path.c_str(), &st) == 0)
+        {
+            // Delete it if it exists
+            unlink(full_file_path.c_str());
+        }
+    }
+
     bool SD::IsFileOpen()
     {
         return f != NULL;

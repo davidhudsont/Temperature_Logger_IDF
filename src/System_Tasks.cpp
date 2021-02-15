@@ -135,6 +135,14 @@ static void sdcard_task(void *pvParameter)
             {
                 sd.CloseFile();
             }
+            else if (msg.id == COMMAND_DELETE_LOG)
+            {
+                if (sd.IsFileOpen())
+                {
+                    sd.CloseFile();
+                }
+                sd.DeleteFile(file_name);
+            }
         }
         if (xSemaphoreTake(log_semiphore, 0))
         {

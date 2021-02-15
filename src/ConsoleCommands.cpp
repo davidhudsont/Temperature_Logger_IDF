@@ -355,6 +355,7 @@ static struct
     struct arg_lit *disk;
     struct arg_lit *write;
     struct arg_int *log_control;
+    struct arg_lit *delete_log;
     struct arg_end *end;
 } sdcard_args;
 
@@ -397,6 +398,7 @@ static void register_sdcard_command(void)
     sdcard_args.disk = arg_lit0("d", NULL, "Get Disk Information");
     sdcard_args.write = arg_lit0("w", NULL, "Write a to file example");
     sdcard_args.log_control = arg_int0("l", NULL, "0|1", "Stop/Start logging");
+    sdcard_args.delete_log = arg_lit0("r", NULL, "Delete the current log file and stop logging");
     sdcard_args.end = arg_end(2);
 
     const esp_console_cmd_t cmd = {
