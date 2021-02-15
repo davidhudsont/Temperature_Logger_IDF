@@ -1,6 +1,4 @@
-
-#ifndef __BSP_SPI_H__
-#define __BSP_SPI_H__
+#pragma once
 
 #include "driver/spi_common.h"
 #include "driver/spi_master.h"
@@ -87,5 +85,3 @@ namespace BSP
         void burstWrite(const uint8_t address, uint8_t *buf, uint32_t size);
     };
 } // namespace BSP
-
-#endif

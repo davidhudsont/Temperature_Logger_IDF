@@ -1,6 +1,4 @@
-
-#ifndef _BSP_UART_H_
-#define _BSP_UART_H_
+#pragma once
 
 #include "driver/uart.h"
 #include "driver/gpio.h"
@@ -32,5 +30,3 @@ void UART_START_DEVICE(UART_STRUCT *uart_dev);
 
 int UART_Read_Bytes(UART_STRUCT *uart_dev, uint8_t *data, uint32_t len);
 void UART_Write_Bytes(UART_STRUCT *uart_dev, uint8_t *data, uint32_t len);
-
-#endif

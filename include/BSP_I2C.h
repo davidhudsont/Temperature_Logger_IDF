@@ -1,6 +1,4 @@
-
-#ifndef __BSP_I2C_H__
-#define __BSP_I2C_H__
+#pragma once
 
 #include "driver/i2c.h"
 
@@ -63,5 +61,3 @@ namespace BSP
     };
 
 } // namespace BSP
-
-#endif

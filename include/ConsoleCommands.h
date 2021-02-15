@@ -1,13 +1,4 @@
-/**
- * @file ConsoleCommands.h
- * @author David Hudson
- * @brief Header file
- * @date 2020-02-21
- * 
- */
-
-#ifndef __REGISTER_COMMANDS_H_
-#define __REGISTER_COMMANDS_H_
+#pragma once
 
 typedef enum COMMAND_ID
 {
@@ -23,6 +14,9 @@ typedef enum COMMAND_ID
     COMMAND_GET_DATETIME,
     COMMAND_GET_TEMPF,
     COMMAND_GET_TEMPC,
+    COMMAND_GET_DISK,
+    COMMAND_WRITE_DISK,
+    COMMAND_START_LOG,
     COMMAND_STOP_LOG,
 } COMMAND_ID;
 
@@ -36,9 +30,7 @@ typedef struct COMMAND_MESSAGE_STRUCT
 
 int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg);
 int recieve_tmp_command(COMMAND_MESSAGE_STRUCT *msg);
-int recieve_openlog_command(COMMAND_MESSAGE_STRUCT *msg);
+int recieve_sdcard_command(COMMAND_MESSAGE_STRUCT *msg);
 
 void register_system(void);
 void register_queues(void);
-
-#endif

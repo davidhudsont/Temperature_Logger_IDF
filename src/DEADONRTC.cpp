@@ -1,6 +1,10 @@
 
 #include "DEADONRTC.h"
 #include "string.h"
+#include <sstream>
+#include <iomanip>
+#include "esp_log.h"
+#include "freertos/semphr.h"
 
 // Credit to SparkFun Library for the Build Dates: https://github.com/sparkfun/SparkFun_DS3234_RTC_Arduino_Library
 // Parse the __DATE__ predefined macro to generate date defaults:
@@ -45,11 +49,11 @@
 #define BUILD_SECOND_1 (__TIME__[7] - 0x30)
 #define BUILD_SECOND ((BUILD_SECOND_0 * 10) + BUILD_SECOND_1)
 
-QueueHandle_t queue;
+SemaphoreHandle_t semiphore;
 
-int get_queue(char *msg)
+int GetInterruptSemiphore()
 {
-    return xQueueReceive(queue, msg, 10);
+    return xSemaphoreTake(semiphore, 0);
 }
 
 /**
@@ -161,6 +165,25 @@ void RTCDS3234::WRITE_BUILD_DATETIME()
     time_config[3] = DECtoBCD(weekday);
 
     Register_Burst_Write(REG_SECONDS, time_config, 7);
+}
+
+std::string RTCDS3234::DATETIME_TOSTRING()
+{
+    std::stringstream ss;
+
+    ss << std::setfill('0') << std::setw(2) << (int)hours << ":";
+    ss << std::setfill('0') << std::setw(2) << (int)minutes << ":";
+    ss << std::setfill('0') << std::setw(2) << (int)seconds;
+    if (hour12_not24)
+    {
+        ss << " " << (PM_notAM ? "PM" : "AM");
+    }
+    ss << ", ";
+    ss << std::setfill('0') << std::setw(2) << (int)month << "-";
+    ss << std::setfill('0') << std::setw(2) << (int)date << "-";
+    ss << (int)(year + 2000);
+
+    return ss.str();
 }
 
 void RTCDS3234::WRITE_SECONDS(uint8_t seconds)
@@ -358,23 +381,19 @@ bool RTCDS3234::READ_ALARM2_FLAG()
  */
 static void IRAM_ATTR alert_isr_handler(void *arg)
 {
-    char msg = 'r';
-    BaseType_t base;
-    xQueueSendFromISR(queue, (void *)&msg, &base);
+    static BaseType_t xHigherPriorityTaskWoken;
+    xSemaphoreGiveFromISR(semiphore, &xHigherPriorityTaskWoken);
 }
 
 void RTCDS3234::ISR_Init()
 {
+
+    semiphore = xSemaphoreCreateBinary();
+
     gpio_config_t io_conf;
-
-    queue = xQueueCreate(3, 1);
-
     io_conf.intr_type = (gpio_int_type_t)GPIO_INTR_NEGEDGE;
-
     io_conf.pin_bit_mask = 1ULL << DEADON_ALERT_PIN_NUM;
-
     io_conf.mode = GPIO_MODE_INPUT;
-
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
 

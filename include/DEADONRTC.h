@@ -1,11 +1,10 @@
 
-#ifndef _DEADON_RTC_H_
-#define _DEADON_RTC_H_
+#pragma once
 
 #include "DEADONRTC_Registers.h"
 #include "BSP_SPI.h"
-#include "freertos/queue.h"
 #include "driver/gpio.h"
+#include <string>
 
 // Active Low INT_BAR
 #define DEADON_ALERT_PIN_NUM (GPIO_NUM_25) // Interrupt Pin
@@ -40,7 +39,7 @@ typedef enum ALARM2_MODES
 
 } ALARM2_MODES;
 
-int get_queue(char *msg);
+int GetInterruptSemiphore();
 
 class RTCDS3234
 {
@@ -130,6 +129,13 @@ public:
      * 
      */
     void WRITE_BUILD_DATETIME();
+
+    /**
+     * @brief Get Date time string
+     * 
+     * @return std::string 
+     */
+    std::string DATETIME_TOSTRING();
 
     void WRITE_SECONDS(uint8_t second);
     uint8_t READ_SECONDS();
@@ -234,5 +240,3 @@ public:
      */
     void SRAM_Burst_Write(uint8_t address, uint8_t *data, uint32_t len);
 };
-
-#endif

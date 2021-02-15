@@ -9,17 +9,17 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
-static QueueHandle_t rtc_command_queue;     // Queue to send device objects between tasks
-static QueueHandle_t tmp_command_queue;     // Queue to send device objects between tasks
-static QueueHandle_t openlog_command_queue; // Queue to send device objects between tasks
+static QueueHandle_t rtc_command_queue;    // Queue to send device objects between tasks
+static QueueHandle_t tmp_command_queue;    // Queue to send device objects between tasks
+static QueueHandle_t sdcard_command_queue; // Queue to send device objects between tasks
 
 static void register_version(void);
 static void register_time(void);
 static void register_date(void);
 static void register_getdatetime(void);
 static void register_temperature(void);
-static void register_openlog_control(void);
 static void register_adjust_log_level_command(void);
+static void register_sdcard_command(void);
 
 int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg)
 {
@@ -29,9 +29,9 @@ int recieve_tmp_command(COMMAND_MESSAGE_STRUCT *msg)
 {
     return xQueueReceive(tmp_command_queue, msg, 30);
 }
-int recieve_openlog_command(COMMAND_MESSAGE_STRUCT *msg)
+int recieve_sdcard_command(COMMAND_MESSAGE_STRUCT *msg)
 {
-    return xQueueReceive(openlog_command_queue, msg, 30);
+    return xQueueReceive(sdcard_command_queue, msg, 30);
 }
 
 /**
@@ -44,8 +44,8 @@ void register_system(void)
     register_date();
     register_getdatetime();
     register_temperature();
-    register_openlog_control();
     register_adjust_log_level_command();
+    register_sdcard_command();
 }
 
 /**
@@ -55,7 +55,7 @@ void register_queues(void)
 {
     rtc_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
     tmp_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
-    openlog_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
+    sdcard_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
 }
 
 static int get_version(int argc, char **argv)
@@ -302,49 +302,6 @@ static void register_temperature(void)
 
 static struct
 {
-    struct arg_int *stop_log;
-    struct arg_end *end;
-} openlog_args;
-
-static int openlog_control(int argc, char **argv)
-{
-    int nerrors = arg_parse(argc, argv, (void **)&openlog_args);
-    COMMAND_MESSAGE_STRUCT msg;
-
-    if (nerrors != 0)
-    {
-        arg_print_errors(stderr, openlog_args.end, argv[0]);
-        return 1;
-    }
-
-    if (openlog_args.stop_log->count)
-    {
-        msg.id = COMMAND_STOP_LOG;
-        msg.arg1 = openlog_args.stop_log->ival[0];
-    }
-
-    xQueueSend(openlog_command_queue, (void *)&msg, 30);
-    return 0;
-}
-
-static void register_openlog_control(void)
-{
-    openlog_args.stop_log = arg_int0("s", NULL, "<1|0>", "Stop and Start logging");
-    openlog_args.end = arg_end(1);
-
-    const esp_console_cmd_t cmd = {
-        .command = "log",
-        .help = "Control the logger",
-        .hint = NULL,
-        .func = &openlog_control,
-        .argtable = &openlog_args,
-    };
-
-    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
-}
-
-static struct
-{
     struct arg_int *level;
     struct arg_str *tag;
     struct arg_end *end;
@@ -389,6 +346,65 @@ static void register_adjust_log_level_command(void)
         .func = &set_log_level,
         .argtable = &level_args,
     };
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+static struct
+{
+    struct arg_lit *disk;
+    struct arg_lit *write;
+    struct arg_int *log_control;
+    struct arg_end *end;
+} sdcard_args;
+
+static int sdcard(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&sdcard_args);
+
+    if (nerrors != 0)
+    {
+        arg_print_errors(stderr, sdcard_args.end, argv[0]);
+        return 1;
+    }
+
+    if (sdcard_args.disk->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        msg.id = COMMAND_GET_DISK;
+        xQueueSend(sdcard_command_queue, (void *)&msg, 30);
+    }
+    else if (sdcard_args.write->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        msg.id = COMMAND_WRITE_DISK;
+        xQueueSend(sdcard_command_queue, (void *)&msg, 30);
+    }
+    else if (sdcard_args.log_control->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        int control = sdcard_args.log_control->ival[0];
+        msg.id = control ? COMMAND_START_LOG : COMMAND_STOP_LOG;
+        xQueueSend(sdcard_command_queue, (void *)&msg, 30);
+    }
+
+    return 0;
+}
+
+static void register_sdcard_command(void)
+{
+
+    sdcard_args.disk = arg_lit0("d", NULL, "Get Disk Information");
+    sdcard_args.write = arg_lit0("w", NULL, "Write a to file example");
+    sdcard_args.log_control = arg_int0("l", NULL, "0|1", "Stop/Start logging");
+    sdcard_args.end = arg_end(2);
+
+    const esp_console_cmd_t cmd = {
+        .command = "sd",
+        .help = "SD Card Commands",
+        .hint = NULL,
+        .func = &sdcard,
+        .argtable = &sdcard_args};
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }

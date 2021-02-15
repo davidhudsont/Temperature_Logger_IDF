@@ -1,9 +1,8 @@
-
-#ifndef _TMP102_H_
-#define _TMP102_H_
+#pragma once
 
 #include "BSP_I2C.h"
 #include "TMP102Registers.h"
+#include <string>
 
 typedef enum CONVERSION_MODES
 {
@@ -98,6 +97,18 @@ public:
      * @return float 
      */
     float Get_TemperatureF();
-};
 
-#endif
+    /**
+     * @brief Get a string of the temperature in Fahrenheit
+     * 
+     * @return std::string 
+     */
+    std::string Get_TemperatureF_ToString();
+
+    /**
+     * @brief Get a string of the temperature in Celsius
+     * 
+     * @return std::string 
+     */
+    std::string Get_TemperatureC_ToString();
+};

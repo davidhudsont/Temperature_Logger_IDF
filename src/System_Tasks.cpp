@@ -8,42 +8,41 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "freertos/semphr.h"
 #include "DEADONRTC.h"
 #include "TMP102.h"
-#include "OPENLOG.h"
 #include "bspConsole.h"
 #include "linenoise/linenoise.h"
 #include "esp_console.h"
+#include "BSP_SD.h"
+#include <sys/unistd.h>
+#include <sys/stat.h>
 
-// Used to communicate between tasks
-typedef struct MESSAGE_STRUCT
-{
-    char id;
-    void *device;
-} MESSAGE_STRUCT;
+static const char *SDTAG = "SDCard";
+static std::string temperaturef;
+static std::string datetime;
 
-static QueueHandle_t device_queue; // Queue to send device objects between tasks
+static SemaphoreHandle_t log_semiphore;
+static SemaphoreHandle_t alarm_semiphore;
 
-static QueueHandle_t alarm_queue; // Sends message when an alarm has been triggered
-
-static void openlog_task(void *pvParameter);
-static void tmp102_sleep_task(void *pvParameter);
+static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
 static void console_task(void *pvParameter);
+static void sdcard_task(void *pvParameter);
 
 void Create_Task_Queues(void)
 {
-    device_queue = xQueueCreate(3, sizeof(MESSAGE_STRUCT));
-    alarm_queue = xQueueCreate(3, 1);
+    log_semiphore = xSemaphoreCreateBinary();
+    alarm_semiphore = xSemaphoreCreateBinary();
     register_queues();
 }
 
 void Create_Tasks(void)
 {
-    xTaskCreate(&rtc_intr_task, "rtc_intr_task", configMINIMAL_STACK_SIZE * 3, NULL, 4, NULL);
-    xTaskCreate(&tmp102_sleep_task, "tmp102sleep_task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
-    //xTaskCreate(&openlog_task, "openlog_task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
-    xTaskCreate(&console_task, "console_task", configMINIMAL_STACK_SIZE * 4, NULL, 7, NULL);
+    xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 3, NULL, 4, NULL);
+    xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
+    xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 4, NULL, 7, NULL);
+    xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
 }
 
 /**
@@ -56,108 +55,91 @@ void delay(uint32_t time_ms)
     vTaskDelay(time_ms / portTICK_PERIOD_MS);
 }
 
-/**
- * @brief Print the current datetime.
- * @param rtc - DEADONTRC device structure
- */
-void Print_DateTime(RTCDS3234 &rtc)
+static void exampleFileTest()
 {
-    uint8_t hours = rtc.hours;
-    uint8_t minutes = rtc.minutes;
-    uint8_t seconds = rtc.seconds;
-    uint8_t date = rtc.date;
-    uint8_t month = rtc.month;
-    uint8_t year = rtc.year;
-
-    if (rtc.hour12_not24)
+    ESP_LOGI(SDTAG, "Opening file");
+    FILE *f = fopen(MOUNT_POINT "/hello.txt", "w");
+    if (f == NULL)
     {
-        bool PM_notAM = rtc.PM_notAM;
-        ESP_LOGI("RTC", "%02d:%02d:%02d %s, %02d-%02d-%04d", hours, minutes, seconds, (PM_notAM ? "PM" : "AM"), month, date, year + 2000);
+        ESP_LOGE(SDTAG, "Failed to open file for writing");
     }
     else
     {
-        ESP_LOGI("RTC", "%02d:%02d:%02d, %02d-%02d-%04d", hours, minutes, seconds, month, date, year + 2000);
+        fprintf(f, "Hello World!\n");
+        fclose(f);
+        ESP_LOGI(SDTAG, "File written");
+        // Check if destination file exists before renaming
+        struct stat st;
+        if (stat(MOUNT_POINT "/foo.txt", &st) == 0)
+        {
+            // Delete it if it exists
+            unlink(MOUNT_POINT "/foo.txt");
+        }
+
+        // Rename original file
+        ESP_LOGI(SDTAG, "Renaming file");
+        if (rename(MOUNT_POINT "/hello.txt", MOUNT_POINT "/foo.txt") != 0)
+        {
+            ESP_LOGE(SDTAG, "Rename failed");
+        }
+
+        // Open renamed file for reading
+        ESP_LOGI(SDTAG, "Reading file");
+        f = fopen(MOUNT_POINT "/foo.txt", "r");
+        if (f == NULL)
+        {
+            ESP_LOGE(SDTAG, "Failed to open file for reading");
+        }
+        char line[64];
+        fgets(line, sizeof(line), f);
+        fclose(f);
+        // strip newline
+        char *pos = strchr(line, '\n');
+        if (pos)
+        {
+            *pos = '\0';
+        }
+        ESP_LOGI(SDTAG, "Read from file: '%s'\n", line);
     }
 }
-/*
-static void openlog_task(void *pvParameter)
+
+static void sdcard_task(void *pvParameter)
 {
-    printf("OPENLOG Task Start!\n");
-    DEADONRTC rtc_dev;
-    TMP102_STRUCT tmp102_dev;
-    memset(&rtc_dev, 0, sizeof(DEADONRTC));
-    memset(&tmp102_dev, 0, sizeof(TMP102_STRUCT));
-
-    MESSAGE_STRUCT *message_reciever;
-    COMMAND_MESSAGE_STRUCT command_msg;
-    bool stop_logging_flag = true;
-    uint8_t *buffer = (uint8_t *)malloc(sizeof(MESSAGE_STRUCT));
-    char *line = (char *)malloc(500);
-    int task_counter = 0;
-
-    // Start the Openlog Device
-    OPENLOG_STRUCT openlog_dev;
-    OPENLOG_Begin(&openlog_dev);
-    OPENLOG_UART_FLUSH(&openlog_dev);
-    delay(300);
-    OPENLOG_EnterCommandMode(&openlog_dev);
-    delay(300);
-    UART_Write_Bytes(&openlog_dev.uart_dev, (uint8_t *)"\r", 1);
-    delay(300);
-    OPENLOG_EnterAppendFileMode(&openlog_dev, "DATA_LOG.txt");
+    BSP::SD sd;
+    sd.Mount();
+    std::string file_name = "TLOG.txt";
 
     while (1)
     {
-        if (xQueueReceive(openlog_command_queue, &command_msg, 30))
+        COMMAND_MESSAGE_STRUCT msg;
+        if (recieve_sdcard_command(&msg))
         {
-            stop_logging_flag = command_msg.arg1;
-        }
-
-        if (xQueueReceive(device_queue, buffer, 30) && !stop_logging_flag)
-        {
-            message_reciever = (MESSAGE_STRUCT *)buffer;
-            if (message_reciever->id == 'r')
+            if (msg.id == COMMAND_GET_DISK)
             {
-                DEADONRTC *rtc = (DEADONRTC *)message_reciever->device;
-                Print_DateTime(rtc);
-                rtc_dev.hours = rtc->hours;
-                rtc_dev.minutes = rtc->minutes;
-                rtc_dev.seconds = rtc->seconds;
-                rtc_dev.date = rtc->date;
-                rtc_dev.month = rtc->month;
-                rtc_dev.year = rtc->year;
-                task_counter++;
+                sd.PrintDiskInfo();
             }
-            else if (message_reciever->id == 't')
+            else if (msg.id == COMMAND_WRITE_DISK)
             {
-                TMP102_STRUCT *tmp = (TMP102_STRUCT *)message_reciever->device;
-                float temperature = TMP102_Get_Temperature(tmp);
-                printf("Temperature = %2.3f C\n", temperature);
-                temperature = TMP102_Get_TemperatureF(tmp);
-                printf("Temperature = %3.3f F\n", temperature);
-                tmp102_dev.temperature = tmp->temperature;
-                task_counter++;
+                exampleFileTest();
+            }
+            else if (msg.id == COMMAND_START_LOG)
+            {
+                sd.OpenFile(file_name);
+            }
+            else if (msg.id == COMMAND_STOP_LOG)
+            {
+                sd.CloseFile();
             }
         }
-
-        if (task_counter >= 2)
+        if (xSemaphoreTake(log_semiphore, 0))
         {
-            uint8_t hours = rtc_dev.hours;
-            uint8_t minutes = rtc_dev.minutes;
-            uint8_t seconds = rtc_dev.seconds;
-            uint8_t date = rtc_dev.date;
-            uint8_t month = rtc_dev.month;
-            uint8_t year = rtc_dev.year;
-            float tempc = TMP102_Get_Temperature(&tmp102_dev);
-            float tempf = TMP102_Get_TemperatureF(&tmp102_dev);
-            printf("Write a line to the openlog!!!!\n");
-            sprintf(line, "%02d:%02d:%02d, %02d-%02d-%04d, %2.3fC, %3.3fF\n", hours, minutes, seconds, month, date, year + 2000, tempc, tempf);
-            OPENLOG_WriteLineToFile(&openlog_dev, line);
-            task_counter = 0;
+            ESP_LOGI("LOG", "Logging to SD Card");
+            std::string logline = datetime + ", " + temperaturef;
+            ESP_LOGI("LOG", "%s\n", logline.c_str());
         }
     }
 }
-*/
+
 void Power_On_Test(RTCDS3234 &rtc)
 {
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
@@ -206,8 +188,6 @@ static void rtc_intr_task(void *pvParameter)
 {
     ESP_LOGI("RTC", "RTC Task Start!");
     RTCDS3234 rtc;
-    char msg;
-    MESSAGE_STRUCT device_message;
     COMMAND_MESSAGE_STRUCT cmd_msg;
     rtc.Begin();
 
@@ -217,29 +197,24 @@ static void rtc_intr_task(void *pvParameter)
     while (1)
     {
         // Evaluate Alarm Interrupts
-        if (get_queue(&msg))
+        if (GetInterruptSemiphore())
         {
-            if (msg == 'r')
-            {
-                bool alarm1_flag = rtc.READ_ALARM1_FLAG();
-                bool alarm2_flag = rtc.READ_ALARM2_FLAG();
+            bool alarm1_flag = rtc.READ_ALARM1_FLAG();
+            bool alarm2_flag = rtc.READ_ALARM2_FLAG();
 
-                if (alarm1_flag)
-                {
-                    ESP_LOGI("RTC", "ALARM1 Triggered");
-                    rtc.READ_DATETIME();
-                    Print_DateTime(rtc);
-                }
-                if (alarm2_flag)
-                {
-                    ESP_LOGI("RTC", "ALARM2 Triggered");
-                    rtc.READ_DATETIME();
-                    char tmp_ready = 'r';
-                    xQueueSend(alarm_queue, (void *)&tmp_ready, 30);
-                    //device_message.id = 'r';
-                    //device_message.device = (void *)&rtc;
-                    //xQueueSend(device_queue, &device_message, 30);
-                }
+            if (alarm1_flag)
+            {
+                ESP_LOGI("RTC", "ALARM1 Triggered");
+                rtc.READ_DATETIME();
+                datetime = rtc.DATETIME_TOSTRING();
+                ESP_LOGI("RTC", "%s", datetime.c_str());
+            }
+            if (alarm2_flag)
+            {
+                ESP_LOGI("RTC", "ALARM2 Triggered");
+                rtc.READ_DATETIME();
+                datetime = rtc.DATETIME_TOSTRING();
+                xSemaphoreGive(alarm_semiphore);
             }
         }
 
@@ -250,7 +225,8 @@ static void rtc_intr_task(void *pvParameter)
             {
             case COMMAND_GET_DATETIME:
                 rtc.READ_DATETIME();
-                Print_DateTime(rtc);
+                datetime = rtc.DATETIME_TOSTRING();
+                ESP_LOGI("RTC", "%s", datetime.c_str());
                 break;
             case COMMAND_SET_SECONDS:
                 rtc.WRITE_SECONDS(cmd_msg.arg1);
@@ -283,51 +259,47 @@ static void rtc_intr_task(void *pvParameter)
     }
 }
 
-static void OneShotTemperatureRead(TMP102 &tmp102_device)
+static void OneShotTemperatureRead(TMP102 &tmp102)
 {
     static bool oneshot = false;
     if (oneshot == false)
     {
         ESP_LOGI("TMP", "Set the OneShot!");
-        tmp102_device.Set_OneShot();
+        tmp102.Set_OneShot();
         delay(30);
-        oneshot = tmp102_device.Get_OneShot();
+        oneshot = tmp102.Get_OneShot();
     }
 
     if (oneshot)
     {
-        tmp102_device.Read_Temperature();
+        tmp102.Read_Temperature();
         ESP_LOGI("TMP", "Temperature has been Read");
         oneshot = false;
     }
 }
 
-static void tmp102_sleep_task(void *pvParameter)
+static void tmp102_task(void *pvParameter)
 {
-    TMP102 tmp102_device;
-    char msg;
+    TMP102 tmp102;
     COMMAND_MESSAGE_STRUCT cmd_msg;
-    MESSAGE_STRUCT device_message;
 
     ESP_LOGI("TMP", "TMP102 Task Start!");
-    tmp102_device.Begin();
-    tmp102_device.Set_Conversion_Rate(CONVERSION_MODE_1);
+    tmp102.Begin();
+    tmp102.Set_Conversion_Rate(CONVERSION_MODE_1);
     delay(100);
-    tmp102_device.Sleep(true);
+    tmp102.Sleep(true);
     delay(300);
+    OneShotTemperatureRead(tmp102);
+    OneShotTemperatureRead(tmp102);
 
     while (1)
     {
-
-        if (xQueueReceive(alarm_queue, &msg, 30))
+        if (xSemaphoreTake(alarm_semiphore, 0))
         {
-            if (msg == 'r')
-            {
-                OneShotTemperatureRead(tmp102_device);
-                device_message.id = 't';
-                device_message.device = nullptr;
-                xQueueSend(device_queue, &device_message, 30);
-            }
+            OneShotTemperatureRead(tmp102);
+            temperaturef = tmp102.Get_TemperatureF_ToString();
+            ESP_LOGI("TMP", "%s", temperaturef.c_str());
+            xSemaphoreGive(log_semiphore);
         }
 
         if (recieve_tmp_command(&cmd_msg))
@@ -336,13 +308,13 @@ static void tmp102_sleep_task(void *pvParameter)
             switch (cmd_msg.id)
             {
             case COMMAND_GET_TEMPF:
-                OneShotTemperatureRead(tmp102_device);
-                temperature = tmp102_device.Get_TemperatureF();
-                ESP_LOGI("TMP", "%3.3fF", temperature);
+                OneShotTemperatureRead(tmp102);
+                temperature = tmp102.Get_TemperatureF();
+                ESP_LOGI("TMP", "%3.3fC", temperature);
                 break;
             case COMMAND_GET_TEMPC:
-                OneShotTemperatureRead(tmp102_device);
-                temperature = tmp102_device.Get_Temperature();
+                OneShotTemperatureRead(tmp102);
+                temperature = tmp102.Get_Temperature();
                 ESP_LOGI("TMP", "%2.3fC", temperature);
                 break;
             default:

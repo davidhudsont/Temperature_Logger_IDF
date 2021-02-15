@@ -1,8 +1,5 @@
 
-#ifndef _BSP_CONSOLE_H_
-#define _BSP_CONSOLE_H_
+#pragma once
 
 void Start_Console();
 void Register_Console_Commands();
-
-#endif
