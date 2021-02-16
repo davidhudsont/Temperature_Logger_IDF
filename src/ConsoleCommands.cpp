@@ -388,6 +388,12 @@ static int sdcard(int argc, char **argv)
         msg.id = control ? COMMAND_START_LOG : COMMAND_STOP_LOG;
         xQueueSend(sdcard_command_queue, (void *)&msg, 30);
     }
+    else if (sdcard_args.delete_log->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        msg.id = COMMAND_DELETE_LOG;
+        xQueueSend(sdcard_command_queue, (void *)&msg, 30);
+    }
 
     return 0;
 }

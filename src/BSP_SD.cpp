@@ -140,7 +140,12 @@ namespace BSP
     {
         if (initialized)
         {
-            fclose(f);
+            ESP_LOGI(SDTAG, "Closing File");
+            int ret = fclose(f);
+            if (ret == 0)
+            {
+                f = NULL;
+            }
         }
     }
 
@@ -153,6 +158,7 @@ namespace BSP
         if (stat(full_file_path.c_str(), &st) == 0)
         {
             // Delete it if it exists
+            ESP_LOGI(SDTAG, "Deleting %s", file_name.c_str());
             unlink(full_file_path.c_str());
         }
     }

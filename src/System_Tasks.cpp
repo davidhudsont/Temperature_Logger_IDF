@@ -124,6 +124,7 @@ static void sdcard_task(void *pvParameter)
             }
             else if (msg.id == COMMAND_START_LOG)
             {
+                ESP_LOGI("LOG", "Started Logging");
                 sd.OpenFile(file_name);
                 if (sd.IsFileOpen())
                 {
@@ -133,10 +134,12 @@ static void sdcard_task(void *pvParameter)
             }
             else if (msg.id == COMMAND_STOP_LOG)
             {
+                ESP_LOGI("LOG", "Stopped Logging");
                 sd.CloseFile();
             }
             else if (msg.id == COMMAND_DELETE_LOG)
             {
+                ESP_LOGI("LOG", "Deleting Logging File and stopped Logging");
                 if (sd.IsFileOpen())
                 {
                     sd.CloseFile();
