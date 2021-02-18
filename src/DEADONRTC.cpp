@@ -170,7 +170,12 @@ void RTCDS3234::WRITE_BUILD_DATETIME()
 std::string RTCDS3234::DATETIME_TOSTRING()
 {
     std::stringstream ss;
+    // date is day of month
+    ss << std::setfill('0') << std::setw(2) << (int)month << "/";
+    ss << std::setfill('0') << std::setw(2) << (int)date << "/";
+    ss << (int)(year + 2000);
 
+    ss << ", ";
     ss << std::setfill('0') << std::setw(2) << (int)hours << ":";
     ss << std::setfill('0') << std::setw(2) << (int)minutes << ":";
     ss << std::setfill('0') << std::setw(2) << (int)seconds;
@@ -178,10 +183,6 @@ std::string RTCDS3234::DATETIME_TOSTRING()
     {
         ss << " " << (PM_notAM ? "PM" : "AM");
     }
-    ss << ", ";
-    ss << std::setfill('0') << std::setw(2) << (int)month << "-";
-    ss << std::setfill('0') << std::setw(2) << (int)date << "-";
-    ss << (int)(year + 2000);
 
     return ss.str();
 }

@@ -110,12 +110,15 @@ namespace BSP
 
     esp_err_t SD::OpenFile(std::string &file_name)
     {
+        std::string full_file_path = MOUNT_POINT "/" + file_name;
+
         if (initialized && f == NULL)
         {
-            f = fopen(file_name.c_str(), "w");
+            f = fopen(full_file_path.c_str(), "w");
             if (f == NULL)
             {
                 ESP_LOGE(SDTAG, "Failed to open file for writing");
+                ESP_LOGE(SDTAG, "File Path: %s", full_file_path.c_str());
                 return ESP_FAIL;
             }
             return ESP_OK;
@@ -137,8 +140,32 @@ namespace BSP
     {
         if (initialized)
         {
-            fclose(f);
+            ESP_LOGI(SDTAG, "Closing File");
+            int ret = fclose(f);
+            if (ret == 0)
+            {
+                f = NULL;
+            }
         }
+    }
+
+    void SD::DeleteFile(std::string &file_name)
+    {
+        std::string full_file_path = MOUNT_POINT "/" + file_name;
+
+        // Check if destination file exists before deleting
+        struct stat st;
+        if (stat(full_file_path.c_str(), &st) == 0)
+        {
+            // Delete it if it exists
+            ESP_LOGI(SDTAG, "Deleting %s", file_name.c_str());
+            unlink(full_file_path.c_str());
+        }
+    }
+
+    bool SD::IsFileOpen()
+    {
+        return f != NULL;
     }
 
 } // namespace BSP
