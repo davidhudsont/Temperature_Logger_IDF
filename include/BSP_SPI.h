@@ -18,28 +18,17 @@ namespace BSP
     private:
         spi_bus_config_t m_bus_config;
         spi_host_device_t m_host;
-        int m_dma_chan;
         spi_device_interface_config_t m_devcfg;
         spi_device_handle_t m_spi_handle;
-
-        struct SPI_TRANSACTION
-        {
-            spi_transaction_t transaction;
-            SPI_TRANSACTION()
-            {
-                memset(&transaction, 0, sizeof(transaction));
-            }
-            void transmit(spi_device_handle_t &handle)
-            {
-                esp_err_t err;
-                gpio_set_level(PIN_NUM_CS, 0);
-                err = spi_device_polling_transmit(handle, &transaction);
-                gpio_set_level(PIN_NUM_CS, 1);
-                assert(err == ESP_OK);
-            }
-        };
+        int m_dma_chan;
 
     public:
+        /**
+         * @brief Construct a new SPI object
+         * 
+         */
+        SPI();
+
         /**
          * @brief Initializes a SPI device on the VSPI Channel
          * 

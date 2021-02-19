@@ -43,6 +43,12 @@ private:
 
 public:
     /**
+     * @brief Construct a new TMP102 object
+     * 
+     */
+    TMP102();
+
+    /**
      * @brief Start I2C bus and initialize the device structure.
      */
     void Begin();

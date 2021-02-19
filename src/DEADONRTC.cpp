@@ -82,6 +82,14 @@ static uint8_t DECtoBCD(uint8_t dec)
     return bcd;
 }
 
+RTCDS3234::RTCDS3234()
+    : intr_enable(false), alarm1_enable(false), alarm2_enable(false),
+      seconds(0), minutes(0), hours(0), day(0), date(0), month(0), year(0),
+      hour12_not24(false), PM_notAM(false), century(false)
+{
+    memset(&raw_time, 0, sizeof(uint8_t));
+}
+
 void RTCDS3234::Begin()
 {
     volatile int clock_speed = 4 * 1000 * 1000; // Clock speed 4MHz

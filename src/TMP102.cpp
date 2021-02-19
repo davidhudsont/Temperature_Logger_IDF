@@ -4,14 +4,15 @@
 #include <iomanip>
 #include <sstream>
 
-void TMP102::Begin()
+TMP102::TMP102()
+    : tlow(0), thigh(0), temperature(0.0f), sleep_mode(false)
 {
     memset(raw_temp, 0, sizeof(uint8_t) * 2);
     memset(config, 0, sizeof(uint8_t) * 2);
-    tlow = 0;
-    thigh = 0;
-    temperature = 0.0f;
-    sleep_mode = false;
+}
+
+void TMP102::Begin()
+{
     i2c.Setup();
 }
 

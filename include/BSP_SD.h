@@ -2,6 +2,8 @@
 
 #include "esp_err.h"
 #include <string>
+#include "sdmmc_cmd.h"
+#include "esp_vfs_fat.h"
 #ifdef CONFIG_IDF_TARGET_ESP32
 #include "driver/sdmmc_host.h"
 #endif
@@ -25,9 +27,10 @@ namespace BSP
         bool initialized;
         sdmmc_card_t *card;
         FILE *f;
-        sdmmc_host_t host;
+        sdmmc_host_t host = SDSPI_HOST_DEFAULT();
 
     public:
+        SD();
         void Mount();
         void UnMount();
         void PrintDiskInfo();

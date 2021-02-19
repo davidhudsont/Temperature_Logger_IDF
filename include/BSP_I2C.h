@@ -19,6 +19,12 @@ namespace BSP
         i2c_config_t m_config;
 
     public:
+        /**
+         * @brief Construct a new I2C object
+         * 
+         */
+        I2C();
+
         void Setup();
 
         /**

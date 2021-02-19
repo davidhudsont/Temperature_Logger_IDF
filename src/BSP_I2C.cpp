@@ -5,6 +5,11 @@
 namespace BSP
 {
 
+    I2C::I2C()
+    {
+        memset(&m_config, 0, sizeof(i2c_config_t));
+    }
+
     void I2C::Setup()
     {
         memset(&m_config, 0, sizeof(i2c_config_t));

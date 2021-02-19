@@ -11,6 +11,11 @@
 
 namespace BSP
 {
+    SD::SD()
+        : initialized(false), card(NULL), f(NULL)
+    {
+    }
+
     void SD::Mount()
     {
         initialized = false;

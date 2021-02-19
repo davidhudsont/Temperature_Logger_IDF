@@ -50,6 +50,18 @@ private:
     bool alarm1_enable;
     bool alarm2_enable;
 
+    uint8_t seconds;
+    uint8_t minutes;
+    uint8_t hours;
+    uint8_t day;
+    uint8_t date;
+    uint8_t month;
+    uint8_t year;
+
+    bool hour12_not24;
+    bool PM_notAM;
+    bool century;
+
     BSP::SPI spi;
 
     /**
@@ -87,17 +99,12 @@ private:
     void Register_Burst_Write(uint8_t address, uint8_t *data, uint32_t len);
 
 public:
-    uint8_t seconds;
-    uint8_t minutes;
-    uint8_t hours;
-    uint8_t day;
-    uint8_t date;
-    uint8_t month;
-    uint8_t year;
 
-    bool hour12_not24;
-    bool PM_notAM;
-    bool century;
+    /**
+     * @brief Construct a new RTCDS3234 object
+     * 
+     */
+    RTCDS3234();
 
     /**
      * @brief Initialize the RTC device structure

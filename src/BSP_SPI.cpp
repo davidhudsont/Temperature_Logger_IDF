@@ -4,6 +4,14 @@
 
 namespace BSP
 {
+    SPI::SPI()
+    {
+        memset(&m_bus_config, 0, sizeof(spi_bus_config_t));
+        memset(&m_host, 0, sizeof(spi_host_device_t));
+        memset(&m_devcfg, 0, sizeof(spi_device_interface_config_t));
+        memset(&m_spi_handle, 0, sizeof(spi_device_handle_t));
+        m_dma_chan = 0;
+    }
 
     esp_err_t SPI::Init(int clock_speed)
     {
