@@ -34,9 +34,7 @@ int recieve_sdcard_command(COMMAND_MESSAGE_STRUCT *msg)
     return xQueueReceive(sdcard_command_queue, msg, 30);
 }
 
-/**
- * @brief Register all the console commands
- */
+// cppcheck-suppress unusedFunction
 void register_system(void)
 {
     register_version();
@@ -48,9 +46,6 @@ void register_system(void)
     register_sdcard_command();
 }
 
-/**
- * @brief Create the console command queues
- */
 void register_queues(void)
 {
     rtc_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));

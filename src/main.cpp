@@ -23,6 +23,7 @@ extern "C"
     void app_main(void);
 }
 
+// cppcheck-suppress unusedFunction
 void app_main()
 {
     printf("Starting Tasks!\n");

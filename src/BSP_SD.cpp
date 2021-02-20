@@ -97,11 +97,17 @@ namespace BSP
     {
         if (initialized)
         {
+            if (IsFileOpen())
+            {
+                CloseFile();
+            }
+
             // All done, unmount partition and disable SDMMC or SPI peripheral
             esp_vfs_fat_sdcard_unmount(mount_point, card);
             ESP_LOGI(SDTAG, "Card unmounted");
             //deinitialize the bus after all devices are removed
             spi_bus_free((spi_host_device_t)host.slot);
+            initialized = false;
         }
     }
 
@@ -113,7 +119,7 @@ namespace BSP
         }
     }
 
-    esp_err_t SD::OpenFile(std::string &file_name)
+    esp_err_t SD::OpenFile(const std::string &file_name)
     {
         std::string full_file_path = MOUNT_POINT "/" + file_name;
 
@@ -168,9 +174,14 @@ namespace BSP
         }
     }
 
-    bool SD::IsFileOpen()
+    bool SD::IsFileOpen() const
     {
         return f != NULL;
+    }
+
+    bool SD::IsCardDetected() const
+    {
+        return gpio_get_level(GPIO_NUM_38) == 1;
     }
 
 } // namespace BSP

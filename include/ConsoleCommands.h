@@ -33,5 +33,13 @@ int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg);
 int recieve_tmp_command(COMMAND_MESSAGE_STRUCT *msg);
 int recieve_sdcard_command(COMMAND_MESSAGE_STRUCT *msg);
 
+/**
+ * @brief Register all the console commands
+ * 
+ */
 void register_system(void);
+
+/**
+ * @brief Create the console command queues
+ */
 void register_queues(void);
