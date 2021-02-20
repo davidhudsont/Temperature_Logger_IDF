@@ -15,15 +15,15 @@
 #define PIN_NUM_SD_CD (GPIO_NUM_38)
 #define SPI_DMA_CHAN 1
 
-#define MOUNT_POINT "/sdcard"
-
 namespace BSP
 {
+    constexpr auto MOUNT_POINT = "/sdcard";
+    constexpr auto SDTAG = "SDTAG";
+
     class SD
     {
     private:
-        const char *SDTAG = "SDTAG";
-        const char *mount_point = MOUNT_POINT;
+        const std::string mount_point;
         bool initialized;
         sdmmc_card_t *card;
         FILE *f;

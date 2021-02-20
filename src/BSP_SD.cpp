@@ -12,7 +12,7 @@
 namespace BSP
 {
     SD::SD()
-        : initialized(false), card(NULL), f(NULL)
+        : mount_point(MOUNT_POINT), initialized(false), card(NULL), f(NULL)
     {
     }
 
@@ -30,7 +30,6 @@ namespace BSP
         gpio_pad_select_gpio(GPIO_NUM_38);
         gpio_set_direction(GPIO_NUM_38, GPIO_MODE_INPUT);
 
-        //const char mount_point[] = MOUNT_POINT;
         ESP_LOGI(SDTAG, "Initializing SD Card");
 
         if (gpio_get_level(GPIO_NUM_38) == 1)
@@ -70,7 +69,7 @@ namespace BSP
             slot_config.gpio_cs = PIN_NUM_SD_CS;
             slot_config.host_id = (spi_host_device_t)host.slot;
             ESP_LOGI(SDTAG, "Mounting SD Card");
-            ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config, &card);
+            ret = esp_vfs_fat_sdspi_mount(mount_point.c_str(), &host, &slot_config, &mount_config, &card);
         }
 
         if (ret != ESP_OK)
@@ -103,7 +102,7 @@ namespace BSP
             }
 
             // All done, unmount partition and disable SDMMC or SPI peripheral
-            esp_vfs_fat_sdcard_unmount(mount_point, card);
+            esp_vfs_fat_sdcard_unmount(mount_point.c_str(), card);
             ESP_LOGI(SDTAG, "Card unmounted");
             //deinitialize the bus after all devices are removed
             spi_bus_free((spi_host_device_t)host.slot);
@@ -121,7 +120,7 @@ namespace BSP
 
     esp_err_t SD::OpenFile(const std::string &file_name)
     {
-        std::string full_file_path = MOUNT_POINT "/" + file_name;
+        std::string full_file_path = mount_point + "/" + file_name;
 
         if (initialized && f == NULL)
         {
@@ -162,7 +161,7 @@ namespace BSP
 
     void SD::DeleteFile(std::string &file_name)
     {
-        std::string full_file_path = MOUNT_POINT "/" + file_name;
+        std::string full_file_path = mount_point + "/" + file_name;
 
         // Check if destination file exists before deleting
         struct stat st;

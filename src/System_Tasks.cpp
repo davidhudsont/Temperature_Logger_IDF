@@ -18,7 +18,6 @@
 #include <sys/unistd.h>
 #include <sys/stat.h>
 
-static const char *SDTAG = "SDCard";
 static std::string temperaturef;
 static std::string datetime;
 
@@ -55,54 +54,6 @@ void delay(uint32_t time_ms)
     vTaskDelay(time_ms / portTICK_PERIOD_MS);
 }
 
-static void exampleFileTest()
-{
-    ESP_LOGI(SDTAG, "Opening file");
-    FILE *f = fopen(MOUNT_POINT "/hello.txt", "w");
-    if (f == NULL)
-    {
-        ESP_LOGE(SDTAG, "Failed to open file for writing");
-    }
-    else
-    {
-        fprintf(f, "Hello World!\n");
-        fclose(f);
-        ESP_LOGI(SDTAG, "File written");
-        // Check if destination file exists before renaming
-        struct stat st;
-        if (stat(MOUNT_POINT "/foo.txt", &st) == 0)
-        {
-            // Delete it if it exists
-            unlink(MOUNT_POINT "/foo.txt");
-        }
-
-        // Rename original file
-        ESP_LOGI(SDTAG, "Renaming file");
-        if (rename(MOUNT_POINT "/hello.txt", MOUNT_POINT "/foo.txt") != 0)
-        {
-            ESP_LOGE(SDTAG, "Rename failed");
-        }
-
-        // Open renamed file for reading
-        ESP_LOGI(SDTAG, "Reading file");
-        f = fopen(MOUNT_POINT "/foo.txt", "r");
-        if (f == NULL)
-        {
-            ESP_LOGE(SDTAG, "Failed to open file for reading");
-        }
-        char line[64];
-        fgets(line, sizeof(line), f);
-        fclose(f);
-        // strip newline
-        char *pos = strchr(line, '\n');
-        if (pos)
-        {
-            *pos = '\0';
-        }
-        ESP_LOGI(SDTAG, "Read from file: '%s'\n", line);
-    }
-}
-
 static void sdcard_task(void *pvParameter)
 {
     BSP::SD sd;
@@ -120,7 +71,6 @@ static void sdcard_task(void *pvParameter)
             }
             else if (msg.id == COMMAND_WRITE_DISK)
             {
-                exampleFileTest();
             }
             else if (msg.id == COMMAND_START_LOG)
             {
