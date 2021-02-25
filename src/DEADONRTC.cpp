@@ -97,7 +97,7 @@ void RTCDS3234::Begin()
     err = spi.Init(clock_speed);
     if (err != ESP_OK)
     {
-        printf("Spi Configuration Error\n");
+        ESP_LOGE("RTC", "Spi Configuration Error");
     }
 }
 

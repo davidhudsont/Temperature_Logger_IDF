@@ -48,22 +48,22 @@ A temperature logging device using the ESP32 Micro-controller with the IDF RTOS
 * time -h 7 -h 0 (Set clock to hour 7 AM)
 * time -t 13 (Set clock to hour 13)
 
-![alt text][console_cap1]
+![Console Screen Capture](images/Console_Capture.JPG)
 
-[console_cap1]: https://github.com/davidhudsont/Temperature_Logger_IDF/blob/master/images/Console_Capture.JPG "Console Screen Capture"
+![Console Screen Capture 2](images/Console_Capture2.JPG)
 
 ## Links
 
-## TMP102
+### TMP102
 
 * [TMP102 DataSheet](https://www.sparkfun.com/datasheets/Sensors/Temperature/tmp102.pdf)
 * [TMP102 Hookup Guide](https://learn.sparkfun.com/tutorials/tmp102-digital-temperature-sensor-hookup-guide)
 
-## DS3234 DeadOn RTC
+### DS3234 DeadOn RTC
 
 * [DS3234 DataSheet](https://www.sparkfun.com/datasheets/BreakoutBoards/DS3234.pdf)
 * [DS3234 Hookup Guide](https://learn.sparkfun.com/tutorials/deadon-rtc-breakout-hookup-guide)
 
-## SparkFun micro SD Card Breakout
+### SparkFun micro SD Card Breakout
 
 * [Micro SD Card Breakout](https://www.sparkfun.com/products/544)

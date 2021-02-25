@@ -17,6 +17,7 @@ int main()
 #include <string.h>
 #include "sdkconfig.h"
 #include "System_Tasks.h"
+#include "esp_log.h"
 
 extern "C"
 {
@@ -26,7 +27,7 @@ extern "C"
 // cppcheck-suppress unusedFunction
 void app_main()
 {
-    printf("Starting Tasks!\n");
+    ESP_LOGI("Main", "Starting Tasks");
     Create_Task_Queues();
     Create_Tasks();
 }
