@@ -15,22 +15,27 @@
 
 #define BUFFER_SIZE (1024)
 
-class UART
+namespace BSP
 {
-private:
-    uart_config_t m_config;
-    int m_tx_pin;
-    int m_rx_pin;
-    uart_port_t m_port;
 
-public:
-    void Begin(int buadrate, int TX_Pin, int RX_Pin, uart_port_t port);
+    class UART
+    {
+    private:
+        uart_config_t m_config;
+        int m_tx_pin;
+        int m_rx_pin;
+        uart_port_t m_port;
 
-    int BurstRead(uint8_t *data, uint32_t len);
-    void WriteBurst(uint8_t *data, uint32_t len);
-    void Write(uint8_t data);
+    public:
+        void Begin(int buadrate, int TX_Pin, int RX_Pin, uart_port_t port);
 
-    void Flush();
+        int BurstRead(uint8_t *data, uint32_t len);
+        void WriteBurst(uint8_t *data, uint32_t len);
+        void Write(uint8_t data);
 
-    void GetBufferedDataLength(size_t *len);
-};
+        void Flush();
+
+        void GetBufferedDataLength(size_t *len);
+    };
+
+}
