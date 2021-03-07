@@ -39,3 +39,9 @@
 #define CONVERSION_RATE2 (CONFIG_CR0)              // 1Hz
 #define CONVERSION_RATE3 (CONFIG_CR1)              // 4Hz
 #define CONVERSION_RATE4 (CONFIG_CR0 | CONFIG_CR1) // 8Hz
+
+// Fault Settings
+#define FAULT_SETTING1 (0x00)
+#define FAULT_SETTING2 (CONFIG_F0)
+#define FAULT_SETTING3 (CONFIG_F1)
+#define FAULT_SETTING4 (CONFIG_F1 | CONFIG_F0)

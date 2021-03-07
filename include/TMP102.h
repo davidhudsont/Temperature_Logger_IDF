@@ -4,25 +4,34 @@
 #include "TMP102Registers.h"
 #include <string>
 
-typedef enum CONVERSION_MODES
+enum CONVERSION_MODES
 {
-    CONVERSION_MODE_0 = 0,
-    CONVERSION_MODE_1 = 1,
-    CONVERSION_MODE_2 = 2,
-    CONVERSION_MODE_3 = 3
-} CONVERSION_MODES;
+    CONVERSION_MODE_0 = CONVERSION_RATE1, // 0.25 Hz
+    CONVERSION_MODE_1 = CONVERSION_RATE2, // 1 Hz
+    CONVERSION_MODE_2 = CONVERSION_RATE3, // 4 Hz
+    CONVERSION_MODE_3 = CONVERSION_RATE4, // 8 Hz
+};
+
+enum FAULT_SETTINGS
+{
+    CFAULTS1 = FAULT_SETTING1, // Consecutive faults 1
+    CFAULTS2 = FAULT_SETTING2, // Consecutive faults 2
+    CFAULTS4 = FAULT_SETTING3, // Consecutive faults 4
+    CFAULTS6 = FAULT_SETTING4, // Consecutive faults 6
+};
+
+constexpr float maxTHigh = 150.0f;
+constexpr float minTLow = -55.0f;
+
+constexpr int16_t maxPositiveTemp12bit = 0x07FF;
+constexpr int16_t maxPositiveTemp13bit = 0x0FFF;
 
 class TMP102
 {
 private:
-    uint8_t raw_temp[2];
     uint8_t config[2];
 
-    uint16_t tlow;
-    uint16_t thigh;
     float temperature;
-
-    bool sleep_mode;
 
     BSP::I2C i2c;
 
@@ -61,9 +70,14 @@ public:
 
     /**
      * @brief Put the TMP102 device to sleep
-     * @param bool sleep 
      */
-    void Sleep(bool sleep);
+    void Sleep();
+
+    /**
+     * @brief Wake up the TMP102
+     * 
+     */
+    void Wake();
 
     /**
      * @brief Configure the one shot

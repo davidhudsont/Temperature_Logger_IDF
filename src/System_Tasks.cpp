@@ -257,7 +257,7 @@ static void tmp102_task(void *pvParameter)
     tmp102.Begin();
     tmp102.Set_Conversion_Rate(CONVERSION_MODE_1);
     delay(100);
-    tmp102.Sleep(true);
+    tmp102.Sleep();
     delay(300);
     OneShotTemperatureRead(tmp102);
     OneShotTemperatureRead(tmp102);
