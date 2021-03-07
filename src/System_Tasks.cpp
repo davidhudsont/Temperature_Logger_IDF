@@ -11,6 +11,7 @@
 #include "freertos/semphr.h"
 #include "DEADONRTC.h"
 #include "TMP102.h"
+#include "LCD.h"
 #include "bspConsole.h"
 #include "linenoise/linenoise.h"
 #include "esp_console.h"
@@ -28,6 +29,7 @@ static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
 static void console_task(void *pvParameter);
 static void sdcard_task(void *pvParameter);
+static void lcd_task(void *pvParameter);
 
 void Create_Task_Queues(void)
 {
@@ -38,10 +40,12 @@ void Create_Task_Queues(void)
 
 void Create_Tasks(void)
 {
+    // Larger number equals higher priority
     xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 3, NULL, 4, NULL);
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 4, NULL, 7, NULL);
     xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
+    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 3, NULL, 3, NULL);
 }
 
 /**
@@ -356,5 +360,21 @@ static void console_task(void *pvParameter)
         }
 
         linenoiseFree(line);
+    }
+}
+
+static void lcd_task(void *pvParameter)
+{
+    LCD lcd;
+    lcd.Begin();
+
+    lcd.ResetCursor();
+
+    while (1)
+    {
+        lcd.ResetCursor();
+        std::string logline = datetime + ", " + temperaturef;
+        lcd.WriteCharacters(logline.c_str(), logline.length());
+        delay(10000);
     }
 }
