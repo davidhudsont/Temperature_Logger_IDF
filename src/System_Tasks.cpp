@@ -19,8 +19,9 @@
 #include <sys/unistd.h>
 #include <sys/stat.h>
 
-static std::string temperaturef;
-static std::string datetime;
+static std::string logtemperaturef;
+static std::string logtime;
+static std::string logdate;
 
 static SemaphoreHandle_t log_semiphore;
 static SemaphoreHandle_t alarm_semiphore;
@@ -41,11 +42,11 @@ void Create_Task_Queues(void)
 void Create_Tasks(void)
 {
     // Larger number equals higher priority
-    xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 3, NULL, 4, NULL);
+    xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 4, NULL, 7, NULL);
     xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
-    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 3, NULL, 3, NULL);
+    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 4, NULL, 3, NULL);
 }
 
 /**
@@ -103,7 +104,7 @@ static void sdcard_task(void *pvParameter)
         }
         if (xSemaphoreTake(log_semiphore, 0))
         {
-            std::string logline = datetime + ", " + temperaturef;
+            std::string logline = logdate + ", " + logtime + ", " + logtemperaturef;
             ESP_LOGI("LOG", "%s", logline.c_str());
             if (sd.IsFileOpen())
             {
@@ -180,14 +181,16 @@ static void rtc_intr_task(void *pvParameter)
             {
                 ESP_LOGI("RTC", "ALARM1 Triggered");
                 rtc.READ_DATETIME();
-                datetime = rtc.DATETIME_TOSTRING();
-                ESP_LOGI("RTC", "%s", datetime.c_str());
+                logdate = rtc.DATE_TOSTRING();
+                logtime = rtc.TIME_TOSTRING();
+                ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
             }
             if (alarm2_flag)
             {
                 ESP_LOGI("RTC", "ALARM2 Triggered");
                 rtc.READ_DATETIME();
-                datetime = rtc.DATETIME_TOSTRING();
+                logdate = rtc.DATE_TOSTRING();
+                logtime = rtc.TIME_TOSTRING();
                 xSemaphoreGive(alarm_semiphore);
             }
         }
@@ -199,8 +202,9 @@ static void rtc_intr_task(void *pvParameter)
             {
             case COMMAND_GET_DATETIME:
                 rtc.READ_DATETIME();
-                datetime = rtc.DATETIME_TOSTRING();
-                ESP_LOGI("RTC", "%s", datetime.c_str());
+                logdate = rtc.DATE_TOSTRING();
+                logtime = rtc.TIME_TOSTRING();
+                ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
                 break;
             case COMMAND_SET_SECONDS:
                 rtc.WRITE_SECONDS(cmd_msg.arg1);
@@ -271,8 +275,8 @@ static void tmp102_task(void *pvParameter)
         if (xSemaphoreTake(alarm_semiphore, 0))
         {
             OneShotTemperatureRead(tmp102);
-            temperaturef = tmp102.Get_TemperatureF_ToString();
-            ESP_LOGI("TMP", "%s%cF", temperaturef.c_str(), char(248));
+            logtemperaturef = tmp102.Get_TemperatureF_ToString();
+            ESP_LOGI("TMP", "%sF", logtemperaturef.c_str());
             xSemaphoreGive(log_semiphore);
         }
 
@@ -372,9 +376,12 @@ static void lcd_task(void *pvParameter)
 
     while (1)
     {
-        lcd.ResetCursor();
-        std::string logline = datetime + ", " + temperaturef;
-        lcd.WriteCharacters(logline.c_str(), logline.length());
+        lcd.SetCursor(0, 0);
+        lcd.WriteCharacters(logdate.c_str(), logdate.length());
+        lcd.SetCursor(1, 0);
+        lcd.WriteCharacters(logtime.c_str(), logtime.length());
+        lcd.SetCursor(2, 0);
+        lcd.WriteCharacters(logtemperaturef.c_str(), logtemperaturef.length());
         delay(10000);
     }
 }

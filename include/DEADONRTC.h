@@ -99,7 +99,6 @@ private:
     void Register_Burst_Write(uint8_t address, uint8_t *data, uint32_t len);
 
 public:
-
     /**
      * @brief Construct a new RTCDS3234 object
      * 
@@ -138,11 +137,18 @@ public:
     void WRITE_BUILD_DATETIME();
 
     /**
-     * @brief Get Date time string
+     * @brief Get Date string
      * 
      * @return std::string 
      */
-    std::string DATETIME_TOSTRING();
+    std::string DATE_TOSTRING();
+
+    /**
+     * @brief Get the Time string
+     * 
+     * @return std::string 
+     */
+    std::string TIME_TOSTRING();
 
     void WRITE_SECONDS(uint8_t second);
     uint8_t READ_SECONDS();
