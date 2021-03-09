@@ -19,6 +19,8 @@ typedef enum COMMAND_ID
     COMMAND_START_LOG,
     COMMAND_STOP_LOG,
     COMMAND_DELETE_LOG,
+    COMMAND_LCD_DISPLAY_OFF,
+    COMMAND_LCD_DISPLAY_ON,
 } COMMAND_ID;
 
 typedef struct COMMAND_MESSAGE_STRUCT
@@ -32,6 +34,7 @@ typedef struct COMMAND_MESSAGE_STRUCT
 int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg);
 int recieve_tmp_command(COMMAND_MESSAGE_STRUCT *msg);
 int recieve_sdcard_command(COMMAND_MESSAGE_STRUCT *msg);
+int recieve_lcd_command(COMMAND_MESSAGE_STRUCT *msg);
 
 /**
  * @brief Register all the console commands

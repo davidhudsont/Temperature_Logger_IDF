@@ -12,6 +12,7 @@
 static QueueHandle_t rtc_command_queue;    // Queue to send device objects between tasks
 static QueueHandle_t tmp_command_queue;    // Queue to send device objects between tasks
 static QueueHandle_t sdcard_command_queue; // Queue to send device objects between tasks
+static QueueHandle_t lcd_command_queue;
 
 static void register_version(void);
 static void register_time(void);
@@ -20,6 +21,7 @@ static void register_getdatetime(void);
 static void register_temperature(void);
 static void register_adjust_log_level_command(void);
 static void register_sdcard_command(void);
+static void register_lcd_command(void);
 
 int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg)
 {
@@ -34,6 +36,11 @@ int recieve_sdcard_command(COMMAND_MESSAGE_STRUCT *msg)
     return xQueueReceive(sdcard_command_queue, msg, 30);
 }
 
+int recieve_lcd_command(COMMAND_MESSAGE_STRUCT *msg)
+{
+    return xQueueReceive(lcd_command_queue, msg, 30);
+}
+
 // cppcheck-suppress unusedFunction
 void register_system(void)
 {
@@ -44,6 +51,7 @@ void register_system(void)
     register_temperature();
     register_adjust_log_level_command();
     register_sdcard_command();
+    register_lcd_command();
 }
 
 void register_queues(void)
@@ -51,6 +59,7 @@ void register_queues(void)
     rtc_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
     tmp_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
     sdcard_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
+    lcd_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
 }
 
 static int get_version(int argc, char **argv)
@@ -408,6 +417,48 @@ static void register_sdcard_command(void)
         .hint = NULL,
         .func = &sdcard,
         .argtable = &sdcard_args};
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+static struct
+{
+    struct arg_int *display_toggle;
+    struct arg_end *end;
+} lcd_args;
+
+static int lcd(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&lcd_args);
+
+    if (nerrors != 0)
+    {
+        arg_print_errors(stderr, lcd_args.end, argv[0]);
+        return 1;
+    }
+
+    else if (lcd_args.display_toggle->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        msg.id = lcd_args.display_toggle->ival[0] ? COMMAND_LCD_DISPLAY_ON : COMMAND_LCD_DISPLAY_OFF;
+        xQueueSend(lcd_command_queue, (void *)&msg, 30);
+    }
+
+    return 0;
+}
+
+static void register_lcd_command(void)
+{
+
+    lcd_args.display_toggle = arg_int0("d", NULL, "<bool>", "Get Disk Information");
+    lcd_args.end = arg_end(2);
+
+    const esp_console_cmd_t cmd = {
+        .command = "lcd",
+        .help = "LCD Commands",
+        .hint = NULL,
+        .func = &lcd,
+        .argtable = &lcd_args};
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }

@@ -25,6 +25,9 @@ static std::string logdate;
 
 static SemaphoreHandle_t log_semiphore;
 static SemaphoreHandle_t alarm_semiphore;
+static SemaphoreHandle_t lcd_semiphore;
+
+static TaskHandle_t lcdTaskHandle;
 
 static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
@@ -36,6 +39,7 @@ void Create_Task_Queues(void)
 {
     log_semiphore = xSemaphoreCreateBinary();
     alarm_semiphore = xSemaphoreCreateBinary();
+    lcd_semiphore = xSemaphoreCreateBinary();
     register_queues();
 }
 
@@ -44,9 +48,9 @@ void Create_Tasks(void)
     // Larger number equals higher priority
     xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
-    xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 4, NULL, 7, NULL);
+    xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
     xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
-    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 4, NULL, 3, NULL);
+    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 4, NULL, 3, &lcdTaskHandle);
 }
 
 /**
@@ -192,6 +196,7 @@ static void rtc_intr_task(void *pvParameter)
                 logdate = rtc.DATE_TOSTRING();
                 logtime = rtc.TIME_TOSTRING();
                 xSemaphoreGive(alarm_semiphore);
+                xSemaphoreGive(lcd_semiphore);
             }
         }
 
@@ -233,6 +238,7 @@ static void rtc_intr_task(void *pvParameter)
             default:
                 break;
             }
+            xSemaphoreGive(lcd_semiphore);
         }
     }
 }
@@ -298,6 +304,8 @@ static void tmp102_task(void *pvParameter)
             default:
                 break;
             }
+            logtemperaturef = tmp102.Get_TemperatureF_ToString();
+            xSemaphoreGive(lcd_semiphore);
         }
     }
 }
@@ -376,12 +384,28 @@ static void lcd_task(void *pvParameter)
 
     while (1)
     {
-        lcd.SetCursor(0, 0);
-        lcd.WriteCharacters(logdate.c_str(), logdate.length());
-        lcd.SetCursor(1, 0);
-        lcd.WriteCharacters(logtime.c_str(), logtime.length());
-        lcd.SetCursor(2, 0);
-        lcd.WriteCharacters(logtemperaturef.c_str(), logtemperaturef.length());
-        delay(10000);
+        COMMAND_MESSAGE_STRUCT msg;
+        if (xSemaphoreTake(lcd_semiphore, 100))
+        {
+            lcd.SetCursor(0, 0);
+            lcd.WriteCharacters(logdate.c_str(), logdate.length());
+            lcd.SetCursor(1, 0);
+            lcd.WriteCharacters(logtime.c_str(), logtime.length());
+            lcd.SetCursor(2, 0);
+            lcd.WriteCharacters(logtemperaturef.c_str(), logtemperaturef.length());
+        }
+        if (recieve_lcd_command(&msg))
+        {
+            if (msg.id == COMMAND_LCD_DISPLAY_ON)
+            {
+                ESP_LOGI("LCD", "DISPLAY ON");
+                lcd.Display();
+            }
+            else
+            {
+                ESP_LOGI("LCD", "DISPLAY OFF");
+                lcd.NoDisplay();
+            }
+        }
     }
 }
