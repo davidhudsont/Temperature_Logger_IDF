@@ -1,5 +1,10 @@
 #include "LCD.h"
 
+static long map(long x, long in_min, long in_max, long out_min, long out_max)
+{
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 static void delay(int ms)
 {
     vTaskDelay(ms / portTICK_PERIOD_MS);
@@ -114,4 +119,65 @@ void LCD::SetCursor(uint8_t row, uint8_t col)
         col = 19;
 
     SpecialCommand(LCD_SETDDRAMADDR | (col + row_offsets[row]));
+}
+
+void LCD::SetContrast(uint8_t contrast)
+{
+    BeginTransmit();
+    Write(SETTING_COMMAND);
+    Write(CONTRAST_COMMAND);
+    Write(contrast);
+    EndTransmit();
+
+    delay(10);
+}
+
+void LCD::SetBackLight(uint8_t r, uint8_t g, uint8_t b)
+{
+
+    uint8_t red = 128 + map(r, 0, 255, 0, 29);
+    uint8_t green = 158 + map(g, 0, 255, 0, 29);
+    uint8_t blue = 188 + map(b, 0, 255, 0, 29);
+
+    BeginTransmit();
+
+    displayControl &= ~LCD_DISPLAYON;
+    Write(SPECIAL_COMMAND);
+    Write(LCD_DISPLAYCONTROL | displayControl);
+
+    Write(SETTING_COMMAND);
+    Write(red);
+    Write(SETTING_COMMAND);
+    Write(green);
+    Write(SETTING_COMMAND);
+    Write(blue);
+
+    displayControl |= LCD_DISPLAYON;
+    Write(SPECIAL_COMMAND);
+    Write(LCD_DISPLAYCONTROL | displayControl);
+    EndTransmit();
+
+    delay(50);
+}
+
+void LCD::SetBackLightFast(uint8_t r, uint8_t g, uint8_t b)
+{
+    //send commands to the display to set backlights
+    BeginTransmit();        // transmit to device
+    Write(SETTING_COMMAND); //Send special command character
+    Write(SET_RGB_COMMAND); //Send the set RGB character '+' or plus
+    Write(r);               //Send the red value
+    Write(g);               //Send the green value
+    Write(b);               //Send the blue value
+    EndTransmit();          //Stop transmission
+    delay(10);
+}
+
+void LCD::DisableSystemMessages()
+{
+    BeginTransmit();                       // transmit to device
+    Write(SETTING_COMMAND);                //Send special command character
+    Write(DISABLE_SYSTEM_MESSAGE_DISPLAY); //Send the set '.' character
+    EndTransmit();                         //Stop transmission
+    delay(10);
 }

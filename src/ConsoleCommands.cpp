@@ -424,6 +424,9 @@ static void register_sdcard_command(void)
 static struct
 {
     struct arg_int *display_toggle;
+    struct arg_int *contrast;
+    struct arg_int *backlight;
+    struct arg_lit *clear;
     struct arg_end *end;
 } lcd_args;
 
@@ -437,10 +440,48 @@ static int lcd(int argc, char **argv)
         return 1;
     }
 
-    else if (lcd_args.display_toggle->count)
+    if (lcd_args.display_toggle->count)
     {
         COMMAND_MESSAGE_STRUCT msg;
         msg.id = lcd_args.display_toggle->ival[0] ? COMMAND_LCD_DISPLAY_ON : COMMAND_LCD_DISPLAY_OFF;
+        xQueueSend(lcd_command_queue, (void *)&msg, 30);
+    }
+    else if (lcd_args.contrast->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        msg.id = COMMAND_LCD_SET_CONTRAST;
+        msg.arg1 = lcd_args.contrast->ival[0];
+        xQueueSend(lcd_command_queue, (void *)&msg, 30);
+    }
+    else if (lcd_args.backlight->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        msg.id = COMMAND_LCD_SET_BACKLIGHT;
+
+        if (lcd_args.backlight->count == 1)
+        {
+            msg.arg1 = lcd_args.backlight->ival[0];
+            msg.arg2 = 0;
+            msg.arg3 = 0;
+        }
+        else if (lcd_args.backlight->count == 2)
+        {
+            msg.arg1 = lcd_args.backlight->ival[0];
+            msg.arg2 = lcd_args.backlight->ival[1];
+            msg.arg3 = 0;
+        }
+        else if (lcd_args.backlight->count == 3)
+        {
+            msg.arg1 = lcd_args.backlight->ival[0];
+            msg.arg2 = lcd_args.backlight->ival[1];
+            msg.arg3 = lcd_args.backlight->ival[2];
+        }
+        xQueueSend(lcd_command_queue, (void *)&msg, 30);
+    }
+    else if (lcd_args.clear->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        msg.id = COMMAND_LCD_CLEAR_DISPLAY;
         xQueueSend(lcd_command_queue, (void *)&msg, 30);
     }
 
@@ -450,7 +491,10 @@ static int lcd(int argc, char **argv)
 static void register_lcd_command(void)
 {
 
-    lcd_args.display_toggle = arg_int0("d", NULL, "<bool>", "Get Disk Information");
+    lcd_args.display_toggle = arg_int0("d", NULL, "<bool>", "Turn Display On/Off");
+    lcd_args.contrast = arg_int0("c", NULL, "<0-255>", "Set the Contrast");
+    lcd_args.backlight = arg_intn("b", NULL, "<0-255>r, <0-255>g, <0-255>b", 0, 3, "Set the backlight rgb");
+    lcd_args.clear = arg_lit0("r", NULL, "Clear the Display");
     lcd_args.end = arg_end(2);
 
     const esp_console_cmd_t cmd = {

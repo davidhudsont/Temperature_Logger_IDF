@@ -381,6 +381,7 @@ static void lcd_task(void *pvParameter)
     lcd.Begin();
 
     lcd.ResetCursor();
+    lcd.DisableSystemMessages();
 
     while (1)
     {
@@ -401,10 +402,24 @@ static void lcd_task(void *pvParameter)
                 ESP_LOGI("LCD", "DISPLAY ON");
                 lcd.Display();
             }
-            else
+            else if (msg.id == COMMAND_LCD_DISPLAY_OFF)
             {
                 ESP_LOGI("LCD", "DISPLAY OFF");
                 lcd.NoDisplay();
+            }
+            else if (msg.id == COMMAND_LCD_SET_CONTRAST)
+            {
+                ESP_LOGI("LCD", "Set Contrast %d", msg.arg1);
+                lcd.SetContrast(msg.arg1);
+            }
+            else if (msg.id == COMMAND_LCD_SET_BACKLIGHT)
+            {
+                ESP_LOGI("LCD", "Set Backlight r %d, g %d, b %d", msg.arg1, msg.arg2, msg.arg3);
+                lcd.SetBackLightFast(msg.arg1, msg.arg2, msg.arg3);
+            }
+            else if (msg.id == COMMAND_LCD_CLEAR_DISPLAY)
+            {
+                lcd.ResetCursor();
             }
         }
     }

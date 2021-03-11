@@ -78,4 +78,11 @@ public:
     void Command(uint8_t command);
 
     void SetCursor(uint8_t row, uint8_t col);
+
+    void SetContrast(uint8_t contrast);
+
+    void SetBackLight(uint8_t r, uint8_t g, uint8_t b);
+    void SetBackLightFast(uint8_t r, uint8_t g, uint8_t b);
+
+    void DisableSystemMessages();
 };
