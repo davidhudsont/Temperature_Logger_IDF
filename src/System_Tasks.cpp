@@ -419,7 +419,7 @@ static void lcd_task(void *pvParameter)
             }
             else if (msg.id == COMMAND_LCD_CLEAR_DISPLAY)
             {
-                lcd.ResetCursor();
+                lcd.Clear();
             }
         }
     }

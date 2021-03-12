@@ -65,6 +65,8 @@ private:
 public:
     void Begin();
 
+    void Clear();
+
     void NoDisplay();
     void Display();
 

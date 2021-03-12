@@ -67,6 +67,12 @@ void LCD::Command(uint8_t command)
     delay(20);
 }
 
+void LCD::Clear()
+{
+    Command(CLEAR_COMMAND);
+    delay(10);
+}
+
 void LCD::Display()
 {
     displayControl |= LCD_DISPLAYON;
