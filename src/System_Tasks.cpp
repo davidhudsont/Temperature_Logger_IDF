@@ -11,6 +11,7 @@
 #include "freertos/semphr.h"
 #include "DEADONRTC.h"
 #include "TMP102.h"
+#include "LCD.h"
 #include "bspConsole.h"
 #include "linenoise/linenoise.h"
 #include "esp_console.h"
@@ -18,30 +19,38 @@
 #include <sys/unistd.h>
 #include <sys/stat.h>
 
-static std::string temperaturef;
-static std::string datetime;
+static std::string logtemperaturef;
+static std::string logtime;
+static std::string logdate;
 
 static SemaphoreHandle_t log_semiphore;
 static SemaphoreHandle_t alarm_semiphore;
+static SemaphoreHandle_t lcd_semiphore;
+
+static TaskHandle_t lcdTaskHandle;
 
 static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
 static void console_task(void *pvParameter);
 static void sdcard_task(void *pvParameter);
+static void lcd_task(void *pvParameter);
 
 void Create_Task_Queues(void)
 {
     log_semiphore = xSemaphoreCreateBinary();
     alarm_semiphore = xSemaphoreCreateBinary();
+    lcd_semiphore = xSemaphoreCreateBinary();
     register_queues();
 }
 
 void Create_Tasks(void)
 {
-    xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 3, NULL, 4, NULL);
+    // Larger number equals higher priority
+    xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
-    xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 4, NULL, 7, NULL);
+    xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
     xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
+    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 4, NULL, 3, &lcdTaskHandle);
 }
 
 /**
@@ -99,7 +108,7 @@ static void sdcard_task(void *pvParameter)
         }
         if (xSemaphoreTake(log_semiphore, 0))
         {
-            std::string logline = datetime + ", " + temperaturef;
+            std::string logline = logdate + ", " + logtime + ", " + logtemperaturef;
             ESP_LOGI("LOG", "%s", logline.c_str());
             if (sd.IsFileOpen())
             {
@@ -176,15 +185,18 @@ static void rtc_intr_task(void *pvParameter)
             {
                 ESP_LOGI("RTC", "ALARM1 Triggered");
                 rtc.READ_DATETIME();
-                datetime = rtc.DATETIME_TOSTRING();
-                ESP_LOGI("RTC", "%s", datetime.c_str());
+                logdate = rtc.DATE_TOSTRING();
+                logtime = rtc.TIME_TOSTRING();
+                ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
             }
             if (alarm2_flag)
             {
                 ESP_LOGI("RTC", "ALARM2 Triggered");
                 rtc.READ_DATETIME();
-                datetime = rtc.DATETIME_TOSTRING();
+                logdate = rtc.DATE_TOSTRING();
+                logtime = rtc.TIME_TOSTRING();
                 xSemaphoreGive(alarm_semiphore);
+                xSemaphoreGive(lcd_semiphore);
             }
         }
 
@@ -195,8 +207,9 @@ static void rtc_intr_task(void *pvParameter)
             {
             case COMMAND_GET_DATETIME:
                 rtc.READ_DATETIME();
-                datetime = rtc.DATETIME_TOSTRING();
-                ESP_LOGI("RTC", "%s", datetime.c_str());
+                logdate = rtc.DATE_TOSTRING();
+                logtime = rtc.TIME_TOSTRING();
+                ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
                 break;
             case COMMAND_SET_SECONDS:
                 rtc.WRITE_SECONDS(cmd_msg.arg1);
@@ -225,6 +238,7 @@ static void rtc_intr_task(void *pvParameter)
             default:
                 break;
             }
+            xSemaphoreGive(lcd_semiphore);
         }
     }
 }
@@ -267,8 +281,8 @@ static void tmp102_task(void *pvParameter)
         if (xSemaphoreTake(alarm_semiphore, 0))
         {
             OneShotTemperatureRead(tmp102);
-            temperaturef = tmp102.Get_TemperatureF_ToString();
-            ESP_LOGI("TMP", "%s%cF", temperaturef.c_str(), char(248));
+            logtemperaturef = tmp102.Get_TemperatureF_ToString();
+            ESP_LOGI("TMP", "%sF", logtemperaturef.c_str());
             xSemaphoreGive(log_semiphore);
         }
 
@@ -290,6 +304,8 @@ static void tmp102_task(void *pvParameter)
             default:
                 break;
             }
+            logtemperaturef = tmp102.Get_TemperatureF_ToString();
+            xSemaphoreGive(lcd_semiphore);
         }
     }
 }
@@ -356,5 +372,55 @@ static void console_task(void *pvParameter)
         }
 
         linenoiseFree(line);
+    }
+}
+
+static void lcd_task(void *pvParameter)
+{
+    LCD lcd;
+    lcd.Begin();
+
+    lcd.ResetCursor();
+    lcd.DisableSystemMessages();
+
+    while (1)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        if (xSemaphoreTake(lcd_semiphore, 100))
+        {
+            lcd.SetCursor(0, 0);
+            lcd.WriteCharacters(logdate.c_str(), logdate.length());
+            lcd.SetCursor(1, 0);
+            lcd.WriteCharacters(logtime.c_str(), logtime.length());
+            lcd.SetCursor(2, 0);
+            lcd.WriteCharacters(logtemperaturef.c_str(), logtemperaturef.length());
+        }
+        if (recieve_lcd_command(&msg))
+        {
+            if (msg.id == COMMAND_LCD_DISPLAY_ON)
+            {
+                ESP_LOGI("LCD", "DISPLAY ON");
+                lcd.Display();
+            }
+            else if (msg.id == COMMAND_LCD_DISPLAY_OFF)
+            {
+                ESP_LOGI("LCD", "DISPLAY OFF");
+                lcd.NoDisplay();
+            }
+            else if (msg.id == COMMAND_LCD_SET_CONTRAST)
+            {
+                ESP_LOGI("LCD", "Set Contrast %d", msg.arg1);
+                lcd.SetContrast(msg.arg1);
+            }
+            else if (msg.id == COMMAND_LCD_SET_BACKLIGHT)
+            {
+                ESP_LOGI("LCD", "Set Backlight r %d, g %d, b %d", msg.arg1, msg.arg2, msg.arg3);
+                lcd.SetBackLightFast(msg.arg1, msg.arg2, msg.arg3);
+            }
+            else if (msg.id == COMMAND_LCD_CLEAR_DISPLAY)
+            {
+                lcd.Clear();
+            }
+        }
     }
 }

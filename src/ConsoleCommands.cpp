@@ -12,6 +12,7 @@
 static QueueHandle_t rtc_command_queue;    // Queue to send device objects between tasks
 static QueueHandle_t tmp_command_queue;    // Queue to send device objects between tasks
 static QueueHandle_t sdcard_command_queue; // Queue to send device objects between tasks
+static QueueHandle_t lcd_command_queue;
 
 static void register_version(void);
 static void register_time(void);
@@ -20,6 +21,7 @@ static void register_getdatetime(void);
 static void register_temperature(void);
 static void register_adjust_log_level_command(void);
 static void register_sdcard_command(void);
+static void register_lcd_command(void);
 
 int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg)
 {
@@ -34,6 +36,11 @@ int recieve_sdcard_command(COMMAND_MESSAGE_STRUCT *msg)
     return xQueueReceive(sdcard_command_queue, msg, 30);
 }
 
+int recieve_lcd_command(COMMAND_MESSAGE_STRUCT *msg)
+{
+    return xQueueReceive(lcd_command_queue, msg, 30);
+}
+
 // cppcheck-suppress unusedFunction
 void register_system(void)
 {
@@ -44,6 +51,7 @@ void register_system(void)
     register_temperature();
     register_adjust_log_level_command();
     register_sdcard_command();
+    register_lcd_command();
 }
 
 void register_queues(void)
@@ -51,6 +59,7 @@ void register_queues(void)
     rtc_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
     tmp_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
     sdcard_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
+    lcd_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
 }
 
 static int get_version(int argc, char **argv)
@@ -408,6 +417,92 @@ static void register_sdcard_command(void)
         .hint = NULL,
         .func = &sdcard,
         .argtable = &sdcard_args};
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+static struct
+{
+    struct arg_int *display_toggle;
+    struct arg_int *contrast;
+    struct arg_int *backlight;
+    struct arg_lit *clear;
+    struct arg_end *end;
+} lcd_args;
+
+static int lcd(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&lcd_args);
+
+    if (nerrors != 0)
+    {
+        arg_print_errors(stderr, lcd_args.end, argv[0]);
+        return 1;
+    }
+
+    if (lcd_args.display_toggle->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        msg.id = lcd_args.display_toggle->ival[0] ? COMMAND_LCD_DISPLAY_ON : COMMAND_LCD_DISPLAY_OFF;
+        xQueueSend(lcd_command_queue, (void *)&msg, 30);
+    }
+    else if (lcd_args.contrast->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        msg.id = COMMAND_LCD_SET_CONTRAST;
+        msg.arg1 = lcd_args.contrast->ival[0];
+        xQueueSend(lcd_command_queue, (void *)&msg, 30);
+    }
+    else if (lcd_args.backlight->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        msg.id = COMMAND_LCD_SET_BACKLIGHT;
+
+        if (lcd_args.backlight->count == 1)
+        {
+            msg.arg1 = lcd_args.backlight->ival[0];
+            msg.arg2 = 0;
+            msg.arg3 = 0;
+        }
+        else if (lcd_args.backlight->count == 2)
+        {
+            msg.arg1 = lcd_args.backlight->ival[0];
+            msg.arg2 = lcd_args.backlight->ival[1];
+            msg.arg3 = 0;
+        }
+        else if (lcd_args.backlight->count == 3)
+        {
+            msg.arg1 = lcd_args.backlight->ival[0];
+            msg.arg2 = lcd_args.backlight->ival[1];
+            msg.arg3 = lcd_args.backlight->ival[2];
+        }
+        xQueueSend(lcd_command_queue, (void *)&msg, 30);
+    }
+    else if (lcd_args.clear->count)
+    {
+        COMMAND_MESSAGE_STRUCT msg;
+        msg.id = COMMAND_LCD_CLEAR_DISPLAY;
+        xQueueSend(lcd_command_queue, (void *)&msg, 30);
+    }
+
+    return 0;
+}
+
+static void register_lcd_command(void)
+{
+
+    lcd_args.display_toggle = arg_int0("d", NULL, "<bool>", "Turn Display On/Off");
+    lcd_args.contrast = arg_int0("c", NULL, "<0-255>", "Set the Contrast");
+    lcd_args.backlight = arg_intn("b", NULL, "<0-255>r, <0-255>g, <0-255>b", 0, 3, "Set the backlight rgb");
+    lcd_args.clear = arg_lit0("r", NULL, "Clear the Display");
+    lcd_args.end = arg_end(2);
+
+    const esp_console_cmd_t cmd = {
+        .command = "lcd",
+        .help = "LCD Commands",
+        .hint = NULL,
+        .func = &lcd,
+        .argtable = &lcd_args};
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
