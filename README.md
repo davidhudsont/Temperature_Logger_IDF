@@ -67,3 +67,7 @@ A temperature logging device using the ESP32 Micro-controller with the IDF RTOS
 ### SparkFun micro SD Card Breakout
 
 * [Micro SD Card Breakout](https://www.sparkfun.com/products/544)
+
+### SparkFun LCD Display
+
+* [LCD Display](https://www.sparkfun.com/products/16398)
