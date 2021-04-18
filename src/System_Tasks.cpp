@@ -29,6 +29,13 @@ static SemaphoreHandle_t lcd_semiphore;
 
 static TaskHandle_t lcdTaskHandle;
 
+// Objects
+static BSP::SD sd;
+static std::string file_name = "TLOG.csv";
+static RTCDS3234 rtc;
+static TMP102 tmp102;
+static LCD lcd;
+
 static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
 static void console_task(void *pvParameter);
@@ -47,10 +54,10 @@ void Create_Tasks(void)
 {
     // Larger number equals higher priority
     xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
-    xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
-    xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
+    xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
+    xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 3, NULL, 7, NULL);
     xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
-    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 4, NULL, 3, &lcdTaskHandle);
+    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 2, NULL, 3, &lcdTaskHandle);
 }
 
 /**
@@ -65,9 +72,7 @@ void delay(uint32_t time_ms)
 
 static void sdcard_task(void *pvParameter)
 {
-    BSP::SD sd;
     sd.Mount();
-    std::string file_name = "TLOG.csv";
 
     while (1)
     {
@@ -119,7 +124,7 @@ static void sdcard_task(void *pvParameter)
     }
 }
 
-void Power_On_Test(RTCDS3234 &rtc)
+void Power_On_Test()
 {
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
     uint8_t data[6] = {0};
@@ -147,7 +152,7 @@ void Power_On_Test(RTCDS3234 &rtc)
     }
 }
 
-void Start_Alarms(RTCDS3234 &rtc)
+void Start_Alarms()
 {
     // Setup the RTC interrupts
     rtc.ISR_Init();
@@ -166,12 +171,11 @@ void Start_Alarms(RTCDS3234 &rtc)
 static void rtc_intr_task(void *pvParameter)
 {
     ESP_LOGI("RTC", "RTC Task Start!");
-    RTCDS3234 rtc;
     COMMAND_MESSAGE_STRUCT cmd_msg;
     rtc.Begin();
 
-    Power_On_Test(rtc);
-    Start_Alarms(rtc);
+    Power_On_Test();
+    Start_Alarms();
 
     while (1)
     {
@@ -243,7 +247,7 @@ static void rtc_intr_task(void *pvParameter)
     }
 }
 
-static void OneShotTemperatureRead(TMP102 &tmp102)
+static void OneShotTemperatureRead()
 {
     static bool oneshot = false;
     if (oneshot == false)
@@ -264,7 +268,6 @@ static void OneShotTemperatureRead(TMP102 &tmp102)
 
 static void tmp102_task(void *pvParameter)
 {
-    TMP102 tmp102;
     COMMAND_MESSAGE_STRUCT cmd_msg;
 
     ESP_LOGI("TMP", "TMP102 Task Start!");
@@ -273,14 +276,14 @@ static void tmp102_task(void *pvParameter)
     delay(100);
     tmp102.Sleep();
     delay(300);
-    OneShotTemperatureRead(tmp102);
-    OneShotTemperatureRead(tmp102);
+    OneShotTemperatureRead();
+    OneShotTemperatureRead();
 
     while (1)
     {
         if (xSemaphoreTake(alarm_semiphore, 0))
         {
-            OneShotTemperatureRead(tmp102);
+            OneShotTemperatureRead();
             logtemperaturef = tmp102.Get_TemperatureF_ToString();
             ESP_LOGI("TMP", "%sF", logtemperaturef.c_str());
             xSemaphoreGive(log_semiphore);
@@ -292,12 +295,12 @@ static void tmp102_task(void *pvParameter)
             switch (cmd_msg.id)
             {
             case COMMAND_GET_TEMPF:
-                OneShotTemperatureRead(tmp102);
+                OneShotTemperatureRead();
                 temperature = tmp102.Get_TemperatureF();
                 ESP_LOGI("TMP", "%3.3fC", temperature);
                 break;
             case COMMAND_GET_TEMPC:
-                OneShotTemperatureRead(tmp102);
+                OneShotTemperatureRead();
                 temperature = tmp102.Get_Temperature();
                 ESP_LOGI("TMP", "%2.3fC", temperature);
                 break;
@@ -377,7 +380,6 @@ static void console_task(void *pvParameter)
 
 static void lcd_task(void *pvParameter)
 {
-    LCD lcd;
     lcd.Begin();
 
     lcd.ResetCursor();
