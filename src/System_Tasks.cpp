@@ -50,7 +50,7 @@ void Create_Tasks(void)
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
     xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
-    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 4, NULL, 3, &lcdTaskHandle);
+    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, &lcdTaskHandle);
 }
 
 /**
@@ -382,6 +382,8 @@ static void lcd_task(void *pvParameter)
 
     lcd.ResetCursor();
     lcd.DisableSystemMessages();
+    lcd.Display();
+    lcd.SetBackLightFast(125, 125, 125);
 
     while (1)
     {
@@ -397,29 +399,28 @@ static void lcd_task(void *pvParameter)
         }
         if (recieve_lcd_command(&msg))
         {
-            if (msg.id == COMMAND_LCD_DISPLAY_ON)
+            switch (msg.id)
             {
+            case COMMAND_LCD_DISPLAY_ON:
                 ESP_LOGI("LCD", "DISPLAY ON");
+                lcd.SetBackLightFast(125, 125, 125);
                 lcd.Display();
-            }
-            else if (msg.id == COMMAND_LCD_DISPLAY_OFF)
-            {
+                break;
+            case COMMAND_LCD_DISPLAY_OFF:
                 ESP_LOGI("LCD", "DISPLAY OFF");
+                lcd.SetBackLightFast(0, 0, 0);
                 lcd.NoDisplay();
-            }
-            else if (msg.id == COMMAND_LCD_SET_CONTRAST)
-            {
+                break;
+            case COMMAND_LCD_SET_CONTRAST:
                 ESP_LOGI("LCD", "Set Contrast %d", msg.arg1);
                 lcd.SetContrast(msg.arg1);
-            }
-            else if (msg.id == COMMAND_LCD_SET_BACKLIGHT)
-            {
+                break;
+            case COMMAND_LCD_SET_BACKLIGHT:
                 ESP_LOGI("LCD", "Set Backlight r %d, g %d, b %d", msg.arg1, msg.arg2, msg.arg3);
                 lcd.SetBackLightFast(msg.arg1, msg.arg2, msg.arg3);
-            }
-            else if (msg.id == COMMAND_LCD_CLEAR_DISPLAY)
-            {
-                lcd.Clear();
+                break;
+            default:
+                break;
             }
         }
     }
