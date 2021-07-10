@@ -434,15 +434,22 @@ static void lcd_task(void *pvParameter)
             {
                 if (event.value)
                 {
+                    lcd.SetBackLightFast(125, 125, 125);
                     lcd.Display();
                 }
                 else
                 {
                     lcd.NoDisplay();
+                    lcd.SetBackLightFast(0, 0, 0);
                 }
                 break;
             }
-
+            case DATA:
+            {
+                ESP_LOGI("BT", "Send Data to App");
+                std::string data = logdate + "\n" + logtime + "\n" + logtemperaturef;
+                BTSendString(data);
+            }
             default:
                 break;
             }

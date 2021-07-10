@@ -20,6 +20,7 @@
 static QueueHandle_t queue;
 
 static const esp_spp_mode_t esp_spp_mode = ESP_SPP_MODE_CB;
+static int connection_handle;
 
 static struct timeval time_new, time_old;
 static long data_num = 0;
@@ -60,11 +61,18 @@ void Parse(std::string &data)
                 }
             }
         }
+        if (tokens[0] == "DATA")
+        {
+            BTEvent event;
+            event.code = DATA;
+            xQueueSend(queue, &event, 10);
+        }
     }
 }
 
 void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 {
+    connection_handle = param->cong.handle;
     switch (event)
     {
     case ESP_SPP_INIT_EVT:
@@ -258,4 +266,11 @@ bool CheckBTEventQueue(BTEvent *event)
 {
     bool ret = xQueueReceive(queue, event, 10);
     return ret;
+}
+
+void BTSendString(std::string text)
+{
+    int len = text.size();
+    std::string msg = text + "\n";
+    esp_spp_write(connection_handle, len, (uint8_t *)msg.c_str());
 }
