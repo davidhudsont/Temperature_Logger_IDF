@@ -417,8 +417,8 @@ static void register_sdcard_command(void)
         .hint = NULL,
         .func = &sdcard,
         .argtable = &sdcard_args};
-
-    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+    // Disable SD Card commands
+    // ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
 static struct
