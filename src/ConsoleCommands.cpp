@@ -9,9 +9,14 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
-static QueueHandle_t rtc_command_queue;    // Queue to send device objects between tasks
-static QueueHandle_t tmp_command_queue;    // Queue to send device objects between tasks
+#define DISABLE_SD_CARD
+
+static QueueHandle_t rtc_command_queue; // Queue to send device objects between tasks
+static QueueHandle_t tmp_command_queue; // Queue to send device objects between tasks
+
+#ifndef DISABLE_SD_CARD
 static QueueHandle_t sdcard_command_queue; // Queue to send device objects between tasks
+#endif
 static QueueHandle_t lcd_command_queue;
 
 static void register_version(void);
@@ -20,21 +25,28 @@ static void register_date(void);
 static void register_getdatetime(void);
 static void register_temperature(void);
 static void register_adjust_log_level_command(void);
+#ifndef DISABLE_SD_CARD
 static void register_sdcard_command(void);
+#endif
+
 static void register_lcd_command(void);
 
 int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg)
 {
     return xQueueReceive(rtc_command_queue, msg, 30);
 }
+
 int recieve_tmp_command(COMMAND_MESSAGE_STRUCT *msg)
 {
     return xQueueReceive(tmp_command_queue, msg, 30);
 }
+
+#ifndef DISABLE_SD_CARD
 int recieve_sdcard_command(COMMAND_MESSAGE_STRUCT *msg)
 {
     return xQueueReceive(sdcard_command_queue, msg, 30);
 }
+#endif
 
 int recieve_lcd_command(COMMAND_MESSAGE_STRUCT *msg)
 {
@@ -50,7 +62,9 @@ void register_system(void)
     register_getdatetime();
     register_temperature();
     register_adjust_log_level_command();
+#ifndef DISABLE_SD_CARD
     register_sdcard_command();
+#endif
     register_lcd_command();
 }
 
@@ -58,7 +72,9 @@ void register_queues(void)
 {
     rtc_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
     tmp_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
+#ifndef DISABLE_SD_CARD
     sdcard_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
+#endif
     lcd_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
 }
 
@@ -354,6 +370,7 @@ static void register_adjust_log_level_command(void)
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
+#ifndef DISABLE_SD_CARD
 static struct
 {
     struct arg_lit *disk;
@@ -401,7 +418,6 @@ static int sdcard(int argc, char **argv)
 
     return 0;
 }
-
 static void register_sdcard_command(void)
 {
 
@@ -417,9 +433,9 @@ static void register_sdcard_command(void)
         .hint = NULL,
         .func = &sdcard,
         .argtable = &sdcard_args};
-
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
+#endif
 
 static struct
 {
