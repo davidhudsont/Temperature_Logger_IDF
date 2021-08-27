@@ -15,9 +15,12 @@
 #include "bspConsole.h"
 #include "linenoise/linenoise.h"
 #include "esp_console.h"
-#include "BSP_SD.h"
 #include <sys/unistd.h>
 #include <sys/stat.h>
+#define DISABLE_SD_CARD
+#ifndef DISABLE_SD_CARD
+#include "BSP_SD.h"
+#endif
 
 static std::string logtemperaturef;
 static std::string logtime;
@@ -32,7 +35,9 @@ static TaskHandle_t lcdTaskHandle;
 static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
 static void console_task(void *pvParameter);
+#ifndef DISABLE_SD_CARD
 static void sdcard_task(void *pvParameter);
+#endif
 static void lcd_task(void *pvParameter);
 
 void Create_Task_Queues(void)
@@ -49,7 +54,9 @@ void Create_Tasks(void)
     xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
+#ifndef DISABLE_SD_CARD
     xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
+#endif
     xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, &lcdTaskHandle);
 }
 
@@ -63,6 +70,7 @@ void delay(uint32_t time_ms)
     vTaskDelay(time_ms / portTICK_PERIOD_MS);
 }
 
+#ifndef DISABLE_SD_CARD
 static void sdcard_task(void *pvParameter)
 {
     BSP::SD sd;
@@ -118,6 +126,7 @@ static void sdcard_task(void *pvParameter)
         }
     }
 }
+#endif
 
 void Power_On_Test(RTCDS3234 &rtc)
 {
