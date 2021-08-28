@@ -27,8 +27,6 @@ ButtonInterrupt::ButtonInterrupt(gpio_num_t pin, gpio_isr_t isr_handler)
     ESP_ERROR_CHECK(err);
     err = gpio_set_intr_type(pin, GPIO_INTR_NEGEDGE);
     ESP_ERROR_CHECK(err);
-    err = gpio_install_isr_service(0);
-    ESP_ERROR_CHECK(err);
     err = gpio_isr_handler_add(pin, isr_handler, (void *)NULL);
     ESP_ERROR_CHECK(err);
 }
