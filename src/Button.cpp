@@ -1,6 +1,11 @@
 #include "Button.h"
 #include "esp_err.h"
 
+static int64_t millis()
+{
+    return esp_timer_get_time() / 1000;
+}
+
 Button::Button(gpio_num_t pin)
     : pin(pin)
 {
@@ -8,9 +13,44 @@ Button::Button(gpio_num_t pin)
     gpio_set_pull_mode(pin, GPIO_PULLDOWN_ONLY);
 }
 
-Button::operator bool() const
+bool Button::get_button_state()
 {
-    return (bool)gpio_get_level(pin);
+    bool ret = false;
+    int reading = gpio_get_level(pin);
+    // If the switch changed, due to noise or pressing:
+    if (reading != lastButtonState)
+    {
+        // reset the debouncing timer
+        lastDebounceTime = millis();
+    }
+
+    if ((millis() - lastDebounceTime) > debounceDelay)
+    {
+        // whatever the reading is at, it's been there for longer than the debounce
+        // delay, so take it as the actual current state:
+
+        // if the button state has changed:
+        if (reading != buttonState)
+        {
+            buttonState = reading;
+
+            // only toggle the LED if the new button state is HIGH
+            if (buttonState)
+            {
+                ret = true;
+            }
+        }
+    }
+
+    // save the reading. Next time through the loop, it'll be the lastButtonState:
+    lastButtonState = reading;
+
+    return ret;
+}
+
+Button::operator bool()
+{
+    return get_button_state();
 }
 
 ButtonInterrupt::ButtonInterrupt(gpio_num_t pin, gpio_isr_t isr_handler)
