@@ -32,6 +32,7 @@ static SemaphoreHandle_t lcd_semiphore;
 
 static TaskHandle_t lcdTaskHandle;
 
+static void button_task(void *pvParameter);
 static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
 static void console_task(void *pvParameter);
@@ -51,6 +52,7 @@ void Create_Task_Queues(void)
 void Create_Tasks(void)
 {
     // Larger number equals higher priority
+    xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 2, NULL);
     xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
@@ -127,6 +129,11 @@ static void sdcard_task(void *pvParameter)
     }
 }
 #endif
+
+void button_task(void *pvParameter)
+{
+    ESP_LOGI("BTN", "Starting Button Interface");
+}
 
 void Power_On_Test(RTCDS3234 &rtc)
 {
