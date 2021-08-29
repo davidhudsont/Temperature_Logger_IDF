@@ -23,7 +23,7 @@
 #include "BSP_SD.h"
 #endif
 
-static std::string logtemperaturef;
+static std::string temperature_reading;
 static std::string logtime;
 static std::string logdate;
 
@@ -123,7 +123,7 @@ static void sdcard_task(void *pvParameter)
         }
         if (xSemaphoreTake(log_semiphore, 0))
         {
-            std::string logline = logdate + ", " + logtime + ", " + logtemperaturef;
+            std::string logline = logdate + ", " + logtime + ", " + temperature_reading;
             ESP_LOGI("LOG", "%s", logline.c_str());
             if (sd.IsFileOpen())
             {
@@ -335,8 +335,8 @@ static void tmp102_task(void *pvParameter)
         if (xSemaphoreTake(alarm_semiphore, 0))
         {
             OneShotTemperatureRead(tmp102);
-            logtemperaturef = tmp102.Get_TemperatureF_ToString();
-            ESP_LOGI("TMP", "%sF", logtemperaturef.c_str());
+            temperature_reading = tmp102.Get_TemperatureF_ToString();
+            ESP_LOGI("TMP", "%sF", temperature_reading.c_str());
             xSemaphoreGive(log_semiphore);
         }
 
@@ -358,7 +358,7 @@ static void tmp102_task(void *pvParameter)
             default:
                 break;
             }
-            logtemperaturef = tmp102.Get_TemperatureF_ToString();
+            temperature_reading = tmp102.Get_TemperatureF_ToString();
             xSemaphoreGive(lcd_semiphore);
         }
     }
@@ -449,7 +449,7 @@ static void lcd_task(void *pvParameter)
             lcd.SetCursor(1, 0);
             lcd.WriteCharacters(logtime.c_str(), logtime.length());
             lcd.SetCursor(2, 0);
-            lcd.WriteCharacters(logtemperaturef.c_str(), logtemperaturef.length());
+            lcd.WriteCharacters(temperature_reading.c_str(), temperature_reading.length());
         }
         if (recieve_lcd_command(&msg))
         {
