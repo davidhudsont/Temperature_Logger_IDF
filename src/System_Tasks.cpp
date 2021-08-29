@@ -23,7 +23,8 @@
 #include "BSP_SD.h"
 #endif
 
-static std::string temperature_reading;
+static std::string temperature_readingf;
+static std::string temperature_readingc;
 static std::string logtime;
 static std::string logdate;
 
@@ -33,6 +34,8 @@ static SemaphoreHandle_t lcd_semiphore;
 static SemaphoreHandle_t button_semiphore;
 
 static TaskHandle_t lcdTaskHandle;
+
+static bool displayed_tmp_reading = false;
 
 static void button_task(void *pvParameter);
 static void tmp102_task(void *pvParameter);
@@ -154,6 +157,7 @@ void button_task(void *pvParameter)
         if (button)
         {
             ESP_LOGI("BTN", "Button Closed");
+            displayed_tmp_reading = !displayed_tmp_reading;
         }
         if (xSemaphoreTake(button_semiphore, 0))
         {
@@ -335,8 +339,9 @@ static void tmp102_task(void *pvParameter)
         if (xSemaphoreTake(alarm_semiphore, 0))
         {
             OneShotTemperatureRead(tmp102);
-            temperature_reading = tmp102.Get_TemperatureF_ToString();
-            ESP_LOGI("TMP", "%sF", temperature_reading.c_str());
+            temperature_readingf = tmp102.Get_TemperatureF_ToString();
+            temperature_readingc = tmp102.Get_TemperatureC_ToString();
+            ESP_LOGI("TMP", "%sF", temperature_readingf.c_str());
             xSemaphoreGive(log_semiphore);
         }
 
@@ -358,7 +363,8 @@ static void tmp102_task(void *pvParameter)
             default:
                 break;
             }
-            temperature_reading = tmp102.Get_TemperatureF_ToString();
+            temperature_readingf = tmp102.Get_TemperatureF_ToString();
+            temperature_readingc = tmp102.Get_TemperatureC_ToString();
             xSemaphoreGive(lcd_semiphore);
         }
     }
@@ -449,7 +455,10 @@ static void lcd_task(void *pvParameter)
             lcd.SetCursor(1, 0);
             lcd.WriteCharacters(logtime.c_str(), logtime.length());
             lcd.SetCursor(2, 0);
-            lcd.WriteCharacters(temperature_reading.c_str(), temperature_reading.length());
+            if (displayed_tmp_reading)
+                lcd.WriteCharacters(temperature_readingf.c_str(), temperature_readingf.length());
+            else
+                lcd.WriteCharacters(temperature_readingc.c_str(), temperature_readingc.length());
         }
         if (recieve_lcd_command(&msg))
         {
