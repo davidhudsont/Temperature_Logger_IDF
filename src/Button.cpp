@@ -58,7 +58,7 @@ ButtonInterrupt::ButtonInterrupt(gpio_num_t pin, gpio_isr_t isr_handler)
 {
 
     gpio_config_t io_conf;
-    io_conf.intr_type = (gpio_int_type_t)GPIO_PIN_INTR_NEGEDGE;
+    io_conf.intr_type = (gpio_int_type_t)GPIO_PIN_INTR_POSEDGE;
     io_conf.pin_bit_mask = 1ULL << pin;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
