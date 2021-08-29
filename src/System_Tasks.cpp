@@ -145,7 +145,10 @@ void button_task(void *pvParameter)
 {
     ESP_LOGI("BTN", "Starting Button Interface");
     Button button(GPIO_NUM_13);
-    ButtonInterrupt button_int(GPIO_NUM_12, button_isr_handler);
+    ButtonInterrupt button_plus(GPIO_NUM_12, button_isr_handler);
+    Button button_minus(GPIO_NUM_14);
+    Button button_extra(GPIO_NUM_27);
+    uint32_t counter = 0;
     while (true)
     {
         if (button)
@@ -154,9 +157,19 @@ void button_task(void *pvParameter)
         }
         if (xSemaphoreTake(button_semiphore, 0))
         {
-            ESP_LOGI("BTN", "Interrupt Button Closed");
+            counter += 1;
+            ESP_LOGI("BTN", "Button Plus: Counter = %d", counter);
         }
-        delay(100);
+        else if (button_minus)
+        {
+            counter -= 1;
+            ESP_LOGI("BTN", "Button Minus: Counter = %d", counter);
+        }
+        else if (button_extra)
+        {
+            ESP_LOGI("BTN", "Button Extra: Counter = %d", counter);
+        }
+        delay(10);
     }
 }
 
