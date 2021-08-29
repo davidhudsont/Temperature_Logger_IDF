@@ -17,21 +17,27 @@
 #include "esp_console.h"
 #include <sys/unistd.h>
 #include <sys/stat.h>
+#include "Button.h"
 #define DISABLE_SD_CARD
 #ifndef DISABLE_SD_CARD
 #include "BSP_SD.h"
 #endif
 
-static std::string logtemperaturef;
+static std::string temperature_readingf;
+static std::string temperature_readingc;
 static std::string logtime;
 static std::string logdate;
 
 static SemaphoreHandle_t log_semiphore;
 static SemaphoreHandle_t alarm_semiphore;
 static SemaphoreHandle_t lcd_semiphore;
+static SemaphoreHandle_t button_semiphore;
 
 static TaskHandle_t lcdTaskHandle;
 
+static bool displayed_tmp_reading = false;
+
+static void button_task(void *pvParameter);
 static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
 static void console_task(void *pvParameter);
@@ -45,19 +51,8 @@ void Create_Task_Queues(void)
     log_semiphore = xSemaphoreCreateBinary();
     alarm_semiphore = xSemaphoreCreateBinary();
     lcd_semiphore = xSemaphoreCreateBinary();
+    button_semiphore = xSemaphoreCreateBinary();
     register_queues();
-}
-
-void Create_Tasks(void)
-{
-    // Larger number equals higher priority
-    xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
-    xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
-    xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
-#ifndef DISABLE_SD_CARD
-    xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
-#endif
-    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, &lcdTaskHandle);
 }
 
 /**
@@ -68,6 +63,21 @@ void Create_Tasks(void)
 void delay(uint32_t time_ms)
 {
     vTaskDelay(time_ms / portTICK_PERIOD_MS);
+}
+
+void Create_Tasks(void)
+{
+    gpio_install_isr_service(0);
+    // Larger number equals higher priority
+    xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
+    xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
+    xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
+#ifndef DISABLE_SD_CARD
+    xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
+#endif
+    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, &lcdTaskHandle);
+    delay(100);
+    xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 2, NULL);
 }
 
 #ifndef DISABLE_SD_CARD
@@ -116,7 +126,7 @@ static void sdcard_task(void *pvParameter)
         }
         if (xSemaphoreTake(log_semiphore, 0))
         {
-            std::string logline = logdate + ", " + logtime + ", " + logtemperaturef;
+            std::string logline = logdate + ", " + logtime + ", " + temperature_reading;
             ESP_LOGI("LOG", "%s", logline.c_str());
             if (sd.IsFileOpen())
             {
@@ -127,6 +137,45 @@ static void sdcard_task(void *pvParameter)
     }
 }
 #endif
+
+static void IRAM_ATTR button_isr_handler(void *arg)
+{
+    static BaseType_t xHigherPriorityTaskWoken;
+    xSemaphoreGiveFromISR(button_semiphore, &xHigherPriorityTaskWoken);
+}
+
+void button_task(void *pvParameter)
+{
+    ESP_LOGI("BTN", "Starting Button Interface");
+    Button button(GPIO_NUM_13);
+    ButtonInterrupt button_plus(GPIO_NUM_12, button_isr_handler);
+    Button button_minus(GPIO_NUM_14);
+    Button button_extra(GPIO_NUM_27);
+    uint32_t counter = 0;
+    while (true)
+    {
+        if (button)
+        {
+            ESP_LOGI("BTN", "Button Closed");
+            displayed_tmp_reading = !displayed_tmp_reading;
+        }
+        if (xSemaphoreTake(button_semiphore, 0))
+        {
+            counter += 1;
+            ESP_LOGI("BTN", "Button Plus: Counter = %d", counter);
+        }
+        else if (button_minus)
+        {
+            counter -= 1;
+            ESP_LOGI("BTN", "Button Minus: Counter = %d", counter);
+        }
+        else if (button_extra)
+        {
+            ESP_LOGI("BTN", "Button Extra: Counter = %d", counter);
+        }
+        delay(10);
+    }
+}
 
 void Power_On_Test(RTCDS3234 &rtc)
 {
@@ -290,8 +339,9 @@ static void tmp102_task(void *pvParameter)
         if (xSemaphoreTake(alarm_semiphore, 0))
         {
             OneShotTemperatureRead(tmp102);
-            logtemperaturef = tmp102.Get_TemperatureF_ToString();
-            ESP_LOGI("TMP", "%sF", logtemperaturef.c_str());
+            temperature_readingf = tmp102.Get_TemperatureF_ToString();
+            temperature_readingc = tmp102.Get_TemperatureC_ToString();
+            ESP_LOGI("TMP", "%sF", temperature_readingf.c_str());
             xSemaphoreGive(log_semiphore);
         }
 
@@ -313,7 +363,8 @@ static void tmp102_task(void *pvParameter)
             default:
                 break;
             }
-            logtemperaturef = tmp102.Get_TemperatureF_ToString();
+            temperature_readingf = tmp102.Get_TemperatureF_ToString();
+            temperature_readingc = tmp102.Get_TemperatureC_ToString();
             xSemaphoreGive(lcd_semiphore);
         }
     }
@@ -404,7 +455,10 @@ static void lcd_task(void *pvParameter)
             lcd.SetCursor(1, 0);
             lcd.WriteCharacters(logtime.c_str(), logtime.length());
             lcd.SetCursor(2, 0);
-            lcd.WriteCharacters(logtemperaturef.c_str(), logtemperaturef.length());
+            if (displayed_tmp_reading)
+                lcd.WriteCharacters(temperature_readingf.c_str(), temperature_readingf.length());
+            else
+                lcd.WriteCharacters(temperature_readingc.c_str(), temperature_readingc.length());
         }
         if (recieve_lcd_command(&msg))
         {
