@@ -47,13 +47,12 @@ static void sdcard_task(void *pvParameter);
 #endif
 static void lcd_task(void *pvParameter);
 
-void Create_Task_Queues(void)
+void Create_Semaphores(void)
 {
     log_semiphore = xSemaphoreCreateBinary();
     alarm_semiphore = xSemaphoreCreateBinary();
     lcd_semiphore = xSemaphoreCreateBinary();
     button_semiphore = xSemaphoreCreateBinary();
-    register_queues();
 }
 
 /**

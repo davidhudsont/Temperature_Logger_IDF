@@ -49,13 +49,6 @@ void register_system(void)
     register_lcd_command();
 }
 
-void register_queues(void)
-{
-#ifndef DISABLE_SD_CARD
-    sdcard_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
-#endif
-}
-
 static int get_version(int argc, char **argv)
 {
     esp_chip_info_t info;
