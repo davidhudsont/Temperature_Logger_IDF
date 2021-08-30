@@ -18,6 +18,7 @@
 #include <sys/unistd.h>
 #include <sys/stat.h>
 #include "Button.h"
+#include "DeviceCommands.h"
 #define DISABLE_SD_CARD
 #ifndef DISABLE_SD_CARD
 #include "BSP_SD.h"
@@ -46,13 +47,12 @@ static void sdcard_task(void *pvParameter);
 #endif
 static void lcd_task(void *pvParameter);
 
-void Create_Task_Queues(void)
+void Create_Semaphores(void)
 {
     log_semiphore = xSemaphoreCreateBinary();
     alarm_semiphore = xSemaphoreCreateBinary();
     lcd_semiphore = xSemaphoreCreateBinary();
     button_semiphore = xSemaphoreCreateBinary();
-    register_queues();
 }
 
 /**
@@ -168,10 +168,13 @@ void button_task(void *pvParameter)
         {
             counter -= 1;
             ESP_LOGI("BTN", "Button Minus: Counter = %d", counter);
+            clearDisplay();
         }
         else if (button_extra)
         {
             ESP_LOGI("BTN", "Button Extra: Counter = %d", counter);
+            readDateTime();
+            readTemperature(true);
         }
         delay(10);
     }
@@ -225,7 +228,7 @@ static void rtc_intr_task(void *pvParameter)
 {
     ESP_LOGI("RTC", "RTC Task Start!");
     RTCDS3234 rtc;
-    COMMAND_MESSAGE_STRUCT cmd_msg;
+    COMMAND_MESSAGE cmd_msg;
     rtc.Begin();
 
     Power_On_Test(rtc);
@@ -259,38 +262,38 @@ static void rtc_intr_task(void *pvParameter)
         }
 
         // Evaulate Console Commands
-        if (recieve_rtc_command(&cmd_msg))
+        if (recieveDateCommand(&cmd_msg) || recieveTimeCommand(&cmd_msg))
         {
             switch (cmd_msg.id)
             {
-            case COMMAND_GET_DATETIME:
+            case GET_DATETIME:
                 rtc.READ_DATETIME();
                 logdate = rtc.DATE_TOSTRING();
                 logtime = rtc.TIME_TOSTRING();
                 ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
                 break;
-            case COMMAND_SET_SECONDS:
+            case SET_SECONDS:
                 rtc.WRITE_SECONDS(cmd_msg.arg1);
                 break;
-            case COMMAND_SET_MINUTES:
+            case SET_MINUTES:
                 rtc.WRITE_MINUTES(cmd_msg.arg1);
                 break;
-            case COMMAND_SET_12HOURS:
+            case SET_12HOURS:
                 rtc.WRITE_12HOURS(cmd_msg.arg1, cmd_msg.arg2);
                 break;
-            case COMMAND_SET_24HOURS:
+            case SET_24HOURS:
                 rtc.WRITE_24HOURS(cmd_msg.arg1);
                 break;
-            case COMMAND_SET_WEEKDAY:
+            case SET_WEEKDAY:
                 rtc.WRITE_DAYS((DAYS)cmd_msg.arg1);
                 break;
-            case COMMAND_SET_DATE:
+            case SET_DAYOFMONTH:
                 rtc.WRITE_DATE(cmd_msg.arg1);
                 break;
-            case COMMAND_SET_MONTH:
+            case SET_MONTH:
                 rtc.WRITE_MONTH(cmd_msg.arg1);
                 break;
-            case COMMAND_SET_YEAR:
+            case SET_YEAR:
                 rtc.WRITE_YEAR(cmd_msg.arg1);
                 break;
             default:
@@ -323,7 +326,7 @@ static void OneShotTemperatureRead(TMP102 &tmp102)
 static void tmp102_task(void *pvParameter)
 {
     TMP102 tmp102;
-    COMMAND_MESSAGE_STRUCT cmd_msg;
+    COMMAND_MESSAGE cmd_msg;
 
     ESP_LOGI("TMP", "TMP102 Task Start!");
     tmp102.Begin();
@@ -345,17 +348,17 @@ static void tmp102_task(void *pvParameter)
             xSemaphoreGive(log_semiphore);
         }
 
-        if (recieve_tmp_command(&cmd_msg))
+        if (recieveTMPCommand(&cmd_msg))
         {
             float temperature = 0;
             switch (cmd_msg.id)
             {
-            case COMMAND_GET_TEMPF:
+            case GET_TEMPF:
                 OneShotTemperatureRead(tmp102);
                 temperature = tmp102.Get_TemperatureF();
                 ESP_LOGI("TMP", "%3.3fC", temperature);
                 break;
-            case COMMAND_GET_TEMPC:
+            case GET_TEMPC:
                 OneShotTemperatureRead(tmp102);
                 temperature = tmp102.Get_Temperature();
                 ESP_LOGI("TMP", "%2.3fC", temperature);
@@ -447,7 +450,7 @@ static void lcd_task(void *pvParameter)
 
     while (1)
     {
-        COMMAND_MESSAGE_STRUCT msg;
+        COMMAND_MESSAGE msg;
         if (xSemaphoreTake(lcd_semiphore, 100))
         {
             lcd.SetCursor(0, 0);
@@ -460,28 +463,30 @@ static void lcd_task(void *pvParameter)
             else
                 lcd.WriteCharacters(temperature_readingc.c_str(), temperature_readingc.length());
         }
-        if (recieve_lcd_command(&msg))
+        if (recieveLCDCommand(&msg))
         {
             switch (msg.id)
             {
-            case COMMAND_LCD_DISPLAY_ON:
+            case LCD_DISPLAY_ON:
                 ESP_LOGI("LCD", "DISPLAY ON");
                 lcd.SetBackLightFast(125, 125, 125);
                 lcd.Display();
                 break;
-            case COMMAND_LCD_DISPLAY_OFF:
+            case LCD_DISPLAY_OFF:
                 ESP_LOGI("LCD", "DISPLAY OFF");
                 lcd.SetBackLightFast(0, 0, 0);
                 lcd.NoDisplay();
                 break;
-            case COMMAND_LCD_SET_CONTRAST:
+            case LCD_SET_CONTRAST:
                 ESP_LOGI("LCD", "Set Contrast %d", msg.arg1);
                 lcd.SetContrast(msg.arg1);
                 break;
-            case COMMAND_LCD_SET_BACKLIGHT:
+            case LCD_SET_BACKLIGHT:
                 ESP_LOGI("LCD", "Set Backlight r %d, g %d, b %d", msg.arg1, msg.arg2, msg.arg3);
                 lcd.SetBackLightFast(msg.arg1, msg.arg2, msg.arg3);
                 break;
+            case LCD_CLEAR_DISPLAY:
+                lcd.Clear();
             default:
                 break;
             }

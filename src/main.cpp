@@ -28,7 +28,7 @@ extern "C"
 void app_main()
 {
     ESP_LOGI("Main", "Starting Tasks");
-    Create_Task_Queues();
+    Create_Semaphores();
     Create_Tasks();
 }
 
