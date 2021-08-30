@@ -15,19 +15,9 @@ struct COMMAND_MESSAGE
 class CommandQueue
 {
 public:
-    CommandQueue()
-    {
-        commandQueue = xQueueCreate(3, sizeof(COMMAND_MESSAGE));
-    }
-    void Send(COMMAND_MESSAGE *msg)
-    {
-        xQueueSend(commandQueue, (void *)&msg, 30);
-    }
-
-    bool Recieve(COMMAND_MESSAGE *msg)
-    {
-        return xQueueReceive(commandQueue, msg, 30);
-    }
+    CommandQueue();
+    void Send(COMMAND_MESSAGE msg);
+    bool Recieve(COMMAND_MESSAGE *msg);
 
 private:
     QueueHandle_t commandQueue;
