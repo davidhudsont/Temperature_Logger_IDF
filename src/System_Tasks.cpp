@@ -168,7 +168,7 @@ void button_task(void *pvParameter)
         {
             counter -= 1;
             ESP_LOGI("BTN", "Button Minus: Counter = %d", counter);
-            ClearDisplay();
+            clearDisplay();
         }
         else if (button_extra)
         {

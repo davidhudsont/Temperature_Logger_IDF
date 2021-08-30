@@ -433,26 +433,26 @@ static int lcd(int argc, char **argv)
             uint8_t r = lcd_args.backlight->ival[0];
             uint8_t g = 0;
             uint8_t b = 0;
-            SetBackLight(r, g, b);
+            setBackLight(r, g, b);
         }
         else if (lcd_args.backlight->count == 2)
         {
             uint8_t r = lcd_args.backlight->ival[0];
             uint8_t g = lcd_args.backlight->ival[1];
             uint8_t b = 0;
-            SetBackLight(r, g, b);
+            setBackLight(r, g, b);
         }
         else if (lcd_args.backlight->count == 3)
         {
             uint8_t r = lcd_args.backlight->ival[0];
             uint8_t g = lcd_args.backlight->ival[1];
             uint8_t b = lcd_args.backlight->ival[2];
-            SetBackLight(r, g, b);
+            setBackLight(r, g, b);
         }
     }
     else if (lcd_args.clear->count)
     {
-        ClearDisplay();
+        clearDisplay();
     }
 
     return 0;

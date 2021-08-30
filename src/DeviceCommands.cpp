@@ -40,7 +40,7 @@ void setContrast(uint8_t contrast)
     lcd_command_queue.Send(msg);
 }
 
-void SetBackLight(uint8_t r, uint8_t g, uint8_t b)
+void setBackLight(uint8_t r, uint8_t g, uint8_t b)
 {
     COMMAND_MESSAGE msg;
     msg.id = LCD_SET_BACKLIGHT;
@@ -50,7 +50,7 @@ void SetBackLight(uint8_t r, uint8_t g, uint8_t b)
     lcd_command_queue.Send(msg);
 }
 
-void ClearDisplay()
+void clearDisplay()
 {
     COMMAND_MESSAGE msg;
     msg.id = LCD_CLEAR_DISPLAY;

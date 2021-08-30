@@ -30,8 +30,8 @@ bool recieveTMPCommand(COMMAND_MESSAGE *msg);
 void displayOff();
 void displayOn();
 void setContrast(uint8_t contrast);
-void SetBackLight(uint8_t r, uint8_t g, uint8_t b);
-void ClearDisplay();
+void setBackLight(uint8_t r, uint8_t g, uint8_t b);
+void clearDisplay();
 
 bool recieveLCDCommand(COMMAND_MESSAGE *msg);
 
