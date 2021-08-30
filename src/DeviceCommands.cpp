@@ -1,5 +1,4 @@
 #include "DeviceCommands.h"
-#include "freertos/queue.h"
 
 static CommandQueue tmp_command_queue;
 static CommandQueue lcd_command_queue;

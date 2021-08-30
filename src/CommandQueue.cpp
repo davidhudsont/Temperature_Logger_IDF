@@ -1,7 +1,4 @@
 #include "CommandQueue.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/queue.h"
-#include "esp_log.h"
 
 CommandQueue::CommandQueue()
 {
