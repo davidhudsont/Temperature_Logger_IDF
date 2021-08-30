@@ -11,11 +11,12 @@ enum COMMANDS
     SET_12HOURS,
     SET_24HOURS,
     SET_WEEKDAY,
-    SET_DATE,
+    SET_DAYOFMONTH,
     SET_MONTH,
     SET_YEAR,
     GET_DATETIME,
-    GET_TEMP,
+    GET_TEMPF,
+    GET_TEMPC,
     LCD_DISPLAY_OFF,
     LCD_DISPLAY_ON,
     LCD_SET_CONTRAST,
@@ -23,26 +24,29 @@ enum COMMANDS
     LCD_CLEAR_DISPLAY,
 };
 
-void readTemperature();
+void readTemperature(bool FahrenheitOrCelsius);
 bool recieveTMPCommand(COMMAND_MESSAGE *msg);
 
 void displayOff();
 void displayOn();
 void setContrast(uint8_t contrast);
-void SetBackLightFast(uint8_t r, uint8_t g, uint8_t b);
+void SetBackLight(uint8_t r, uint8_t g, uint8_t b);
+void ClearDisplay();
 
 bool recieveLCDCommand(COMMAND_MESSAGE *msg);
 
 void setWeekDay(uint8_t weekday);
 void setMonth(uint8_t month);
 void setYear(uint8_t year);
-void setDate(uint8_t dayOfMonth, uint8_t month, uint8_t year);
+void setDayOfMonth(uint8_t dayOfMonth);
 
 bool recieveDateCommand(COMMAND_MESSAGE *msg);
 
 void setSeconds(uint8_t second);
 void setMinutes(uint8_t minute);
-void setHours12Mode(uint8_t hour, uint8_t AMOrPM);
+void setHours12Mode(uint8_t hour, bool AMOrPM);
 void setHours24Mode(uint8_t hour);
 
 bool recieveTimeCommand(COMMAND_MESSAGE *msg);
+
+void readDateTime();

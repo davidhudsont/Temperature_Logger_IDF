@@ -6,10 +6,10 @@ static CommandQueue lcd_command_queue;
 static CommandQueue date_command_queue;
 static CommandQueue time_command_queue;
 
-void readTemperature()
+void readTemperature(bool FahrenheitOrCelsius)
 {
     COMMAND_MESSAGE msg;
-    msg.id = GET_TEMP;
+    msg.id = FahrenheitOrCelsius ? GET_TEMPF : GET_TEMPC;
     tmp_command_queue.Send(&msg);
 }
 
@@ -40,13 +40,20 @@ void setContrast(uint8_t contrast)
     lcd_command_queue.Send(&msg);
 }
 
-void SetBackLightFast(uint8_t r, uint8_t g, uint8_t b)
+void SetBackLight(uint8_t r, uint8_t g, uint8_t b)
 {
     COMMAND_MESSAGE msg;
     msg.id = LCD_SET_BACKLIGHT;
     msg.arg1 = r;
     msg.arg2 = g;
     msg.arg3 = b;
+    lcd_command_queue.Send(&msg);
+}
+
+void ClearDisplay()
+{
+    COMMAND_MESSAGE msg;
+    msg.id = LCD_CLEAR_DISPLAY;
     lcd_command_queue.Send(&msg);
 }
 
@@ -79,13 +86,11 @@ void setYear(uint8_t year)
     date_command_queue.Send(&msg);
 }
 
-void setDate(uint8_t dayOfMonth, uint8_t month, uint8_t year)
+void setDayOfMonth(uint8_t dayOfMonth)
 {
     COMMAND_MESSAGE msg;
-    msg.id = SET_DATE;
+    msg.id = SET_DAYOFMONTH;
     msg.arg1 = dayOfMonth;
-    msg.arg2 = month;
-    msg.arg3 = year;
     date_command_queue.Send(&msg);
 }
 
@@ -110,7 +115,7 @@ void setMinutes(uint8_t minute)
     time_command_queue.Send(&msg);
 }
 
-void setHours12Mode(uint8_t hour, uint8_t AMOrPM)
+void setHours12Mode(uint8_t hour, bool AMOrPM)
 {
     COMMAND_MESSAGE msg;
     msg.id = SET_12HOURS;
@@ -130,4 +135,11 @@ void setHours24Mode(uint8_t hour)
 bool recieveTimeCommand(COMMAND_MESSAGE *msg)
 {
     return time_command_queue.Recieve(msg);
+}
+
+void readDateTime()
+{
+    COMMAND_MESSAGE msg;
+    msg.id = GET_DATETIME;
+    time_command_queue.Send(&msg);
 }
