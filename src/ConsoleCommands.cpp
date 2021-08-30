@@ -8,16 +8,12 @@
 #include "argtable3/argtable3.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include "DeviceCommands.h"
 
 #define DISABLE_SD_CARD
-
-static QueueHandle_t rtc_command_queue; // Queue to send device objects between tasks
-static QueueHandle_t tmp_command_queue; // Queue to send device objects between tasks
-
 #ifndef DISABLE_SD_CARD
 static QueueHandle_t sdcard_command_queue; // Queue to send device objects between tasks
 #endif
-static QueueHandle_t lcd_command_queue;
 
 static void register_version(void);
 static void register_time(void);
@@ -31,27 +27,12 @@ static void register_sdcard_command(void);
 
 static void register_lcd_command(void);
 
-int recieve_rtc_command(COMMAND_MESSAGE_STRUCT *msg)
-{
-    return xQueueReceive(rtc_command_queue, msg, 30);
-}
-
-int recieve_tmp_command(COMMAND_MESSAGE_STRUCT *msg)
-{
-    return xQueueReceive(tmp_command_queue, msg, 30);
-}
-
 #ifndef DISABLE_SD_CARD
 int recieve_sdcard_command(COMMAND_MESSAGE_STRUCT *msg)
 {
     return xQueueReceive(sdcard_command_queue, msg, 30);
 }
 #endif
-
-int recieve_lcd_command(COMMAND_MESSAGE_STRUCT *msg)
-{
-    return xQueueReceive(lcd_command_queue, msg, 30);
-}
 
 // cppcheck-suppress unusedFunction
 void register_system(void)
@@ -70,12 +51,9 @@ void register_system(void)
 
 void register_queues(void)
 {
-    rtc_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
-    tmp_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
 #ifndef DISABLE_SD_CARD
     sdcard_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
 #endif
-    lcd_command_queue = xQueueCreate(3, sizeof(COMMAND_MESSAGE_STRUCT));
 }
 
 static int get_version(int argc, char **argv)
@@ -121,7 +99,6 @@ static struct
 static int set_time(int argc, char **argv)
 {
     int nerrors = arg_parse(argc, argv, (void **)&time_args);
-    COMMAND_MESSAGE_STRUCT msg;
 
     if (nerrors != 0)
     {
@@ -131,34 +108,30 @@ static int set_time(int argc, char **argv)
 
     if (time_args.seconds->count)
     {
+        uint8_t seconds = time_args.seconds->ival[0];
         printf("Set Seconds to: %d\n", time_args.seconds->ival[0]);
-        msg.id = COMMAND_SET_SECONDS;
-        msg.arg1 = time_args.seconds->ival[0];
+        setSeconds(seconds);
     }
     else if (time_args.minutes->count)
     {
-        int minutes = time_args.minutes->ival[0];
+        uint8_t minutes = time_args.minutes->ival[0];
         printf("Minutes: %d\n", minutes);
-        msg.id = COMMAND_SET_MINUTES;
-        msg.arg1 = minutes;
+        setMinutes(minutes);
     }
     else if (time_args.hours12->count)
     {
         bool PM_notAM = time_args.hours12->ival[1];
         int hours = time_args.hours12->ival[0];
         printf("Hours: %d, %s\n", hours, (PM_notAM ? "PM" : "AM"));
-        msg.id = COMMAND_SET_12HOURS;
-        msg.arg1 = hours;
-        msg.arg2 = PM_notAM;
+        setHours12Mode(hours, PM_notAM);
     }
     else if (time_args.hours24->count)
     {
         int hours = time_args.hours24->ival[0];
         printf("Hours: %d\n", hours);
-        msg.id = COMMAND_SET_24HOURS;
-        msg.arg1 = hours;
+        setHours24Mode(hours);
     }
-    xQueueSend(rtc_command_queue, (void *)&msg, 30);
+
     return 0;
 }
 
@@ -193,7 +166,6 @@ static struct
 static int set_date(int argc, char **argv)
 {
     int nerrors = arg_parse(argc, argv, (void **)&date_args);
-    COMMAND_MESSAGE_STRUCT msg;
 
     if (nerrors != 0)
     {
@@ -203,32 +175,29 @@ static int set_date(int argc, char **argv)
 
     if (date_args.days->count)
     {
+        int days = date_args.days->ival[0];
         printf("Set Days to: %d\n", date_args.days->ival[0]);
-        msg.id = COMMAND_SET_WEEKDAY;
-        msg.arg1 = date_args.days->ival[0];
+        setWeekDay(days);
     }
     else if (date_args.date->count)
     {
-        int date = date_args.date->ival[0];
-        printf("Set Date to: %d\n", date);
-        msg.id = COMMAND_SET_DATE;
-        msg.arg1 = date;
+        int dayOfMonth = date_args.date->ival[0];
+        printf("Set Date to: %d\n", dayOfMonth);
+        setDayOfMonth(dayOfMonth);
     }
     else if (date_args.month->count)
     {
         int month = date_args.month->ival[0];
         printf("Set Month to: %d\n", month);
-        msg.id = COMMAND_SET_MONTH;
-        msg.arg1 = month;
+        setMonth(month);
     }
     else if (date_args.year->count)
     {
         int year = date_args.year->ival[0];
         printf("Set Year to: %d\n", year);
-        msg.id = COMMAND_SET_YEAR;
-        msg.arg1 = year;
+        setYear(year);
     }
-    xQueueSend(rtc_command_queue, (void *)&msg, 30);
+
     return 0;
 }
 
@@ -253,9 +222,7 @@ static void register_date(void)
 
 static int get_datetime(int argc, char **argv)
 {
-    COMMAND_MESSAGE_STRUCT msg;
-    msg.id = COMMAND_GET_DATETIME;
-    xQueueSend(rtc_command_queue, (void *)&msg, 30);
+    readDateTime();
     return 0;
 }
 
@@ -282,7 +249,6 @@ static struct
 static int get_temperature(int argc, char **argv)
 {
     int nerrors = arg_parse(argc, argv, (void **)&temperature_args);
-    COMMAND_MESSAGE_STRUCT msg;
 
     if (nerrors != 0)
     {
@@ -292,14 +258,12 @@ static int get_temperature(int argc, char **argv)
 
     if (temperature_args.tempf->count)
     {
-        msg.id = COMMAND_GET_TEMPF;
+        readTemperature(true);
     }
     if (temperature_args.tempc->count)
     {
-        msg.id = COMMAND_GET_TEMPC;
+        readTemperature(false);
     }
-
-    xQueueSend(tmp_command_queue, (void *)&msg, 30);
     return 0;
 }
 
@@ -458,47 +422,44 @@ static int lcd(int argc, char **argv)
 
     if (lcd_args.display_toggle->count)
     {
-        COMMAND_MESSAGE_STRUCT msg;
-        msg.id = lcd_args.display_toggle->ival[0] ? COMMAND_LCD_DISPLAY_ON : COMMAND_LCD_DISPLAY_OFF;
-        xQueueSend(lcd_command_queue, (void *)&msg, 30);
+        bool turnDisplayOn = lcd_args.display_toggle->ival[0] ? true : false;
+        if (turnDisplayOn)
+            displayOn();
+        else
+            displayOff();
     }
     else if (lcd_args.contrast->count)
     {
-        COMMAND_MESSAGE_STRUCT msg;
-        msg.id = COMMAND_LCD_SET_CONTRAST;
-        msg.arg1 = lcd_args.contrast->ival[0];
-        xQueueSend(lcd_command_queue, (void *)&msg, 30);
+        uint8_t contrast = lcd_args.contrast->ival[0];
+        setContrast(contrast);
     }
     else if (lcd_args.backlight->count)
     {
-        COMMAND_MESSAGE_STRUCT msg;
-        msg.id = COMMAND_LCD_SET_BACKLIGHT;
-
         if (lcd_args.backlight->count == 1)
         {
-            msg.arg1 = lcd_args.backlight->ival[0];
-            msg.arg2 = 0;
-            msg.arg3 = 0;
+            uint8_t r = lcd_args.backlight->ival[0];
+            uint8_t g = 0;
+            uint8_t b = 0;
+            SetBackLight(r, g, b);
         }
         else if (lcd_args.backlight->count == 2)
         {
-            msg.arg1 = lcd_args.backlight->ival[0];
-            msg.arg2 = lcd_args.backlight->ival[1];
-            msg.arg3 = 0;
+            uint8_t r = lcd_args.backlight->ival[0];
+            uint8_t g = lcd_args.backlight->ival[1];
+            uint8_t b = 0;
+            SetBackLight(r, g, b);
         }
         else if (lcd_args.backlight->count == 3)
         {
-            msg.arg1 = lcd_args.backlight->ival[0];
-            msg.arg2 = lcd_args.backlight->ival[1];
-            msg.arg3 = lcd_args.backlight->ival[2];
+            uint8_t r = lcd_args.backlight->ival[0];
+            uint8_t g = lcd_args.backlight->ival[1];
+            uint8_t b = lcd_args.backlight->ival[2];
+            SetBackLight(r, g, b);
         }
-        xQueueSend(lcd_command_queue, (void *)&msg, 30);
     }
     else if (lcd_args.clear->count)
     {
-        COMMAND_MESSAGE_STRUCT msg;
-        msg.id = COMMAND_LCD_CLEAR_DISPLAY;
-        xQueueSend(lcd_command_queue, (void *)&msg, 30);
+        ClearDisplay();
     }
 
     return 0;
