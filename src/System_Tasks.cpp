@@ -169,10 +169,13 @@ void button_task(void *pvParameter)
         {
             counter -= 1;
             ESP_LOGI("BTN", "Button Minus: Counter = %d", counter);
+            ClearDisplay();
         }
         else if (button_extra)
         {
             ESP_LOGI("BTN", "Button Extra: Counter = %d", counter);
+            readDateTime();
+            readTemperature(true);
         }
         delay(10);
     }
@@ -483,6 +486,8 @@ static void lcd_task(void *pvParameter)
                 ESP_LOGI("LCD", "Set Backlight r %d, g %d, b %d", msg.arg1, msg.arg2, msg.arg3);
                 lcd.SetBackLightFast(msg.arg1, msg.arg2, msg.arg3);
                 break;
+            case LCD_CLEAR_DISPLAY:
+                lcd.Clear();
             default:
                 break;
             }
