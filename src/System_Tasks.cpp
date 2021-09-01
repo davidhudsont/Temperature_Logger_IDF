@@ -423,6 +423,74 @@ static void console_task(void *pvParameter)
     }
 }
 
+static void Update_LCD(LCD &lcd, bool fahreintheitOrCelsius)
+{
+    lcd.SetCursor(0, 0);
+    lcd.WriteCharacters(logdate.c_str(), logdate.length());
+    lcd.SetCursor(1, 0);
+    lcd.WriteCharacters(logtime.c_str(), logtime.length());
+    lcd.SetCursor(2, 0);
+    if (fahreintheitOrCelsius)
+    {
+        lcd.WriteCharacters(temperature_readingf.c_str(), temperature_readingf.length());
+        lcd.WriteCharacter(DEGREE_SYMBOL);
+        lcd.WriteCharacter('F');
+    }
+    else
+    {
+        lcd.WriteCharacters(temperature_readingc.c_str(), temperature_readingc.length());
+        lcd.WriteCharacter(DEGREE_SYMBOL);
+        lcd.WriteCharacter('C');
+    }
+}
+
+enum LCDState
+{
+    DISPLAYING,
+    EDITING
+};
+
+static void DisplayingState(LCD &lcd)
+{
+    COMMAND_MESSAGE msg;
+    if (xSemaphoreTake(lcd_semiphore, 100))
+    {
+        Update_LCD(lcd, displayed_tmp_reading);
+    }
+    if (recieveLCDCommand(&msg))
+    {
+        switch (msg.id)
+        {
+        case LCD_DISPLAY_ON:
+            ESP_LOGI("LCD", "DISPLAY ON");
+            lcd.SetBackLightFast(125, 125, 125);
+            lcd.Display();
+            break;
+        case LCD_DISPLAY_OFF:
+            ESP_LOGI("LCD", "DISPLAY OFF");
+            lcd.SetBackLightFast(0, 0, 0);
+            lcd.NoDisplay();
+            break;
+        case LCD_SET_CONTRAST:
+            ESP_LOGI("LCD", "Set Contrast %d", msg.arg1);
+            lcd.SetContrast(msg.arg1);
+            break;
+        case LCD_SET_BACKLIGHT:
+            ESP_LOGI("LCD", "Set Backlight r %d, g %d, b %d", msg.arg1, msg.arg2, msg.arg3);
+            lcd.SetBackLightFast(msg.arg1, msg.arg2, msg.arg3);
+            break;
+        case LCD_CLEAR_DISPLAY:
+            lcd.Clear();
+        default:
+            break;
+        }
+    }
+}
+
+static void EditingState(LCD &lcd)
+{
+}
+
 static void lcd_task(void *pvParameter)
 {
     LCD lcd;
@@ -432,57 +500,19 @@ static void lcd_task(void *pvParameter)
     lcd.DisableSystemMessages();
     lcd.Display();
     lcd.SetBackLightFast(125, 125, 125);
+    LCDState state = DISPLAYING;
 
     while (1)
     {
-        COMMAND_MESSAGE msg;
-        if (xSemaphoreTake(lcd_semiphore, 100))
+        switch (state)
         {
-            lcd.SetCursor(0, 0);
-            lcd.WriteCharacters(logdate.c_str(), logdate.length());
-            lcd.SetCursor(1, 0);
-            lcd.WriteCharacters(logtime.c_str(), logtime.length());
-            lcd.SetCursor(2, 0);
-            if (displayed_tmp_reading)
-            {
-                lcd.WriteCharacters(temperature_readingf.c_str(), temperature_readingf.length());
-                lcd.WriteCharacter(DEGREE_SYMBOL);
-                lcd.WriteCharacter('F');
-            }
-            else
-            {
-                lcd.WriteCharacters(temperature_readingc.c_str(), temperature_readingc.length());
-                lcd.WriteCharacter(DEGREE_SYMBOL);
-                lcd.WriteCharacter('C');
-            }
-        }
-        if (recieveLCDCommand(&msg))
-        {
-            switch (msg.id)
-            {
-            case LCD_DISPLAY_ON:
-                ESP_LOGI("LCD", "DISPLAY ON");
-                lcd.SetBackLightFast(125, 125, 125);
-                lcd.Display();
-                break;
-            case LCD_DISPLAY_OFF:
-                ESP_LOGI("LCD", "DISPLAY OFF");
-                lcd.SetBackLightFast(0, 0, 0);
-                lcd.NoDisplay();
-                break;
-            case LCD_SET_CONTRAST:
-                ESP_LOGI("LCD", "Set Contrast %d", msg.arg1);
-                lcd.SetContrast(msg.arg1);
-                break;
-            case LCD_SET_BACKLIGHT:
-                ESP_LOGI("LCD", "Set Backlight r %d, g %d, b %d", msg.arg1, msg.arg2, msg.arg3);
-                lcd.SetBackLightFast(msg.arg1, msg.arg2, msg.arg3);
-                break;
-            case LCD_CLEAR_DISPLAY:
-                lcd.Clear();
-            default:
-                break;
-            }
+        case DISPLAYING:
+            DisplayingState(lcd);
+            break;
+        case EDITING:
+            EditingState(lcd);
+        default:
+            break;
         }
     }
 }
