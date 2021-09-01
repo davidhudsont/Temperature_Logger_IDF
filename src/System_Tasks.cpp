@@ -32,7 +32,6 @@ static std::string logdate;
 static SemaphoreHandle_t log_semiphore;
 static SemaphoreHandle_t alarm_semiphore;
 static SemaphoreHandle_t lcd_semiphore;
-static SemaphoreHandle_t button_semiphore;
 
 static TaskHandle_t lcdTaskHandle;
 
@@ -52,7 +51,6 @@ void Create_Semaphores(void)
     log_semiphore = xSemaphoreCreateBinary();
     alarm_semiphore = xSemaphoreCreateBinary();
     lcd_semiphore = xSemaphoreCreateBinary();
-    button_semiphore = xSemaphoreCreateBinary();
 }
 
 /**
@@ -138,43 +136,30 @@ static void sdcard_task(void *pvParameter)
 }
 #endif
 
-static void IRAM_ATTR button_isr_handler(void *arg)
-{
-    static BaseType_t xHigherPriorityTaskWoken;
-    xSemaphoreGiveFromISR(button_semiphore, &xHigherPriorityTaskWoken);
-}
-
 void button_task(void *pvParameter)
 {
     ESP_LOGI("BTN", "Starting Button Interface");
-    Button button(GPIO_NUM_13);
-    ButtonInterrupt button_plus(GPIO_NUM_12, button_isr_handler);
-    Button button_minus(GPIO_NUM_14);
-    Button button_extra(GPIO_NUM_27);
-    uint32_t counter = 0;
+    Button editButton(GPIO_NUM_13);
+    Button editModeButton(GPIO_NUM_12);
+    Button downButton(GPIO_NUM_14);
+    Button upButton(GPIO_NUM_27);
     while (true)
     {
-        if (button)
+        if (editButton)
         {
-            ESP_LOGI("BTN", "Button Closed");
-            displayed_tmp_reading = !displayed_tmp_reading;
+            ESP_LOGI("BTN", "Edit Button Pressed");
         }
-        if (xSemaphoreTake(button_semiphore, 0))
+        else if (editModeButton)
         {
-            counter += 1;
-            ESP_LOGI("BTN", "Button Plus: Counter = %d", counter);
+            ESP_LOGI("BTN", "Edit Mode Button Pressed");
         }
-        else if (button_minus)
+        else if (downButton)
         {
-            counter -= 1;
-            ESP_LOGI("BTN", "Button Minus: Counter = %d", counter);
-            clearDisplay();
+            ESP_LOGI("BTN", "Down Button Pressed");
         }
-        else if (button_extra)
+        else if (upButton)
         {
-            ESP_LOGI("BTN", "Button Extra: Counter = %d", counter);
-            readDateTime();
-            readTemperature(true);
+            ESP_LOGI("BTN", "Up Button Pressed");
         }
         delay(10);
     }
