@@ -1,5 +1,9 @@
 #include "LCD.h"
 
+// Source https://github.com/sparkfun/SparkFun_SerLCD_Arduino_Library/blob/master/src/SerLCD.cpp
+
+// -------------------------------------Static Functions--------------------------------------------------
+
 static long map(long x, long in_min, long in_max, long out_min, long out_max)
 {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
@@ -10,23 +14,7 @@ static void delay(int ms)
     vTaskDelay(ms / portTICK_PERIOD_MS);
 }
 
-void LCD::Begin()
-{
-    uart.Begin(9600, UART2_TX_PIN_NUM, UART2_RX_PIN_NUM, UART_NUM_2);
-
-    delay(20);
-
-    BeginTransmit();
-    Write(SPECIAL_COMMAND);
-    Write(LCD_DISPLAYCONTROL | displayControl);
-    Write(SPECIAL_COMMAND);
-    Write(LCD_ENTRYMODESET | displayMode);
-    Write(SETTING_COMMAND);
-    Write(CLEAR_COMMAND);
-    EndTransmit();
-    delay(50);
-}
-
+// -------------------------------------LCD Private Functions-----------------------------------------------------
 void LCD::BeginTransmit()
 {
 }
@@ -45,26 +33,22 @@ void LCD::EndTransmit()
 {
 }
 
-void LCD::SpecialCommand(uint8_t command)
+// -------------------------------------LCD Public Functions-----------------------------------------------------
+void LCD::Begin()
 {
-    uint8_t commands[2] = {SPECIAL_COMMAND, command};
-
-    BeginTransmit();
-    WriteBurst(commands, 2);
-    EndTransmit();
-
-    delay(50);
-}
-
-void LCD::Command(uint8_t command)
-{
-    uint8_t commands[2] = {SETTING_COMMAND, command};
-
-    BeginTransmit();
-    WriteBurst(commands, 2);
-    EndTransmit();
+    uart.Begin(9600, UART2_TX_PIN_NUM, UART2_RX_PIN_NUM, UART_NUM_2);
 
     delay(20);
+
+    BeginTransmit();
+    Write(SPECIAL_COMMAND);
+    Write(LCD_DISPLAYCONTROL | displayControl);
+    Write(SPECIAL_COMMAND);
+    Write(LCD_ENTRYMODESET | displayMode);
+    Write(SETTING_COMMAND);
+    Write(CLEAR_COMMAND);
+    EndTransmit();
+    delay(50);
 }
 
 void LCD::Clear()
@@ -73,27 +57,21 @@ void LCD::Clear()
     delay(10);
 }
 
-void LCD::Display()
+void LCD::Home()
 {
-    displayControl |= LCD_DISPLAYON;
-    SpecialCommand(LCD_DISPLAYCONTROL | displayControl);
+    SpecialCommand(LCD_RETURNHOME);
 }
 
-void LCD::NoDisplay()
+void LCD::SetCursor(uint8_t row, uint8_t col)
 {
-    displayControl &= ~LCD_DISPLAYON;
-    SpecialCommand(LCD_DISPLAYCONTROL | displayControl);
-}
+    uint8_t row_offsets[4] = {0x00, 0x40, 0x14, 0x54};
 
-void LCD::ResetCursor()
-{
-    uint8_t commands[2] = {'|', '-'};
+    if (row > 3)
+        row = 3;
+    if (col > 19)
+        col = 19;
 
-    BeginTransmit();
-    WriteBurst(commands, 2);
-    EndTransmit();
-
-    delay(50);
+    SpecialCommand(LCD_SETDDRAMADDR | (col + row_offsets[row]));
 }
 
 void LCD::WriteCharacters(const char *str, uint32_t len)
@@ -115,27 +93,60 @@ void LCD::WriteCharacter(char c)
     delay(10);
 }
 
-void LCD::SetCursor(uint8_t row, uint8_t col)
+void LCD::Display()
 {
-    uint8_t row_offsets[4] = {0x00, 0x40, 0x14, 0x54};
-
-    if (row > 3)
-        row = 3;
-    if (col > 19)
-        col = 19;
-
-    SpecialCommand(LCD_SETDDRAMADDR | (col + row_offsets[row]));
+    displayControl |= LCD_DISPLAYON;
+    SpecialCommand(LCD_DISPLAYCONTROL | displayControl);
 }
 
-void LCD::SetContrast(uint8_t contrast)
+void LCD::NoDisplay()
 {
-    BeginTransmit();
-    Write(SETTING_COMMAND);
-    Write(CONTRAST_COMMAND);
-    Write(contrast);
-    EndTransmit();
+    displayControl &= ~LCD_DISPLAYON;
+    SpecialCommand(LCD_DISPLAYCONTROL | displayControl);
+}
 
-    delay(10);
+void LCD::NoCursor()
+{
+    displayControl &= ~LCD_CURSORON;
+    SpecialCommand(LCD_DISPLAYCONTROL | displayControl);
+}
+
+void LCD::Cursor()
+{
+    displayControl |= LCD_CURSORON;
+    SpecialCommand(LCD_DISPLAYCONTROL | displayControl);
+}
+
+void LCD::NoBlink()
+{
+    displayControl &= ~LCD_BLINKON;
+    SpecialCommand(LCD_DISPLAYCONTROL | displayControl);
+}
+
+void LCD::Blink()
+{
+    displayControl |= LCD_BLINKON;
+    SpecialCommand(LCD_DISPLAYCONTROL | displayControl);
+}
+
+void LCD::MoveCursorLeft()
+{
+    SpecialCommand(LCD_CURSORSHIFT | LCD_CURSORMOVE | LCD_MOVELEFT);
+}
+
+void LCD::MoveCursorRight()
+{
+    SpecialCommand(LCD_CURSORSHIFT | LCD_CURSORMOVE | LCD_MOVERIGHT);
+}
+
+void LCD::MoveCursorLeft(uint8_t count)
+{
+    SpecialCommand(LCD_CURSORSHIFT | LCD_CURSORMOVE | LCD_MOVELEFT, count);
+}
+
+void LCD::MoveCursorRight(uint8_t count)
+{
+    SpecialCommand(LCD_CURSORSHIFT | LCD_CURSORMOVE | LCD_MOVERIGHT, count);
 }
 
 void LCD::SetBackLight(uint8_t r, uint8_t g, uint8_t b)
@@ -179,6 +190,53 @@ void LCD::SetBackLightFast(uint8_t r, uint8_t g, uint8_t b)
     delay(10);
 }
 
+void LCD::SetContrast(uint8_t contrast)
+{
+    BeginTransmit();
+    Write(SETTING_COMMAND);
+    Write(CONTRAST_COMMAND);
+    Write(contrast);
+    EndTransmit();
+
+    delay(10);
+}
+
+void LCD::Command(uint8_t command)
+{
+    uint8_t commands[2] = {SETTING_COMMAND, command};
+
+    BeginTransmit();
+    WriteBurst(commands, 2);
+    EndTransmit();
+
+    delay(20);
+}
+
+void LCD::SpecialCommand(uint8_t command)
+{
+    uint8_t commands[2] = {SPECIAL_COMMAND, command};
+
+    BeginTransmit();
+    WriteBurst(commands, 2);
+    EndTransmit();
+
+    delay(50);
+}
+
+void LCD::SpecialCommand(uint8_t command, uint8_t count)
+{
+    uint8_t commands[2] = {SPECIAL_COMMAND, command};
+
+    BeginTransmit();
+    for (int i = 0; i < count; i++)
+    {
+        WriteBurst(commands, 2);
+    }
+    EndTransmit();
+
+    delay(50);
+}
+
 void LCD::DisableSystemMessages()
 {
     BeginTransmit();                       // transmit to device
@@ -186,4 +244,15 @@ void LCD::DisableSystemMessages()
     Write(DISABLE_SYSTEM_MESSAGE_DISPLAY); //Send the set '.' character
     EndTransmit();                         //Stop transmission
     delay(10);
+}
+
+void LCD::ResetCursor()
+{
+    uint8_t commands[2] = {'|', '-'};
+
+    BeginTransmit();
+    WriteBurst(commands, 2);
+    EndTransmit();
+
+    delay(50);
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+// Source https://github.com/sparkfun/SparkFun_SerLCD_Arduino_Library/blob/master/src/SerLCD.h
+
 #include "BSP_UART.h"
 
 #define DISPLAY_ADDRESS 0x72
@@ -49,6 +51,8 @@
 #define LCD_MOVERIGHT 0x04
 #define LCD_MOVELEFT 0x00
 
+const uint8_t DEGREE_SYMBOL = 223;
+
 class LCD
 {
 private:
@@ -65,26 +69,65 @@ private:
 public:
     void Begin();
 
+    // Clear the screen of characters
     void Clear();
-
-    void NoDisplay();
-    void Display();
-
-    void ResetCursor();
-
-    void WriteCharacters(const char *str, uint32_t len);
-
-    void WriteCharacter(char c);
-
-    void SpecialCommand(uint8_t command);
-    void Command(uint8_t command);
-
+    // Return the cursors to starting position
+    void Home();
+    // Set the cursors position
     void SetCursor(uint8_t row, uint8_t col);
+    // Create a custom character
+    // void CreateCustomCharacter(uint8_t location, uint8_t charmap[]);
+    // write a custom character to the LCD
+    // void WriteCustomCharacter(uint8_t location);
+    // Write a string of characters
+    void WriteCharacters(const char *str, uint32_t len);
+    // Write a single character
+    void WriteCharacter(char c);
+    // Disable displaying characters
+    void NoDisplay();
+    // Enable displaying characters
+    void Display();
+    // Disable the underline cursor
+    void NoCursor();
+    // Enable the underline cursor
+    void Cursor();
+    // Disable cursor blinking
+    void NoBlink();
+    // Enable cursor blinking
+    void Blink();
 
-    void SetContrast(uint8_t contrast);
-
+    // void scrollDisplayLeft();
+    // void scrollDisplayRight();
+    // void scrollDisplayLeft(uint8_t count);
+    // void scrollDisplayRight(uint8_t count);
+    void MoveCursorLeft();
+    void MoveCursorRight();
+    void MoveCursorLeft(uint8_t count);
+    void MoveCursorRight(uint8_t count);
+    // void setBacklight(unsigned long rgb);
     void SetBackLight(uint8_t r, uint8_t g, uint8_t b);
+    // void setFastBacklight(unsigned long rgb);
     void SetBackLightFast(uint8_t r, uint8_t g, uint8_t b);
+    // void leftToRight();
+    // void rightToLeft();
+    // void autoscroll();
+    // void noAutoscroll();
+    void SetContrast(uint8_t contrast);
+    // void setAddress(uint8_t new_addr);
+    // Settings command
+    void Command(uint8_t command);
+    // LCD special command
+    void SpecialCommand(uint8_t command);
+    // LCD special command, count times
+    void SpecialCommand(uint8_t command, uint8_t count);
 
+    // void enableSystemMessages();
     void DisableSystemMessages();
+    // void enableSplash();
+    // void disableSplash();
+    // void saveSplash();
+    // uint8_t getAddress();
+
+    // Clears the screen and reset the cursor
+    void ResetCursor();
 };
