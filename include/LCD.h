@@ -51,6 +51,8 @@
 #define LCD_MOVERIGHT 0x04
 #define LCD_MOVELEFT 0x00
 
+const uint8_t DEGREE_SYMBOL = 223;
+
 class LCD
 {
 private:

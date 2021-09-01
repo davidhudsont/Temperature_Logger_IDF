@@ -459,9 +459,17 @@ static void lcd_task(void *pvParameter)
             lcd.WriteCharacters(logtime.c_str(), logtime.length());
             lcd.SetCursor(2, 0);
             if (displayed_tmp_reading)
+            {
                 lcd.WriteCharacters(temperature_readingf.c_str(), temperature_readingf.length());
+                lcd.WriteCharacter(DEGREE_SYMBOL);
+                lcd.WriteCharacter('F');
+            }
             else
+            {
                 lcd.WriteCharacters(temperature_readingc.c_str(), temperature_readingc.length());
+                lcd.WriteCharacter(DEGREE_SYMBOL);
+                lcd.WriteCharacter('C');
+            }
         }
         if (recieveLCDCommand(&msg))
         {
