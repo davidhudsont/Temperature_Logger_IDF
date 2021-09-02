@@ -46,8 +46,8 @@ enum LCDState
 enum LCDSettings
 {
     SETTING_DATE,
-    SETTING_TEMP,
     SETTING_TIME,
+    SETTING_TEMP
 };
 
 LCDState &operator++(LCDState &state)
@@ -445,6 +445,18 @@ static void DisplayingState(LCD &lcd)
 
 static void EditingState(LCD &lcd, LCDSettings &state, Button &upButton, Button &downButton)
 {
+
+    switch (state)
+    {
+    case SETTING_DATE:
+        break;
+    case SETTING_TIME:
+        break;
+    case SETTING_TEMP:
+        break;
+    default:
+        break;
+    }
 }
 
 static void lcd_task(void *pvParameter)
@@ -495,6 +507,16 @@ static void lcd_task(void *pvParameter)
                 break;
             }
         }
+        if (editButton)
+        {
+            ++displayState;
+            ESP_LOGI("BTN", "Display Mode State: %d", displayState);
+        }
+        else if (settingModeButton)
+        {
+            ++settingState;
+            ESP_LOGI("BTN", "Setting Mode State: %d", settingState);
+        }
 
         switch (displayState)
         {
@@ -503,6 +525,7 @@ static void lcd_task(void *pvParameter)
             break;
         case EDITING:
             EditingState(lcd, settingState, upButton, downButton);
+            break;
         default:
             break;
         }
