@@ -491,14 +491,6 @@ static void lcd_task(void *pvParameter)
             case LCD_CLEAR_DISPLAY:
                 lcd.Clear();
                 break;
-            case LCD_CHANGE_DISPLAY_MODE:
-                ++displayState;
-                ESP_LOGI("LCD", "Display State Change %d", displayState);
-                break;
-            case LCD_CHANGE_SETTING_MODE:
-                ++settingState;
-                ESP_LOGI("LCD", "Display State Change %d", settingState);
-                break;
             default:
                 break;
             }
