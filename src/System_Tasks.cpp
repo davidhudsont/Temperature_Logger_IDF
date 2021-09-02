@@ -149,35 +149,6 @@ static void sdcard_task(void *pvParameter)
 }
 #endif
 
-void button_task(void *pvParameter)
-{
-    ESP_LOGI("BTN", "Starting Button Interface");
-    Button editButton(GPIO_NUM_13);
-    Button editModeButton(GPIO_NUM_12);
-    Button downButton(GPIO_NUM_14);
-    Button upButton(GPIO_NUM_27);
-    while (true)
-    {
-        if (editButton)
-        {
-            ESP_LOGI("BTN", "Edit Button Pressed");
-        }
-        else if (editModeButton)
-        {
-            ESP_LOGI("BTN", "Edit Mode Button Pressed");
-        }
-        else if (downButton)
-        {
-            ESP_LOGI("BTN", "Down Button Pressed");
-        }
-        else if (upButton)
-        {
-            ESP_LOGI("BTN", "Up Button Pressed");
-        }
-        delay(10);
-    }
-}
-
 void Power_On_Test(RTCDS3234 &rtc)
 {
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
@@ -433,6 +404,35 @@ static void console_task(void *pvParameter)
         }
 
         linenoiseFree(line);
+    }
+}
+
+void button_task(void *pvParameter)
+{
+    ESP_LOGI("BTN", "Starting Button Interface");
+    Button editButton(GPIO_NUM_13);
+    Button editModeButton(GPIO_NUM_12);
+    Button downButton(GPIO_NUM_14);
+    Button upButton(GPIO_NUM_27);
+    while (true)
+    {
+        if (editButton)
+        {
+            ESP_LOGI("BTN", "Edit Button Pressed");
+        }
+        else if (editModeButton)
+        {
+            ESP_LOGI("BTN", "Edit Mode Button Pressed");
+        }
+        else if (downButton)
+        {
+            ESP_LOGI("BTN", "Down Button Pressed");
+        }
+        else if (upButton)
+        {
+            ESP_LOGI("BTN", "Up Button Pressed");
+        }
+        delay(10);
     }
 }
 
