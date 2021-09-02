@@ -43,7 +43,7 @@ enum LCDState
     EDITING
 };
 
-enum Settings
+enum LCDSettings
 {
     SETTING_DATE,
     SETTING_TEMP,
@@ -459,38 +459,9 @@ static void Update_LCD(LCD &lcd, bool fahreintheitOrCelsius)
 
 static void DisplayingState(LCD &lcd)
 {
-    COMMAND_MESSAGE msg;
     if (xSemaphoreTake(lcd_semiphore, 100))
     {
         Update_LCD(lcd, displayed_tmp_reading);
-    }
-    if (recieveLCDCommand(&msg))
-    {
-        switch (msg.id)
-        {
-        case LCD_DISPLAY_ON:
-            ESP_LOGI("LCD", "DISPLAY ON");
-            lcd.SetBackLightFast(125, 125, 125);
-            lcd.Display();
-            break;
-        case LCD_DISPLAY_OFF:
-            ESP_LOGI("LCD", "DISPLAY OFF");
-            lcd.SetBackLightFast(0, 0, 0);
-            lcd.NoDisplay();
-            break;
-        case LCD_SET_CONTRAST:
-            ESP_LOGI("LCD", "Set Contrast %d", msg.arg1);
-            lcd.SetContrast(msg.arg1);
-            break;
-        case LCD_SET_BACKLIGHT:
-            ESP_LOGI("LCD", "Set Backlight r %d, g %d, b %d", msg.arg1, msg.arg2, msg.arg3);
-            lcd.SetBackLightFast(msg.arg1, msg.arg2, msg.arg3);
-            break;
-        case LCD_CLEAR_DISPLAY:
-            lcd.Clear();
-        default:
-            break;
-        }
     }
 }
 
@@ -507,11 +478,48 @@ static void lcd_task(void *pvParameter)
     lcd.DisableSystemMessages();
     lcd.Display();
     lcd.SetBackLightFast(125, 125, 125);
-    LCDState state = DISPLAYING;
+    LCDState displayState = DISPLAYING;
+    LCDSettings settingState = SETTING_DATE;
 
     while (1)
     {
-        switch (state)
+        COMMAND_MESSAGE msg;
+        if (recieveLCDCommand(&msg))
+        {
+            switch (msg.id)
+            {
+            case LCD_DISPLAY_ON:
+                ESP_LOGI("LCD", "DISPLAY ON");
+                lcd.SetBackLightFast(125, 125, 125);
+                lcd.Display();
+                break;
+            case LCD_DISPLAY_OFF:
+                ESP_LOGI("LCD", "DISPLAY OFF");
+                lcd.SetBackLightFast(0, 0, 0);
+                lcd.NoDisplay();
+                break;
+            case LCD_SET_CONTRAST:
+                ESP_LOGI("LCD", "Set Contrast %d", msg.arg1);
+                lcd.SetContrast(msg.arg1);
+                break;
+            case LCD_SET_BACKLIGHT:
+                ESP_LOGI("LCD", "Set Backlight r %d, g %d, b %d", msg.arg1, msg.arg2, msg.arg3);
+                lcd.SetBackLightFast(msg.arg1, msg.arg2, msg.arg3);
+                break;
+            case LCD_CLEAR_DISPLAY:
+                lcd.Clear();
+            case LCD_CHANGE_DISPLAY_MODE:
+                displayState = (LCDState)msg.arg1;
+                break;
+            case LCD_CHANGE_SETTING_MODE:
+                settingState = (LCDSettings)msg.arg1;
+                break;
+            default:
+                break;
+            }
+        }
+
+        switch (displayState)
         {
         case DISPLAYING:
             DisplayingState(lcd);
