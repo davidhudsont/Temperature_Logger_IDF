@@ -50,7 +50,16 @@ enum LCDSettings
     SETTING_TIME,
 };
 
-static void button_task(void *pvParameter);
+LCDState &operator++(LCDState &state)
+{
+    return state = (state == LCDState::EDITING) ? LCDState::DISPLAYING : static_cast<LCDState>(static_cast<int>(state) + 1);
+}
+
+LCDSettings &operator++(LCDSettings &state)
+{
+    return state = (state == LCDSettings::SETTING_TIME) ? LCDSettings::SETTING_DATE : static_cast<LCDSettings>(static_cast<int>(state) + 1);
+}
+
 static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
 static void console_task(void *pvParameter);
@@ -87,8 +96,6 @@ void Create_Tasks(void)
     xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
 #endif
     xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, &lcdTaskHandle);
-    delay(100);
-    xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 2, NULL);
 }
 
 #ifndef DISABLE_SD_CARD
@@ -407,35 +414,6 @@ static void console_task(void *pvParameter)
     }
 }
 
-void button_task(void *pvParameter)
-{
-    ESP_LOGI("BTN", "Starting Button Interface");
-    Button editButton(GPIO_NUM_13);
-    Button editModeButton(GPIO_NUM_12);
-    Button downButton(GPIO_NUM_14);
-    Button upButton(GPIO_NUM_27);
-    while (true)
-    {
-        if (editButton)
-        {
-            ESP_LOGI("BTN", "Edit Button Pressed");
-        }
-        else if (editModeButton)
-        {
-            ESP_LOGI("BTN", "Edit Mode Button Pressed");
-        }
-        else if (downButton)
-        {
-            ESP_LOGI("BTN", "Down Button Pressed");
-        }
-        else if (upButton)
-        {
-            ESP_LOGI("BTN", "Up Button Pressed");
-        }
-        delay(10);
-    }
-}
-
 static void Update_LCD(LCD &lcd, bool fahreintheitOrCelsius)
 {
     lcd.SetCursor(0, 0);
@@ -465,21 +443,25 @@ static void DisplayingState(LCD &lcd)
     }
 }
 
-static void EditingState(LCD &lcd)
+static void EditingState(LCD &lcd, LCDSettings &state, Button &upButton, Button &downButton)
 {
 }
 
 static void lcd_task(void *pvParameter)
 {
     LCD lcd;
-    lcd.Begin();
+    Button editButton(GPIO_NUM_13);
+    Button settingModeButton(GPIO_NUM_12);
+    Button downButton(GPIO_NUM_14);
+    Button upButton(GPIO_NUM_27);
+    LCDState displayState = DISPLAYING;
+    LCDSettings settingState = SETTING_DATE;
 
+    lcd.Begin();
     lcd.ResetCursor();
     lcd.DisableSystemMessages();
     lcd.Display();
     lcd.SetBackLightFast(125, 125, 125);
-    LCDState displayState = DISPLAYING;
-    LCDSettings settingState = SETTING_DATE;
 
     while (1)
     {
@@ -508,11 +490,14 @@ static void lcd_task(void *pvParameter)
                 break;
             case LCD_CLEAR_DISPLAY:
                 lcd.Clear();
+                break;
             case LCD_CHANGE_DISPLAY_MODE:
-                displayState = (LCDState)msg.arg1;
+                ++displayState;
+                ESP_LOGI("LCD", "Display State Change %d", displayState);
                 break;
             case LCD_CHANGE_SETTING_MODE:
-                settingState = (LCDSettings)msg.arg1;
+                ++settingState;
+                ESP_LOGI("LCD", "Display State Change %d", settingState);
                 break;
             default:
                 break;
@@ -525,7 +510,7 @@ static void lcd_task(void *pvParameter)
             DisplayingState(lcd);
             break;
         case EDITING:
-            EditingState(lcd);
+            EditingState(lcd, settingState, upButton, downButton);
         default:
             break;
         }
