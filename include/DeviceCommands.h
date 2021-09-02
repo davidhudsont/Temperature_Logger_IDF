@@ -22,8 +22,6 @@ enum COMMANDS
     LCD_SET_CONTRAST,
     LCD_SET_BACKLIGHT,
     LCD_CLEAR_DISPLAY,
-    LCD_CHANGE_DISPLAY_MODE,
-    LCD_CHANGE_SETTING_MODE,
 };
 
 void readTemperature(bool FahrenheitOrCelsius);
