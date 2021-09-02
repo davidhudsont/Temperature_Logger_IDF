@@ -37,6 +37,19 @@ static TaskHandle_t lcdTaskHandle;
 
 static bool displayed_tmp_reading = false;
 
+enum LCDState
+{
+    DISPLAYING,
+    EDITING
+};
+
+enum Settings
+{
+    SETTING_DATE,
+    SETTING_TEMP,
+    SETTING_TIME,
+};
+
 static void button_task(void *pvParameter);
 static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
@@ -443,12 +456,6 @@ static void Update_LCD(LCD &lcd, bool fahreintheitOrCelsius)
         lcd.WriteCharacter('C');
     }
 }
-
-enum LCDState
-{
-    DISPLAYING,
-    EDITING
-};
 
 static void DisplayingState(LCD &lcd)
 {
