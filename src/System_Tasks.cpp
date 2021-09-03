@@ -25,16 +25,9 @@
 #include "BSP_SD.h"
 #endif
 
-static std::string temperature_readingf;
-static std::string temperature_readingc;
-static std::string logtime;
-static std::string logdate;
-
 static SemaphoreHandle_t log_semiphore;
 static SemaphoreHandle_t alarm_semiphore;
 static SemaphoreHandle_t lcd_semiphore;
-
-static TaskHandle_t lcdTaskHandle;
 
 static DATE_TIME dateTime;
 static float temperatureF;
@@ -72,10 +65,10 @@ void Create_Tasks(void)
     xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
+    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
 #ifndef DISABLE_SD_CARD
     xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
 #endif
-    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, &lcdTaskHandle);
 }
 
 #ifndef DISABLE_SD_CARD
@@ -202,16 +195,13 @@ static void rtc_intr_task(void *pvParameter)
             {
                 ESP_LOGI("RTC", "ALARM1 Triggered");
                 rtc.READ_DATETIME();
-                logdate = rtc.DATE_TOSTRING();
-                logtime = rtc.TIME_TOSTRING();
-                ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
+                dateTime = rtc.GET_DATETIME();
             }
             if (alarm2_flag)
             {
                 ESP_LOGI("RTC", "ALARM2 Triggered");
                 rtc.READ_DATETIME();
-                logdate = rtc.DATE_TOSTRING();
-                logtime = rtc.TIME_TOSTRING();
+                dateTime = rtc.GET_DATETIME();
                 xSemaphoreGive(alarm_semiphore);
                 xSemaphoreGive(lcd_semiphore);
             }
@@ -223,12 +213,14 @@ static void rtc_intr_task(void *pvParameter)
             switch (cmd_msg.id)
             {
             case GET_DATETIME:
+            {
                 rtc.READ_DATETIME();
-                logdate = rtc.DATE_TOSTRING();
-                logtime = rtc.TIME_TOSTRING();
+                std::string logdate = rtc.DATE_TOSTRING();
+                std::string logtime = rtc.TIME_TOSTRING();
                 ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
                 dateTime = rtc.GET_DATETIME();
                 break;
+            }
             case SET_SECONDS:
                 rtc.WRITE_SECONDS(cmd_msg.arg1);
                 break;
@@ -293,14 +285,15 @@ static void tmp102_task(void *pvParameter)
     delay(300);
     OneShotTemperatureRead(tmp102);
     OneShotTemperatureRead(tmp102);
+    temperatureF = tmp102.Get_TemperatureF();
+    temperatureC = tmp102.Get_Temperature();
 
     while (1)
     {
         if (xSemaphoreTake(alarm_semiphore, 0))
         {
             OneShotTemperatureRead(tmp102);
-            temperature_readingf = tmp102.Get_TemperatureF_ToString();
-            temperature_readingc = tmp102.Get_TemperatureC_ToString();
+            std::string temperature_readingf = tmp102.Get_TemperatureF_ToString();
             ESP_LOGI("TMP", "%sF", temperature_readingf.c_str());
             xSemaphoreGive(log_semiphore);
         }
@@ -322,8 +315,6 @@ static void tmp102_task(void *pvParameter)
             default:
                 break;
             }
-            temperature_readingf = tmp102.Get_TemperatureF_ToString();
-            temperature_readingc = tmp102.Get_TemperatureC_ToString();
             xSemaphoreGive(lcd_semiphore);
         }
     }
@@ -396,18 +387,6 @@ static void console_task(void *pvParameter)
 
 static void lcd_task(void *pvParameter)
 {
-    // LCD lcd;
-    // Button editButton(GPIO_NUM_13);
-    // Button settingModeButton(GPIO_NUM_12);
-    // Button downButton(GPIO_NUM_14);
-    // Button upButton(GPIO_NUM_27);
-
-    // lcd.Begin();
-    // lcd.ResetCursor();
-    // lcd.DisableSystemMessages();
-    // lcd.Display();
-    // lcd.SetBackLightFast(125, 125, 125);
-
     HMI hmi = HMI();
 
     while (1)
