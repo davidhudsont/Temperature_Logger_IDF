@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include "Button.h"
 #include "DeviceCommands.h"
+#include "HMI.h"
 #define DISABLE_SD_CARD
 #ifndef DISABLE_SD_CARD
 #include "BSP_SD.h"
@@ -36,29 +37,6 @@ static SemaphoreHandle_t lcd_semiphore;
 static TaskHandle_t lcdTaskHandle;
 
 static bool displayed_tmp_reading = false;
-
-enum LCDState
-{
-    DISPLAYING,
-    EDITING
-};
-
-enum LCDSettings
-{
-    SETTING_DATE,
-    SETTING_TIME,
-    SETTING_TEMP
-};
-
-LCDState &operator++(LCDState &state)
-{
-    return state = (state == LCDState::EDITING) ? LCDState::DISPLAYING : static_cast<LCDState>(static_cast<int>(state) + 1);
-}
-
-LCDSettings &operator++(LCDSettings &state)
-{
-    return state = (state == LCDSettings::SETTING_TIME) ? LCDSettings::SETTING_DATE : static_cast<LCDSettings>(static_cast<int>(state) + 1);
-}
 
 static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
@@ -435,30 +413,6 @@ static void Update_LCD(LCD &lcd, bool fahreintheitOrCelsius)
     }
 }
 
-static void DisplayingState(LCD &lcd)
-{
-    if (xSemaphoreTake(lcd_semiphore, 100))
-    {
-        Update_LCD(lcd, displayed_tmp_reading);
-    }
-}
-
-static void EditingState(LCD &lcd, LCDSettings &state, Button &upButton, Button &downButton)
-{
-
-    switch (state)
-    {
-    case SETTING_DATE:
-        break;
-    case SETTING_TIME:
-        break;
-    case SETTING_TEMP:
-        break;
-    default:
-        break;
-    }
-}
-
 static void lcd_task(void *pvParameter)
 {
     LCD lcd;
@@ -466,8 +420,6 @@ static void lcd_task(void *pvParameter)
     Button settingModeButton(GPIO_NUM_12);
     Button downButton(GPIO_NUM_14);
     Button upButton(GPIO_NUM_27);
-    LCDState displayState = DISPLAYING;
-    LCDSettings settingState = SETTING_DATE;
 
     lcd.Begin();
     lcd.ResetCursor();
@@ -507,27 +459,9 @@ static void lcd_task(void *pvParameter)
                 break;
             }
         }
-        if (editButton)
+        if (xSemaphoreTake(lcd_semiphore, 100))
         {
-            ++displayState;
-            ESP_LOGI("BTN", "Display Mode State: %d", displayState);
-        }
-        else if (settingModeButton)
-        {
-            ++settingState;
-            ESP_LOGI("BTN", "Setting Mode State: %d", settingState);
-        }
-
-        switch (displayState)
-        {
-        case DISPLAYING:
-            DisplayingState(lcd);
-            break;
-        case EDITING:
-            EditingState(lcd, settingState, upButton, downButton);
-            break;
-        default:
-            break;
+            Update_LCD(lcd, displayed_tmp_reading);
         }
     }
 }
