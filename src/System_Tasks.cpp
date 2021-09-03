@@ -39,7 +39,7 @@ static void console_task(void *pvParameter);
 #ifndef DISABLE_SD_CARD
 static void sdcard_task(void *pvParameter);
 #endif
-static void lcd_task(void *pvParameter);
+static void hmi_task(void *pvParameter);
 
 void Create_Semaphores(void)
 {
@@ -65,7 +65,7 @@ void Create_Tasks(void)
     xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
-    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
+    xTaskCreate(&hmi_task, "HMI Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
 #ifndef DISABLE_SD_CARD
     xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
 #endif
@@ -385,7 +385,7 @@ static void console_task(void *pvParameter)
     }
 }
 
-static void lcd_task(void *pvParameter)
+static void hmi_task(void *pvParameter)
 {
     HMI hmi = HMI();
 
