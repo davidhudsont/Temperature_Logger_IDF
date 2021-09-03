@@ -3,6 +3,7 @@
 #include "LCD.h"
 #include "Button.h"
 #include "DeviceCommands.h"
+#include "DEADONRTC.h"
 
 enum LCDState
 {
@@ -15,18 +16,6 @@ enum LCDSettings
     SETTING_DATE,
     SETTING_TIME,
     SETTING_TEMP
-};
-
-struct DATE_TIME
-{
-    uint8_t year;
-    uint8_t month;
-    uint8_t dayofMonth;
-    uint8_t hour;
-    uint8_t minute;
-    uint8_t second;
-    bool hour12_not24;
-    bool PM_notAM;
 };
 
 const gpio_num_t editPin = GPIO_NUM_13;

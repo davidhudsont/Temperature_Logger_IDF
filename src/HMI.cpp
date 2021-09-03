@@ -33,6 +33,37 @@ void HMI::display()
 }
 void HMI::process()
 {
+    COMMAND_MESSAGE msg;
+    if (recieveLCDCommand(&msg))
+    {
+        switch (msg.id)
+        {
+        case LCD_DISPLAY_ON:
+            ESP_LOGI("LCD", "DISPLAY ON");
+            lcd.SetBackLightFast(125, 125, 125);
+            lcd.Display();
+            break;
+        case LCD_DISPLAY_OFF:
+            ESP_LOGI("LCD", "DISPLAY OFF");
+            lcd.SetBackLightFast(0, 0, 0);
+            lcd.NoDisplay();
+            break;
+        case LCD_SET_CONTRAST:
+            ESP_LOGI("LCD", "Set Contrast %d", msg.arg1);
+            lcd.SetContrast(msg.arg1);
+            break;
+        case LCD_SET_BACKLIGHT:
+            ESP_LOGI("LCD", "Set Backlight r %d, g %d, b %d", msg.arg1, msg.arg2, msg.arg3);
+            lcd.SetBackLightFast(msg.arg1, msg.arg2, msg.arg3);
+            break;
+        case LCD_CLEAR_DISPLAY:
+            lcd.Clear();
+            break;
+        default:
+            break;
+        }
+    }
+
     if (editButton)
     {
         ++displayState;
@@ -72,6 +103,7 @@ void HMI::updateDisplayTemperature(float temperatureF, float temperatureC)
     }
 
     std::string logtemp = ss.str();
+    lcd.SetCursor(2, 0);
     lcd.WriteCharacters(logtemp.c_str(), logtemp.length());
 }
 void HMI::updateDisplayDateTime(DATE_TIME &dateTime)

@@ -39,6 +39,18 @@ typedef enum ALARM2_MODES
 
 } ALARM2_MODES;
 
+struct DATE_TIME
+{
+    uint8_t year;
+    uint8_t month;
+    uint8_t dayofMonth;
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+    bool hour12_not24;
+    bool PM_notAM;
+};
+
 int GetInterruptSemiphore();
 
 class RTCDS3234
@@ -149,6 +161,8 @@ public:
      * @return std::string 
      */
     std::string TIME_TOSTRING();
+
+    DATE_TIME GET_DATETIME();
 
     void WRITE_SECONDS(uint8_t second);
     uint8_t READ_SECONDS();

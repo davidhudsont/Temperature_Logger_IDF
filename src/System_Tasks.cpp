@@ -36,7 +36,9 @@ static SemaphoreHandle_t lcd_semiphore;
 
 static TaskHandle_t lcdTaskHandle;
 
-static bool displayed_tmp_reading = false;
+static DATE_TIME dateTime;
+static float temperatureF;
+static float temperatureC;
 
 static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
@@ -225,6 +227,7 @@ static void rtc_intr_task(void *pvParameter)
                 logdate = rtc.DATE_TOSTRING();
                 logtime = rtc.TIME_TOSTRING();
                 ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
+                dateTime = rtc.GET_DATETIME();
                 break;
             case SET_SECONDS:
                 rtc.WRITE_SECONDS(cmd_msg.arg1);
@@ -304,18 +307,17 @@ static void tmp102_task(void *pvParameter)
 
         if (recieveTMPCommand(&cmd_msg))
         {
-            float temperature = 0;
             switch (cmd_msg.id)
             {
             case GET_TEMPF:
                 OneShotTemperatureRead(tmp102);
-                temperature = tmp102.Get_TemperatureF();
-                ESP_LOGI("TMP", "%3.3fC", temperature);
+                temperatureF = tmp102.Get_TemperatureF();
+                ESP_LOGI("TMP", "%3.3fC", temperatureF);
                 break;
             case GET_TEMPC:
                 OneShotTemperatureRead(tmp102);
-                temperature = tmp102.Get_Temperature();
-                ESP_LOGI("TMP", "%2.3fC", temperature);
+                temperatureC = tmp102.Get_Temperature();
+                ESP_LOGI("TMP", "%2.3fC", temperatureC);
                 break;
             default:
                 break;
@@ -392,76 +394,30 @@ static void console_task(void *pvParameter)
     }
 }
 
-static void Update_LCD(LCD &lcd, bool fahreintheitOrCelsius)
-{
-    lcd.SetCursor(0, 0);
-    lcd.WriteCharacters(logdate.c_str(), logdate.length());
-    lcd.SetCursor(1, 0);
-    lcd.WriteCharacters(logtime.c_str(), logtime.length());
-    lcd.SetCursor(2, 0);
-    if (fahreintheitOrCelsius)
-    {
-        lcd.WriteCharacters(temperature_readingf.c_str(), temperature_readingf.length());
-        lcd.WriteCharacter(DEGREE_SYMBOL);
-        lcd.WriteCharacter('F');
-    }
-    else
-    {
-        lcd.WriteCharacters(temperature_readingc.c_str(), temperature_readingc.length());
-        lcd.WriteCharacter(DEGREE_SYMBOL);
-        lcd.WriteCharacter('C');
-    }
-}
-
 static void lcd_task(void *pvParameter)
 {
-    LCD lcd;
-    Button editButton(GPIO_NUM_13);
-    Button settingModeButton(GPIO_NUM_12);
-    Button downButton(GPIO_NUM_14);
-    Button upButton(GPIO_NUM_27);
+    // LCD lcd;
+    // Button editButton(GPIO_NUM_13);
+    // Button settingModeButton(GPIO_NUM_12);
+    // Button downButton(GPIO_NUM_14);
+    // Button upButton(GPIO_NUM_27);
 
-    lcd.Begin();
-    lcd.ResetCursor();
-    lcd.DisableSystemMessages();
-    lcd.Display();
-    lcd.SetBackLightFast(125, 125, 125);
+    // lcd.Begin();
+    // lcd.ResetCursor();
+    // lcd.DisableSystemMessages();
+    // lcd.Display();
+    // lcd.SetBackLightFast(125, 125, 125);
+
+    HMI hmi = HMI();
 
     while (1)
     {
-        COMMAND_MESSAGE msg;
-        if (recieveLCDCommand(&msg))
-        {
-            switch (msg.id)
-            {
-            case LCD_DISPLAY_ON:
-                ESP_LOGI("LCD", "DISPLAY ON");
-                lcd.SetBackLightFast(125, 125, 125);
-                lcd.Display();
-                break;
-            case LCD_DISPLAY_OFF:
-                ESP_LOGI("LCD", "DISPLAY OFF");
-                lcd.SetBackLightFast(0, 0, 0);
-                lcd.NoDisplay();
-                break;
-            case LCD_SET_CONTRAST:
-                ESP_LOGI("LCD", "Set Contrast %d", msg.arg1);
-                lcd.SetContrast(msg.arg1);
-                break;
-            case LCD_SET_BACKLIGHT:
-                ESP_LOGI("LCD", "Set Backlight r %d, g %d, b %d", msg.arg1, msg.arg2, msg.arg3);
-                lcd.SetBackLightFast(msg.arg1, msg.arg2, msg.arg3);
-                break;
-            case LCD_CLEAR_DISPLAY:
-                lcd.Clear();
-                break;
-            default:
-                break;
-            }
-        }
+
         if (xSemaphoreTake(lcd_semiphore, 100))
         {
-            Update_LCD(lcd, displayed_tmp_reading);
+            hmi.updateDisplayDateTime(dateTime);
+            hmi.updateDisplayTemperature(temperatureF, temperatureC);
         }
+        hmi.process();
     }
 }
