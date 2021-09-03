@@ -3,14 +3,14 @@
 #include <iomanip>
 #include "esp_log.h"
 
-LCDState &operator++(LCDState &state)
+HMIState &operator++(HMIState &state)
 {
-    return state = (state == LCDState::EDITING) ? LCDState::DISPLAYING : static_cast<LCDState>(static_cast<int>(state) + 1);
+    return state = (state == HMIState::EDITING) ? HMIState::DISPLAYING : static_cast<HMIState>(static_cast<int>(state) + 1);
 }
 
-LCDSettings &operator++(LCDSettings &state)
+HMISettings &operator++(HMISettings &state)
 {
-    return state = (state == LCDSettings::SETTING_TIME) ? LCDSettings::SETTING_DATE : static_cast<LCDSettings>(static_cast<int>(state) + 1);
+    return state = (state == HMISettings::SETTING_TIME) ? HMISettings::SETTING_DATE : static_cast<HMISettings>(static_cast<int>(state) + 1);
 }
 
 HMI::HMI()

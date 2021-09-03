@@ -5,13 +5,13 @@
 #include "DeviceCommands.h"
 #include "DEADONRTC.h"
 
-enum LCDState
+enum HMIState
 {
     DISPLAYING,
     EDITING
 };
 
-enum LCDSettings
+enum HMISettings
 {
     SETTING_DATE,
     SETTING_TIME,
@@ -37,8 +37,8 @@ private:
     float temperatureC;
     DATE_TIME dateTime;
 
-    LCDState displayState = DISPLAYING;
-    LCDSettings settingState = SETTING_DATE;
+    HMIState displayState = DISPLAYING;
+    HMISettings settingState = SETTING_DATE;
 
     void editing();
     void display();
