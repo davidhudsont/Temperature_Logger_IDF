@@ -4,6 +4,7 @@ static CommandQueue tmp_command_queue;
 static CommandQueue lcd_command_queue;
 static CommandQueue date_command_queue;
 static CommandQueue time_command_queue;
+static CommandQueue button_command_queue;
 
 void readTemperature(bool FahrenheitOrCelsius)
 {
@@ -53,6 +54,13 @@ void clearDisplay()
 {
     COMMAND_MESSAGE msg;
     msg.id = LCD_CLEAR_DISPLAY;
+    lcd_command_queue.Send(msg);
+}
+
+void updateDisplay()
+{
+    COMMAND_MESSAGE msg;
+    msg.id = LCD_DISPLAY_UPDATE;
     lcd_command_queue.Send(msg);
 }
 
@@ -141,4 +149,17 @@ void readDateTime()
     COMMAND_MESSAGE msg;
     msg.id = GET_DATETIME;
     time_command_queue.Send(msg);
+}
+
+// Button Tasks
+void buttonPressed(COMMANDS command)
+{
+    COMMAND_MESSAGE msg;
+    msg.id = command;
+    button_command_queue.Send(msg);
+}
+
+bool recieveButtonCommand(COMMAND_MESSAGE *msg)
+{
+    return button_command_queue.Recieve(msg);
 }

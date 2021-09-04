@@ -19,40 +19,34 @@
 #include <sys/stat.h>
 #include "Button.h"
 #include "DeviceCommands.h"
+#include "HMI.h"
 #define DISABLE_SD_CARD
 #ifndef DISABLE_SD_CARD
 #include "BSP_SD.h"
 #endif
 
-static std::string temperature_readingf;
-static std::string temperature_readingc;
-static std::string logtime;
-static std::string logdate;
-
 static SemaphoreHandle_t log_semiphore;
 static SemaphoreHandle_t alarm_semiphore;
 static SemaphoreHandle_t lcd_semiphore;
-static SemaphoreHandle_t button_semiphore;
 
-static TaskHandle_t lcdTaskHandle;
+static DATE_TIME dateTime;
+static float temperatureF;
+static float temperatureC;
 
-static bool displayed_tmp_reading = false;
-
-static void button_task(void *pvParameter);
 static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
 static void console_task(void *pvParameter);
 #ifndef DISABLE_SD_CARD
 static void sdcard_task(void *pvParameter);
 #endif
-static void lcd_task(void *pvParameter);
+static void button_task(void *pvParameter);
+static void hmi_task(void *pvParameter);
 
 void Create_Semaphores(void)
 {
     log_semiphore = xSemaphoreCreateBinary();
     alarm_semiphore = xSemaphoreCreateBinary();
     lcd_semiphore = xSemaphoreCreateBinary();
-    button_semiphore = xSemaphoreCreateBinary();
 }
 
 /**
@@ -72,12 +66,12 @@ void Create_Tasks(void)
     xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
+    xTaskCreate(&hmi_task, "HMI Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
+    xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
+
 #ifndef DISABLE_SD_CARD
     xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
 #endif
-    xTaskCreate(&lcd_task, "LCD Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, &lcdTaskHandle);
-    delay(100);
-    xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 2, NULL);
 }
 
 #ifndef DISABLE_SD_CARD
@@ -137,48 +131,6 @@ static void sdcard_task(void *pvParameter)
     }
 }
 #endif
-
-static void IRAM_ATTR button_isr_handler(void *arg)
-{
-    static BaseType_t xHigherPriorityTaskWoken;
-    xSemaphoreGiveFromISR(button_semiphore, &xHigherPriorityTaskWoken);
-}
-
-void button_task(void *pvParameter)
-{
-    ESP_LOGI("BTN", "Starting Button Interface");
-    Button button(GPIO_NUM_13);
-    ButtonInterrupt button_plus(GPIO_NUM_12, button_isr_handler);
-    Button button_minus(GPIO_NUM_14);
-    Button button_extra(GPIO_NUM_27);
-    uint32_t counter = 0;
-    while (true)
-    {
-        if (button)
-        {
-            ESP_LOGI("BTN", "Button Closed");
-            displayed_tmp_reading = !displayed_tmp_reading;
-        }
-        if (xSemaphoreTake(button_semiphore, 0))
-        {
-            counter += 1;
-            ESP_LOGI("BTN", "Button Plus: Counter = %d", counter);
-        }
-        else if (button_minus)
-        {
-            counter -= 1;
-            ESP_LOGI("BTN", "Button Minus: Counter = %d", counter);
-            clearDisplay();
-        }
-        else if (button_extra)
-        {
-            ESP_LOGI("BTN", "Button Extra: Counter = %d", counter);
-            readDateTime();
-            readTemperature(true);
-        }
-        delay(10);
-    }
-}
 
 void Power_On_Test(RTCDS3234 &rtc)
 {
@@ -246,16 +198,13 @@ static void rtc_intr_task(void *pvParameter)
             {
                 ESP_LOGI("RTC", "ALARM1 Triggered");
                 rtc.READ_DATETIME();
-                logdate = rtc.DATE_TOSTRING();
-                logtime = rtc.TIME_TOSTRING();
-                ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
+                dateTime = rtc.GET_DATETIME();
             }
             if (alarm2_flag)
             {
                 ESP_LOGI("RTC", "ALARM2 Triggered");
                 rtc.READ_DATETIME();
-                logdate = rtc.DATE_TOSTRING();
-                logtime = rtc.TIME_TOSTRING();
+                dateTime = rtc.GET_DATETIME();
                 xSemaphoreGive(alarm_semiphore);
                 xSemaphoreGive(lcd_semiphore);
             }
@@ -267,11 +216,14 @@ static void rtc_intr_task(void *pvParameter)
             switch (cmd_msg.id)
             {
             case GET_DATETIME:
+            {
                 rtc.READ_DATETIME();
-                logdate = rtc.DATE_TOSTRING();
-                logtime = rtc.TIME_TOSTRING();
+                std::string logdate = rtc.DATE_TOSTRING();
+                std::string logtime = rtc.TIME_TOSTRING();
                 ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
+                dateTime = rtc.GET_DATETIME();
                 break;
+            }
             case SET_SECONDS:
                 rtc.WRITE_SECONDS(cmd_msg.arg1);
                 break;
@@ -336,38 +288,36 @@ static void tmp102_task(void *pvParameter)
     delay(300);
     OneShotTemperatureRead(tmp102);
     OneShotTemperatureRead(tmp102);
+    temperatureF = tmp102.Get_TemperatureF();
+    temperatureC = tmp102.Get_Temperature();
 
     while (1)
     {
         if (xSemaphoreTake(alarm_semiphore, 0))
         {
             OneShotTemperatureRead(tmp102);
-            temperature_readingf = tmp102.Get_TemperatureF_ToString();
-            temperature_readingc = tmp102.Get_TemperatureC_ToString();
+            std::string temperature_readingf = tmp102.Get_TemperatureF_ToString();
             ESP_LOGI("TMP", "%sF", temperature_readingf.c_str());
             xSemaphoreGive(log_semiphore);
         }
 
         if (recieveTMPCommand(&cmd_msg))
         {
-            float temperature = 0;
             switch (cmd_msg.id)
             {
             case GET_TEMPF:
                 OneShotTemperatureRead(tmp102);
-                temperature = tmp102.Get_TemperatureF();
-                ESP_LOGI("TMP", "%3.3fC", temperature);
+                temperatureF = tmp102.Get_TemperatureF();
+                ESP_LOGI("TMP", "%3.3fC", temperatureF);
                 break;
             case GET_TEMPC:
                 OneShotTemperatureRead(tmp102);
-                temperature = tmp102.Get_Temperature();
-                ESP_LOGI("TMP", "%2.3fC", temperature);
+                temperatureC = tmp102.Get_Temperature();
+                ESP_LOGI("TMP", "%2.3fC", temperatureC);
                 break;
             default:
                 break;
             }
-            temperature_readingf = tmp102.Get_TemperatureF_ToString();
-            temperature_readingc = tmp102.Get_TemperatureC_ToString();
             xSemaphoreGive(lcd_semiphore);
         }
     }
@@ -438,66 +388,51 @@ static void console_task(void *pvParameter)
     }
 }
 
-static void lcd_task(void *pvParameter)
+static void button_task(void *pvParameter)
 {
-    LCD lcd;
-    lcd.Begin();
+    ESP_LOGI("BTN", "Starting Button Interface");
+    Button editButton(GPIO_NUM_13);
+    Button editModeButton(GPIO_NUM_12);
+    Button downButton(GPIO_NUM_14);
+    Button upButton(GPIO_NUM_27);
+    while (true)
+    {
+        if (editButton)
+        {
+            ESP_LOGI("BTN", "Edit Button Pressed");
+            buttonPressed(EDIT_MODE_PRESSED);
+        }
+        else if (editModeButton)
+        {
+            ESP_LOGI("BTN", "Edit Mode Button Pressed");
+            buttonPressed(EDIT_SETTING_PRESSED);
+        }
+        else if (downButton)
+        {
+            ESP_LOGI("BTN", "Down Button Pressed");
+            buttonPressed(DOWN_PRESSED);
+        }
+        else if (upButton)
+        {
+            ESP_LOGI("BTN", "Up Button Pressed");
+            buttonPressed(UP_PRESSED);
+        }
+        delay(10);
+    }
+}
 
-    lcd.ResetCursor();
-    lcd.DisableSystemMessages();
-    lcd.Display();
-    lcd.SetBackLightFast(125, 125, 125);
-
+static void hmi_task(void *pvParameter)
+{
+    HMI hmi = HMI();
     while (1)
     {
-        COMMAND_MESSAGE msg;
-        if (xSemaphoreTake(lcd_semiphore, 100))
+
+        if (xSemaphoreTake(lcd_semiphore, 0))
         {
-            lcd.SetCursor(0, 0);
-            lcd.WriteCharacters(logdate.c_str(), logdate.length());
-            lcd.SetCursor(1, 0);
-            lcd.WriteCharacters(logtime.c_str(), logtime.length());
-            lcd.SetCursor(2, 0);
-            if (displayed_tmp_reading)
-            {
-                lcd.WriteCharacters(temperature_readingf.c_str(), temperature_readingf.length());
-                lcd.WriteCharacter(DEGREE_SYMBOL);
-                lcd.WriteCharacter('F');
-            }
-            else
-            {
-                lcd.WriteCharacters(temperature_readingc.c_str(), temperature_readingc.length());
-                lcd.WriteCharacter(DEGREE_SYMBOL);
-                lcd.WriteCharacter('C');
-            }
+            hmi.setDisplayDateTime(dateTime);
+            hmi.setDisplayTemperature(temperatureF, temperatureC);
+            updateDisplay();
         }
-        if (recieveLCDCommand(&msg))
-        {
-            switch (msg.id)
-            {
-            case LCD_DISPLAY_ON:
-                ESP_LOGI("LCD", "DISPLAY ON");
-                lcd.SetBackLightFast(125, 125, 125);
-                lcd.Display();
-                break;
-            case LCD_DISPLAY_OFF:
-                ESP_LOGI("LCD", "DISPLAY OFF");
-                lcd.SetBackLightFast(0, 0, 0);
-                lcd.NoDisplay();
-                break;
-            case LCD_SET_CONTRAST:
-                ESP_LOGI("LCD", "Set Contrast %d", msg.arg1);
-                lcd.SetContrast(msg.arg1);
-                break;
-            case LCD_SET_BACKLIGHT:
-                ESP_LOGI("LCD", "Set Backlight r %d, g %d, b %d", msg.arg1, msg.arg2, msg.arg3);
-                lcd.SetBackLightFast(msg.arg1, msg.arg2, msg.arg3);
-                break;
-            case LCD_CLEAR_DISPLAY:
-                lcd.Clear();
-            default:
-                break;
-            }
-        }
+        hmi.process();
     }
 }

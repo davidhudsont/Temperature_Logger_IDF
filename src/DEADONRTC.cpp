@@ -200,6 +200,21 @@ std::string RTCDS3234::TIME_TOSTRING()
     return ss.str();
 }
 
+DATE_TIME RTCDS3234::GET_DATETIME()
+{
+    DATE_TIME dateTime;
+    dateTime.year = year;
+    dateTime.month = month;
+    dateTime.dayofMonth = date;
+    dateTime.hour = hours;
+    dateTime.minute = minutes;
+    dateTime.second = seconds;
+    dateTime.hour12_not24 = hour12_not24;
+    dateTime.PM_notAM = PM_notAM;
+
+    return dateTime;
+}
+
 void RTCDS3234::WRITE_SECONDS(uint8_t seconds)
 {
     Register_Write(REG_SECONDS, DECtoBCD(seconds));
