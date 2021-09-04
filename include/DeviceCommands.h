@@ -25,9 +25,11 @@ enum COMMANDS
     LCD_DISPLAY_UPDATE,
 };
 
+// Temperature Commands
 void readTemperature(bool FahrenheitOrCelsius);
 bool recieveTMPCommand(COMMAND_MESSAGE *msg);
 
+// LCD commands
 void displayOff();
 void displayOn();
 void setContrast(uint8_t contrast);
@@ -37,6 +39,7 @@ void updateDisplay();
 
 bool recieveLCDCommand(COMMAND_MESSAGE *msg);
 
+// Date Commands
 void setWeekDay(uint8_t weekday);
 void setMonth(uint8_t month);
 void setYear(uint8_t year);
@@ -44,6 +47,7 @@ void setDayOfMonth(uint8_t dayOfMonth);
 
 bool recieveDateCommand(COMMAND_MESSAGE *msg);
 
+// Time commands
 void setSeconds(uint8_t second);
 void setMinutes(uint8_t minute);
 void setHours12Mode(uint8_t hour, bool AMOrPM);
@@ -52,3 +56,5 @@ void setHours24Mode(uint8_t hour);
 bool recieveTimeCommand(COMMAND_MESSAGE *msg);
 
 void readDateTime();
+
+// Button Tasks
