@@ -23,6 +23,10 @@ enum COMMANDS
     LCD_SET_BACKLIGHT,
     LCD_CLEAR_DISPLAY,
     LCD_DISPLAY_UPDATE,
+    EDIT_SETTING_PRESSED,
+    EDIT_MODE_PRESSED,
+    DOWN_PRESSED,
+    UP_PRESSED,
 };
 
 // Temperature Commands
@@ -58,3 +62,6 @@ bool recieveTimeCommand(COMMAND_MESSAGE *msg);
 void readDateTime();
 
 // Button Tasks
+void buttonPressed(COMMANDS command);
+
+bool recieveButtonCommand(COMMAND_MESSAGE *msg);

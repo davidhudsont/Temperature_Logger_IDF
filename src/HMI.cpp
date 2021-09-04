@@ -22,10 +22,6 @@ HMI::HMI()
     lcd.SetBackLightFast(125, 125, 125);
 }
 
-void HMI::editing()
-{
-}
-
 void HMI::display()
 {
     COMMAND_MESSAGE msg;
@@ -56,6 +52,53 @@ void HMI::display()
             break;
         case LCD_DISPLAY_UPDATE:
             update();
+            break;
+        default:
+            break;
+        }
+    }
+    else if (recieveButtonCommand(&msg))
+    {
+
+        switch (msg.id)
+        {
+        case EDIT_SETTING_PRESSED:
+            ++displayState;
+            ESP_LOGI("BTN", "Display Mode State: %d", displayState);
+            break;
+        case EDIT_MODE_PRESSED:
+            ++settingState;
+            ESP_LOGI("BTN", "Setting Mode State: %d", settingState);
+            break;
+        case DOWN_PRESSED:
+            break;
+        case UP_PRESSED:
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+void HMI::editing()
+{
+    COMMAND_MESSAGE msg;
+    if (recieveButtonCommand(&msg))
+    {
+
+        switch (msg.id)
+        {
+        case EDIT_SETTING_PRESSED:
+            ++displayState;
+            ESP_LOGI("BTN", "Display Mode State: %d", displayState);
+            break;
+        case EDIT_MODE_PRESSED:
+            ++settingState;
+            ESP_LOGI("BTN", "Setting Mode State: %d", settingState);
+            break;
+        case DOWN_PRESSED:
+            break;
+        case UP_PRESSED:
             break;
         default:
             break;
@@ -105,11 +148,6 @@ void HMI::update()
 
 void HMI::process()
 {
-    // ++displayState;
-    // ESP_LOGI("BTN", "Display Mode State: %d", displayState);
-
-    // ++settingState;
-    // ESP_LOGI("BTN", "Setting Mode State: %d", settingState);
 
     switch (displayState)
     {

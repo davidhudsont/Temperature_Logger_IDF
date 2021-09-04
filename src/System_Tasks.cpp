@@ -400,18 +400,22 @@ void button_task(void *pvParameter)
         if (editButton)
         {
             ESP_LOGI("BTN", "Edit Button Pressed");
+            buttonPressed(EDIT_MODE_PRESSED);
         }
         else if (editModeButton)
         {
             ESP_LOGI("BTN", "Edit Mode Button Pressed");
+            buttonPressed(EDIT_SETTING_PRESSED);
         }
         else if (downButton)
         {
             ESP_LOGI("BTN", "Down Button Pressed");
+            buttonPressed(DOWN_PRESSED);
         }
         else if (upButton)
         {
             ESP_LOGI("BTN", "Up Button Pressed");
+            buttonPressed(UP_PRESSED);
         }
         delay(10);
     }
