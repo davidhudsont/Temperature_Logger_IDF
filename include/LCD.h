@@ -130,4 +130,7 @@ public:
 
     // Clears the screen and reset the cursor
     void ResetCursor();
+
+    void ClearRow(uint8_t row);
+    void WriteDigit(char digit);
 };
