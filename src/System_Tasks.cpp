@@ -391,21 +391,21 @@ static void console_task(void *pvParameter)
 static void button_task(void *pvParameter)
 {
     ESP_LOGI("BTN", "Starting Button Interface");
-    Button editButton(GPIO_NUM_13);
+    Button editSettingButton(GPIO_NUM_13);
     Button editModeButton(GPIO_NUM_12);
     Button downButton(GPIO_NUM_14);
     Button upButton(GPIO_NUM_27);
     while (true)
     {
-        if (editButton)
+        if (editSettingButton)
         {
-            ESP_LOGI("BTN", "Edit Button Pressed");
-            buttonPressed(EDIT_MODE_PRESSED);
+            ESP_LOGI("BTN", "Edit Setting Button Pressed");
+            buttonPressed(EDIT_SETTING_PRESSED);
         }
         else if (editModeButton)
         {
             ESP_LOGI("BTN", "Edit Mode Button Pressed");
-            buttonPressed(EDIT_SETTING_PRESSED);
+            buttonPressed(EDIT_MODE_PRESSED);
         }
         else if (downButton)
         {
