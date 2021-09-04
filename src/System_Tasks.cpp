@@ -388,7 +388,7 @@ static void console_task(void *pvParameter)
     }
 }
 
-void button_task(void *pvParameter)
+static void button_task(void *pvParameter)
 {
     ESP_LOGI("BTN", "Starting Button Interface");
     Button editButton(GPIO_NUM_13);
