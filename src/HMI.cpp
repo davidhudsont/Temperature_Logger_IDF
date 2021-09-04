@@ -10,7 +10,7 @@ HMIState &operator++(HMIState &state)
 
 HMISettings &operator++(HMISettings &state)
 {
-    return state = (state == HMISettings::SETTING_TIME) ? HMISettings::SETTING_DATE : static_cast<HMISettings>(static_cast<int>(state) + 1);
+    return state = (state == HMISettings::SETTING_TEMP) ? HMISettings::SETTING_DATE : static_cast<HMISettings>(static_cast<int>(state) + 1);
 }
 
 HMI::HMI()
