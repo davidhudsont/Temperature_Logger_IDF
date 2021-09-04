@@ -39,6 +39,7 @@ static void console_task(void *pvParameter);
 #ifndef DISABLE_SD_CARD
 static void sdcard_task(void *pvParameter);
 #endif
+static void button_task(void *pvParameter);
 static void hmi_task(void *pvParameter);
 
 void Create_Semaphores(void)
@@ -66,6 +67,8 @@ void Create_Tasks(void)
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
     xTaskCreate(&hmi_task, "HMI Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
+    xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
+
 #ifndef DISABLE_SD_CARD
     xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
 #endif
@@ -385,10 +388,38 @@ static void console_task(void *pvParameter)
     }
 }
 
+void button_task(void *pvParameter)
+{
+    ESP_LOGI("BTN", "Starting Button Interface");
+    Button editButton(GPIO_NUM_13);
+    Button editModeButton(GPIO_NUM_12);
+    Button downButton(GPIO_NUM_14);
+    Button upButton(GPIO_NUM_27);
+    while (true)
+    {
+        if (editButton)
+        {
+            ESP_LOGI("BTN", "Edit Button Pressed");
+        }
+        else if (editModeButton)
+        {
+            ESP_LOGI("BTN", "Edit Mode Button Pressed");
+        }
+        else if (downButton)
+        {
+            ESP_LOGI("BTN", "Down Button Pressed");
+        }
+        else if (upButton)
+        {
+            ESP_LOGI("BTN", "Up Button Pressed");
+        }
+        delay(10);
+    }
+}
+
 static void hmi_task(void *pvParameter)
 {
     HMI hmi = HMI();
-
     while (1)
     {
 

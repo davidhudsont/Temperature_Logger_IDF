@@ -18,19 +18,10 @@ enum HMISettings
     SETTING_TEMP
 };
 
-const gpio_num_t editPin = GPIO_NUM_13;
-const gpio_num_t settingModePin = GPIO_NUM_12;
-const gpio_num_t downPin = GPIO_NUM_14;
-const gpio_num_t upPin = GPIO_NUM_27;
-
 class HMI
 {
 private:
     LCD lcd;
-    Button editButton;
-    Button settingModeButton;
-    Button downButton;
-    Button upButton;
 
     bool displayTempF_notC;
     float temperatureF;

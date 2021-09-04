@@ -14,10 +14,6 @@ HMISettings &operator++(HMISettings &state)
 }
 
 HMI::HMI()
-    : editButton(editPin),
-      settingModeButton(settingModePin),
-      downButton(downPin),
-      upButton(upPin)
 {
     lcd.Begin();
     lcd.ResetCursor();
@@ -109,16 +105,11 @@ void HMI::update()
 
 void HMI::process()
 {
-    if (editButton)
-    {
-        ++displayState;
-        ESP_LOGI("BTN", "Display Mode State: %d", displayState);
-    }
-    else if (settingModeButton)
-    {
-        ++settingState;
-        ESP_LOGI("BTN", "Setting Mode State: %d", settingState);
-    }
+    // ++displayState;
+    // ESP_LOGI("BTN", "Display Mode State: %d", displayState);
+
+    // ++settingState;
+    // ESP_LOGI("BTN", "Setting Mode State: %d", settingState);
 
     switch (displayState)
     {
