@@ -22,6 +22,7 @@ enum COMMANDS
     LCD_SET_CONTRAST,
     LCD_SET_BACKLIGHT,
     LCD_CLEAR_DISPLAY,
+    LCD_DISPLAY_UPDATE,
 };
 
 void readTemperature(bool FahrenheitOrCelsius);
@@ -32,6 +33,7 @@ void displayOn();
 void setContrast(uint8_t contrast);
 void setBackLight(uint8_t r, uint8_t g, uint8_t b);
 void clearDisplay();
+void updateDisplay();
 
 bool recieveLCDCommand(COMMAND_MESSAGE *msg);
 

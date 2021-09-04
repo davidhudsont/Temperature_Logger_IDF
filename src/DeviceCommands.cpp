@@ -56,6 +56,13 @@ void clearDisplay()
     lcd_command_queue.Send(msg);
 }
 
+void updateDisplay()
+{
+    COMMAND_MESSAGE msg;
+    msg.id = LCD_DISPLAY_UPDATE;
+    lcd_command_queue.Send(msg);
+}
+
 bool recieveLCDCommand(COMMAND_MESSAGE *msg)
 {
     return lcd_command_queue.Recieve(msg);

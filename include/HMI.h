@@ -42,10 +42,11 @@ private:
 
     void editing();
     void display();
+    void update();
 
 public:
     HMI();
     void process();
-    void updateDisplayTemperature(float temperatureF, float temperatureC);
-    void updateDisplayDateTime(DATE_TIME &dateTime);
+    void setDisplayTemperature(float temperatureF, float temperatureC);
+    void setDisplayDateTime(DATE_TIME &dateTime);
 };

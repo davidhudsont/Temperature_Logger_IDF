@@ -25,13 +25,12 @@ HMI::HMI()
     lcd.Display();
     lcd.SetBackLightFast(125, 125, 125);
 }
+
 void HMI::editing()
 {
 }
+
 void HMI::display()
-{
-}
-void HMI::process()
 {
     COMMAND_MESSAGE msg;
     if (recieveLCDCommand(&msg))
@@ -59,56 +58,17 @@ void HMI::process()
         case LCD_CLEAR_DISPLAY:
             lcd.Clear();
             break;
+        case LCD_DISPLAY_UPDATE:
+            update();
+            break;
         default:
             break;
         }
     }
-
-    if (editButton)
-    {
-        ++displayState;
-        ESP_LOGI("BTN", "Display Mode State: %d", displayState);
-    }
-    else if (settingModeButton)
-    {
-        ++settingState;
-        ESP_LOGI("BTN", "Setting Mode State: %d", settingState);
-    }
-
-    switch (displayState)
-    {
-    case DISPLAYING:
-        editing();
-        break;
-    case EDITING:
-        process();
-        break;
-    default:
-        break;
-    }
 }
-void HMI::updateDisplayTemperature(float temperatureF, float temperatureC)
-{
-    this->temperatureF = temperatureF;
-    this->temperatureC = temperatureC;
 
-    std::stringstream ss;
-    if (displayTempF_notC)
-    {
-        ss << std::setprecision(5) << temperatureF << DEGREE_SYMBOL << "F";
-    }
-    else
-    {
-        ss << std::setprecision(5) << temperatureC << DEGREE_SYMBOL << "C";
-    }
-
-    std::string logtemp = ss.str();
-    lcd.SetCursor(2, 0);
-    lcd.WriteCharacters(logtemp.c_str(), logtemp.length());
-}
-void HMI::updateDisplayDateTime(DATE_TIME &dateTime)
+void HMI::update()
 {
-    this->dateTime = dateTime;
 
     // Date Update
     std::stringstream ss;
@@ -131,4 +91,55 @@ void HMI::updateDisplayDateTime(DATE_TIME &dateTime)
     std::string logtime = ss2.str();
     lcd.SetCursor(1, 0);
     lcd.WriteCharacters(logtime.c_str(), logtime.length());
+
+    std::stringstream ss3;
+    if (displayTempF_notC)
+    {
+        ss3 << std::setprecision(5) << temperatureF << DEGREE_SYMBOL << "F";
+    }
+    else
+    {
+        ss3 << std::setprecision(5) << temperatureC << DEGREE_SYMBOL << "C";
+    }
+
+    std::string logtemp = ss3.str();
+    lcd.SetCursor(2, 0);
+    lcd.WriteCharacters(logtemp.c_str(), logtemp.length());
+}
+
+void HMI::process()
+{
+    if (editButton)
+    {
+        ++displayState;
+        ESP_LOGI("BTN", "Display Mode State: %d", displayState);
+    }
+    else if (settingModeButton)
+    {
+        ++settingState;
+        ESP_LOGI("BTN", "Setting Mode State: %d", settingState);
+    }
+
+    switch (displayState)
+    {
+    case DISPLAYING:
+        display();
+        break;
+    case EDITING:
+        editing();
+        break;
+    default:
+        break;
+    }
+}
+
+void HMI::setDisplayTemperature(float temperatureF, float temperatureC)
+{
+    this->temperatureF = temperatureF;
+    this->temperatureC = temperatureC;
+}
+
+void HMI::setDisplayDateTime(DATE_TIME &dateTime)
+{
+    this->dateTime = dateTime;
 }
