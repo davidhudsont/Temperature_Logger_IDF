@@ -124,9 +124,9 @@ void HMI::editingDate()
     COMMAND_MESSAGE msg;
     if (recieveButtonCommand(&msg))
     {
-        if (msg.id == UP_PRESSED)
+        if (entriesToEdit == 3)
         {
-            if (entriesToEdit == 3)
+            if (msg.id == UP_PRESSED)
             {
                 dateTime.month = dateTime.month + 1;
                 if (dateTime.month > 12)
@@ -136,11 +136,80 @@ void HMI::editingDate()
                 lcd.WriteDigit(dateTime.month / 10);
                 lcd.WriteDigit(dateTime.month % 10);
             }
+            if (msg.id == DOWN_PRESSED)
+            {
+                dateTime.month = dateTime.month - 1;
+                if (dateTime.month == 0)
+                    dateTime.month = 12;
+                lcd.SetCursor(0, 0);
+                ESP_LOGI("HMI", "Month %d", dateTime.month);
+                lcd.WriteDigit(dateTime.month / 10);
+                lcd.WriteDigit(dateTime.month % 10);
+            }
+            if (msg.id == EDIT_MODE_PRESSED)
+            {
+                --entriesToEdit;
+                setMonth(dateTime.month);
+            }
         }
-        if (msg.id == EDIT_MODE_PRESSED)
+        else if (entriesToEdit == 2)
         {
-            displayState = DISPLAYING;
-            displayCurrentState();
+            if (msg.id == UP_PRESSED)
+            {
+                dateTime.dayofMonth = dateTime.dayofMonth + 1;
+                if (dateTime.dayofMonth > 28)
+                    dateTime.dayofMonth = 1;
+                lcd.SetCursor(0, 3);
+                ESP_LOGI("HMI", "Day Of Month %d", dateTime.dayofMonth);
+                lcd.WriteDigit(dateTime.dayofMonth / 10);
+                lcd.WriteDigit(dateTime.dayofMonth % 10);
+            }
+            if (msg.id == DOWN_PRESSED)
+            {
+                dateTime.dayofMonth = dateTime.dayofMonth - 1;
+                if (dateTime.dayofMonth == 0)
+                    dateTime.dayofMonth = 28;
+                lcd.SetCursor(0, 3);
+                ESP_LOGI("HMI", "Day Of Month %d", dateTime.dayofMonth);
+                lcd.WriteDigit(dateTime.dayofMonth / 10);
+                lcd.WriteDigit(dateTime.dayofMonth % 10);
+            }
+            if (msg.id == EDIT_MODE_PRESSED)
+            {
+                --entriesToEdit;
+                setDayOfMonth(dateTime.dayofMonth);
+            }
+        }
+        else if (entriesToEdit == 1)
+        {
+            if (msg.id == UP_PRESSED)
+            {
+                dateTime.year = dateTime.year + 1;
+                lcd.SetCursor(0, 6);
+                ESP_LOGI("HMI", "Year %d", dateTime.year);
+                lcd.WriteDigit(2);
+                lcd.WriteDigit(0);
+                lcd.WriteDigit(dateTime.year / 10);
+                lcd.WriteDigit(dateTime.year % 10);
+            }
+            if (msg.id == DOWN_PRESSED)
+            {
+                dateTime.year = dateTime.year - 1;
+                if (dateTime.year == 0)
+                    dateTime.year = 0;
+                lcd.SetCursor(0, 6);
+                ESP_LOGI("HMI", "Year %d", dateTime.year);
+                lcd.WriteDigit(2);
+                lcd.WriteDigit(0);
+                lcd.WriteDigit(dateTime.year / 10);
+                lcd.WriteDigit(dateTime.year % 10);
+            }
+            if (msg.id == EDIT_MODE_PRESSED)
+            {
+                displayState = DISPLAYING;
+                displayCurrentState();
+                setYear(dateTime.year);
+            }
         }
     }
 }

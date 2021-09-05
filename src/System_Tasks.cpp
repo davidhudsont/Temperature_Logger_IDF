@@ -241,12 +241,15 @@ static void rtc_intr_task(void *pvParameter)
                 break;
             case SET_DAYOFMONTH:
                 rtc.WRITE_DATE(cmd_msg.arg1);
+                dateTime.dayofMonth = cmd_msg.arg1;
                 break;
             case SET_MONTH:
                 rtc.WRITE_MONTH(cmd_msg.arg1);
+                dateTime.month = cmd_msg.arg1;
                 break;
             case SET_YEAR:
                 rtc.WRITE_YEAR(cmd_msg.arg1);
+                dateTime.year = cmd_msg.arg1;
                 break;
             default:
                 break;
