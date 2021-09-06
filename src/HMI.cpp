@@ -16,13 +16,27 @@ HMI::HMI()
 void HMI::displayCurrentState()
 {
     lcd.SetCursor(3, 0);
-    std::string str = "DSP = ";
-    lcd.WriteCharacters(str.c_str(), str.length());
-    lcd.WriteCharacter((char)displayState + '0');
-
-    str = " STN = ";
-    lcd.WriteCharacters(str.c_str(), str.length());
-    lcd.WriteCharacter((char)settingState + '0');
+    if (displayState)
+    {
+        lcd.WriteCharacters("DISP ", 5);
+    }
+    else
+    {
+        lcd.WriteCharacters("EDIT ", 5);
+    }
+    lcd.WriteCharacters("SETN: ", 6);
+    switch (settingState)
+    {
+    case SETTING_DATE:
+        lcd.WriteCharacters("DATE", 4);
+        break;
+    case SETTING_TIME:
+        lcd.WriteCharacters("TIME", 4);
+        break;
+    case SETTING_TEMP:
+        lcd.WriteCharacters("TEMP", 4);
+        break;
+    }
 }
 
 void HMI::display()
@@ -304,6 +318,20 @@ void HMI::changeTemp()
     ESP_LOGI("HMI", "Changed Tempearture Display Units");
     displayState = DISPLAYING;
     lcd.ClearRow(2);
+    std::stringstream ss3;
+    if (displayTempF_notC)
+    {
+        ss3 << std::setprecision(5) << temperatureF << DEGREE_SYMBOL << "F";
+    }
+    else
+    {
+        ss3 << std::setprecision(5) << temperatureC << DEGREE_SYMBOL << "C";
+    }
+
+    std::string logtemp = ss3.str();
+    lcd.SetCursor(2, 0);
+    lcd.WriteCharacters(logtemp.c_str(), logtemp.length());
+
     displayCurrentState();
 }
 
