@@ -145,6 +145,19 @@ void HMI::editDayOfMonth(bool increase)
     lcd.WriteDigit(dateTime.dayofMonth % 10);
 }
 
+void HMI::editYear(bool increase)
+{
+    dateTime.year = increase ? dateTime.year + 1 : dateTime.year - 1;
+    if (dateTime.year == 0)
+        dateTime.year = 0;
+    lcd.SetCursor(0, 6);
+    ESP_LOGI("HMI", "Year %d", dateTime.year);
+    lcd.WriteDigit(2);
+    lcd.WriteDigit(0);
+    lcd.WriteDigit(dateTime.year / 10);
+    lcd.WriteDigit(dateTime.year % 10);
+}
+
 void HMI::editingDate()
 {
     COMMAND_MESSAGE msg;
@@ -186,25 +199,11 @@ void HMI::editingDate()
         {
             if (msg.id == UP_PRESSED)
             {
-                dateTime.year = dateTime.year + 1;
-                lcd.SetCursor(0, 6);
-                ESP_LOGI("HMI", "Year %d", dateTime.year);
-                lcd.WriteDigit(2);
-                lcd.WriteDigit(0);
-                lcd.WriteDigit(dateTime.year / 10);
-                lcd.WriteDigit(dateTime.year % 10);
+                editYear(true);
             }
             if (msg.id == DOWN_PRESSED)
             {
-                dateTime.year = dateTime.year - 1;
-                if (dateTime.year == 0)
-                    dateTime.year = 0;
-                lcd.SetCursor(0, 6);
-                ESP_LOGI("HMI", "Year %d", dateTime.year);
-                lcd.WriteDigit(2);
-                lcd.WriteDigit(0);
-                lcd.WriteDigit(dateTime.year / 10);
-                lcd.WriteDigit(dateTime.year % 10);
+                editYear(false);
             }
             if (msg.id == EDIT_MODE_PRESSED)
             {
