@@ -124,10 +124,25 @@ void HMI::editMonth(bool increase)
     dateTime.month = increase ? dateTime.month + 1 : dateTime.month - 1;
     if (dateTime.month > 12)
         dateTime.month = 1;
+    else if (dateTime.month == 0)
+        dateTime.month = 12;
     lcd.SetCursor(0, 0);
     ESP_LOGI("HMI", "Month %d", dateTime.month);
     lcd.WriteDigit(dateTime.month / 10);
     lcd.WriteDigit(dateTime.month % 10);
+}
+
+void HMI::editDayOfMonth(bool increase)
+{
+    dateTime.dayofMonth = increase ? dateTime.dayofMonth + 1 : dateTime.dayofMonth - 1;
+    if (dateTime.dayofMonth > 28)
+        dateTime.dayofMonth = 1;
+    else if (dateTime.dayofMonth == 0)
+        dateTime.dayofMonth = 28;
+    lcd.SetCursor(0, 3);
+    ESP_LOGI("HMI", "Day Of Month %d", dateTime.dayofMonth);
+    lcd.WriteDigit(dateTime.dayofMonth / 10);
+    lcd.WriteDigit(dateTime.dayofMonth % 10);
 }
 
 void HMI::editingDate()
@@ -155,23 +170,11 @@ void HMI::editingDate()
         {
             if (msg.id == UP_PRESSED)
             {
-                dateTime.dayofMonth = dateTime.dayofMonth + 1;
-                if (dateTime.dayofMonth > 28)
-                    dateTime.dayofMonth = 1;
-                lcd.SetCursor(0, 3);
-                ESP_LOGI("HMI", "Day Of Month %d", dateTime.dayofMonth);
-                lcd.WriteDigit(dateTime.dayofMonth / 10);
-                lcd.WriteDigit(dateTime.dayofMonth % 10);
+                editDayOfMonth(true);
             }
             if (msg.id == DOWN_PRESSED)
             {
-                dateTime.dayofMonth = dateTime.dayofMonth - 1;
-                if (dateTime.dayofMonth == 0)
-                    dateTime.dayofMonth = 28;
-                lcd.SetCursor(0, 3);
-                ESP_LOGI("HMI", "Day Of Month %d", dateTime.dayofMonth);
-                lcd.WriteDigit(dateTime.dayofMonth / 10);
-                lcd.WriteDigit(dateTime.dayofMonth % 10);
+                editDayOfMonth(false);
             }
             if (msg.id == EDIT_MODE_PRESSED)
             {

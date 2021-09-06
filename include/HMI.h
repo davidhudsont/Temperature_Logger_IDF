@@ -34,6 +34,7 @@ private:
 
     void displayCurrentState();
     void editMonth(bool increase);
+    void editDayOfMonth(bool increase);
     void editingDate();
     void editingTime();
     void changeTemp();
