@@ -139,7 +139,7 @@ static int set_date(int argc, char **argv)
 static void register_date_command(void)
 {
     date_args.days = arg_int0("w", NULL, "<w>", "Set weekday!");
-    date_args.date = arg_int0("d", NULL, "<d>", "Set the date!");
+    date_args.date = arg_int0("d", NULL, "<d>", "Set the day of the month!");
     date_args.month = arg_int0("m", NULL, "<m>", "Set the months!");
     date_args.year = arg_int0("y", NULL, "<y>", "Set the year!");
     date_args.end = arg_end(4);
