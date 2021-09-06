@@ -21,7 +21,6 @@
 #include "DeviceCommands.h"
 #include "HMI.h"
 
-static SemaphoreHandle_t log_semiphore;
 static SemaphoreHandle_t alarm_semiphore;
 static SemaphoreHandle_t lcd_semiphore;
 
@@ -37,7 +36,6 @@ static void hmi_task(void *pvParameter);
 
 void Create_Semaphores(void)
 {
-    log_semiphore = xSemaphoreCreateBinary();
     alarm_semiphore = xSemaphoreCreateBinary();
     lcd_semiphore = xSemaphoreCreateBinary();
 }
@@ -236,7 +234,6 @@ static void tmp102_task(void *pvParameter)
             OneShotTemperatureRead(tmp102);
             std::string temperature_readingf = tmp102.Get_TemperatureF_ToString();
             ESP_LOGI("TMP", "%sF", temperature_readingf.c_str());
-            xSemaphoreGive(log_semiphore);
         }
 
         if (recieveTMPCommand(&cmd_msg))
