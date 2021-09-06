@@ -29,7 +29,7 @@ static float temperatureF;
 static float temperatureC;
 
 static void tmp102_task(void *pvParameter);
-static void rtc_intr_task(void *pvParameter);
+static void rtc_task(void *pvParameter);
 static void console_task(void *pvParameter);
 static void button_task(void *pvParameter);
 static void hmi_task(void *pvParameter);
@@ -54,7 +54,7 @@ void Create_Tasks(void)
 {
     gpio_install_isr_service(0);
     // Larger number equals higher priority
-    xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
+    xTaskCreate(&rtc_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
     xTaskCreate(&hmi_task, "HMI Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
@@ -105,7 +105,7 @@ void Start_Alarms(RTCDS3234 &rtc)
     rtc.READ_ALARM2_FLAG();
 }
 
-static void rtc_intr_task(void *pvParameter)
+static void rtc_task(void *pvParameter)
 {
     ESP_LOGI("RTC", "RTC Task Start!");
     RTCDS3234 rtc;
