@@ -4,21 +4,21 @@
 #include "argtable3/argtable3.h"
 #include "DeviceCommands.h"
 
-static void register_time(void);
-static void register_date(void);
-static void register_getdatetime(void);
-static void register_temperature(void);
-static void register_adjust_log_level_command(void);
+static void register_time_command(void);
+static void register_date_command(void);
+static void register_getdatetime_command(void);
+static void register_temperature_command(void);
+static void register_log_level_command(void);
 static void register_lcd_command(void);
 
 // cppcheck-suppress unusedFunction
 void register_system(void)
 {
-    register_time();
-    register_date();
-    register_getdatetime();
-    register_temperature();
-    register_adjust_log_level_command();
+    register_time_command();
+    register_date_command();
+    register_getdatetime_command();
+    register_temperature_command();
+    register_log_level_command();
     register_lcd_command();
 }
 
@@ -70,7 +70,7 @@ static int set_time(int argc, char **argv)
     return 0;
 }
 
-static void register_time(void)
+static void register_time_command(void)
 {
     time_args.seconds = arg_int0("s", "seconds", "<s>", "Set seconds!");
     time_args.minutes = arg_int0("m", "minutes", "<m>", "Set minutes!");
@@ -136,7 +136,7 @@ static int set_date(int argc, char **argv)
     return 0;
 }
 
-static void register_date(void)
+static void register_date_command(void)
 {
     date_args.days = arg_int0("w", NULL, "<w>", "Set weekday!");
     date_args.date = arg_int0("d", NULL, "<d>", "Set the date!");
@@ -161,7 +161,7 @@ static int get_datetime(int argc, char **argv)
     return 0;
 }
 
-static void register_getdatetime(void)
+static void register_getdatetime_command(void)
 {
     const esp_console_cmd_t cmd = {
         .command = "datetime",
@@ -202,7 +202,7 @@ static int get_temperature(int argc, char **argv)
     return 0;
 }
 
-static void register_temperature(void)
+static void register_temperature_command(void)
 {
     temperature_args.tempf = arg_lit0("f", NULL, "Get temperature in Fahrenheit!");
     temperature_args.tempc = arg_lit0("c", NULL, "Get temperature in Celsius!");
@@ -252,7 +252,7 @@ static int set_log_level(int argc, char **argv)
     return 0;
 }
 
-static void register_adjust_log_level_command(void)
+static void register_log_level_command(void)
 {
     level_args.level = arg_int0("l", NULL, "0..5", "Set the log level");
     level_args.tag = arg_str0("t", NULL, "string", "Set log level based on tag");
