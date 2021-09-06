@@ -20,10 +20,6 @@
 #include "Button.h"
 #include "DeviceCommands.h"
 #include "HMI.h"
-#define DISABLE_SD_CARD
-#ifndef DISABLE_SD_CARD
-#include "BSP_SD.h"
-#endif
 
 static SemaphoreHandle_t log_semiphore;
 static SemaphoreHandle_t alarm_semiphore;
@@ -36,9 +32,6 @@ static float temperatureC;
 static void tmp102_task(void *pvParameter);
 static void rtc_intr_task(void *pvParameter);
 static void console_task(void *pvParameter);
-#ifndef DISABLE_SD_CARD
-static void sdcard_task(void *pvParameter);
-#endif
 static void button_task(void *pvParameter);
 static void hmi_task(void *pvParameter);
 
@@ -68,69 +61,7 @@ void Create_Tasks(void)
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
     xTaskCreate(&hmi_task, "HMI Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
     xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
-
-#ifndef DISABLE_SD_CARD
-    xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
-#endif
 }
-
-#ifndef DISABLE_SD_CARD
-static void sdcard_task(void *pvParameter)
-{
-    BSP::SD sd;
-    sd.Mount();
-    std::string file_name = "TLOG.csv";
-
-    while (1)
-    {
-        COMMAND_MESSAGE_STRUCT msg;
-        if (recieve_sdcard_command(&msg))
-        {
-            if (msg.id == COMMAND_GET_DISK)
-            {
-                sd.PrintDiskInfo();
-            }
-            else if (msg.id == COMMAND_WRITE_DISK)
-            {
-            }
-            else if (msg.id == COMMAND_START_LOG)
-            {
-                ESP_LOGI("LOG", "Started Logging");
-                sd.OpenFile(file_name);
-                if (sd.IsFileOpen())
-                {
-                    std::string column_names = "Date, Time, Temperature(F)";
-                    sd.WriteLine(column_names);
-                }
-            }
-            else if (msg.id == COMMAND_STOP_LOG)
-            {
-                ESP_LOGI("LOG", "Stopped Logging");
-                sd.CloseFile();
-            }
-            else if (msg.id == COMMAND_DELETE_LOG)
-            {
-                ESP_LOGI("LOG", "Deleting Logging File and stopped Logging");
-                if (sd.IsFileOpen())
-                {
-                    sd.CloseFile();
-                }
-                sd.DeleteFile(file_name);
-            }
-        }
-        if (xSemaphoreTake(log_semiphore, 0))
-        {
-            std::string logline = logdate + ", " + logtime + ", " + temperature_reading;
-            ESP_LOGI("LOG", "%s", logline.c_str());
-            if (sd.IsFileOpen())
-            {
-                ESP_LOGI("LOG", "Logging to SD Card");
-                sd.WriteLine(logline);
-            }
-        }
-    }
-}
-#endif
 
 void Power_On_Test(RTCDS3234 &rtc)
 {
