@@ -127,7 +127,7 @@ void HMI::editHour(bool increase)
         dateTime.hour = 0;
     else if (dateTime.hour == 0)
         dateTime.hour = 23;
-    lcd.SetCursor(0, 0);
+    lcd.SetCursor(1, 0);
     ESP_LOGI("HMI", "Hour %d", dateTime.hour);
     lcd.WriteDigit(dateTime.hour / 10);
     lcd.WriteDigit(dateTime.hour % 10);
@@ -140,7 +140,7 @@ void HMI::editMinute(bool increase)
         dateTime.minute = 0;
     else if (dateTime.minute == 0)
         dateTime.minute = 59;
-    lcd.SetCursor(0, 0);
+    lcd.SetCursor(1, 3);
     ESP_LOGI("HMI", "Minute %d", dateTime.minute);
     lcd.WriteDigit(dateTime.minute / 10);
     lcd.WriteDigit(dateTime.minute % 10);
@@ -153,7 +153,7 @@ void HMI::editSecond(bool increase)
         dateTime.second = 0;
     else if (dateTime.second == 0)
         dateTime.second = 59;
-    lcd.SetCursor(0, 0);
+    lcd.SetCursor(1, 6);
     ESP_LOGI("HMI", "Second %d", dateTime.second);
     lcd.WriteDigit(dateTime.second / 10);
     lcd.WriteDigit(dateTime.second % 10);

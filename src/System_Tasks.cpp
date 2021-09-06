@@ -226,15 +226,19 @@ static void rtc_intr_task(void *pvParameter)
             }
             case SET_SECONDS:
                 rtc.WRITE_SECONDS(cmd_msg.arg1);
+                dateTime.second = cmd_msg.arg1;
                 break;
             case SET_MINUTES:
                 rtc.WRITE_MINUTES(cmd_msg.arg1);
+                dateTime.minute = cmd_msg.arg1;
                 break;
             case SET_12HOURS:
                 rtc.WRITE_12HOURS(cmd_msg.arg1, cmd_msg.arg2);
+                dateTime.hour = cmd_msg.arg1;
                 break;
             case SET_24HOURS:
                 rtc.WRITE_24HOURS(cmd_msg.arg1);
+                dateTime.hour = cmd_msg.arg1;
                 break;
             case SET_WEEKDAY:
                 rtc.WRITE_DAYS((DAYS)cmd_msg.arg1);
