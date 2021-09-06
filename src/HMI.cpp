@@ -185,11 +185,11 @@ void HMI::editingDate()
             {
                 editDayOfMonth(true);
             }
-            if (msg.id == DOWN_PRESSED)
+            else if (msg.id == DOWN_PRESSED)
             {
                 editDayOfMonth(false);
             }
-            if (msg.id == EDIT_MODE_PRESSED)
+            else if (msg.id == EDIT_MODE_PRESSED)
             {
                 --entriesToEdit;
                 setDayOfMonth(dateTime.dayofMonth);
@@ -201,11 +201,11 @@ void HMI::editingDate()
             {
                 editYear(true);
             }
-            if (msg.id == DOWN_PRESSED)
+            else if (msg.id == DOWN_PRESSED)
             {
                 editYear(false);
             }
-            if (msg.id == EDIT_MODE_PRESSED)
+            else if (msg.id == EDIT_MODE_PRESSED)
             {
                 displayState = DISPLAYING;
                 displayCurrentState();
