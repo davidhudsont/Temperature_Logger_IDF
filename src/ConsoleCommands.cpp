@@ -10,29 +10,13 @@
 #include "freertos/queue.h"
 #include "DeviceCommands.h"
 
-#define DISABLE_SD_CARD
-#ifndef DISABLE_SD_CARD
-static QueueHandle_t sdcard_command_queue; // Queue to send device objects between tasks
-#endif
-
 static void register_version(void);
 static void register_time(void);
 static void register_date(void);
 static void register_getdatetime(void);
 static void register_temperature(void);
 static void register_adjust_log_level_command(void);
-#ifndef DISABLE_SD_CARD
-static void register_sdcard_command(void);
-#endif
-
 static void register_lcd_command(void);
-
-#ifndef DISABLE_SD_CARD
-int recieve_sdcard_command(COMMAND_MESSAGE_STRUCT *msg)
-{
-    return xQueueReceive(sdcard_command_queue, msg, 30);
-}
-#endif
 
 // cppcheck-suppress unusedFunction
 void register_system(void)
@@ -43,9 +27,6 @@ void register_system(void)
     register_getdatetime();
     register_temperature();
     register_adjust_log_level_command();
-#ifndef DISABLE_SD_CARD
-    register_sdcard_command();
-#endif
     register_lcd_command();
 }
 
@@ -326,73 +307,6 @@ static void register_adjust_log_level_command(void)
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
-
-#ifndef DISABLE_SD_CARD
-static struct
-{
-    struct arg_lit *disk;
-    struct arg_lit *write;
-    struct arg_int *log_control;
-    struct arg_lit *delete_log;
-    struct arg_end *end;
-} sdcard_args;
-
-static int sdcard(int argc, char **argv)
-{
-    int nerrors = arg_parse(argc, argv, (void **)&sdcard_args);
-
-    if (nerrors != 0)
-    {
-        arg_print_errors(stderr, sdcard_args.end, argv[0]);
-        return 1;
-    }
-
-    if (sdcard_args.disk->count)
-    {
-        COMMAND_MESSAGE_STRUCT msg;
-        msg.id = COMMAND_GET_DISK;
-        xQueueSend(sdcard_command_queue, (void *)&msg, 30);
-    }
-    else if (sdcard_args.write->count)
-    {
-        COMMAND_MESSAGE_STRUCT msg;
-        msg.id = COMMAND_WRITE_DISK;
-        xQueueSend(sdcard_command_queue, (void *)&msg, 30);
-    }
-    else if (sdcard_args.log_control->count)
-    {
-        COMMAND_MESSAGE_STRUCT msg;
-        int control = sdcard_args.log_control->ival[0];
-        msg.id = control ? COMMAND_START_LOG : COMMAND_STOP_LOG;
-        xQueueSend(sdcard_command_queue, (void *)&msg, 30);
-    }
-    else if (sdcard_args.delete_log->count)
-    {
-        COMMAND_MESSAGE_STRUCT msg;
-        msg.id = COMMAND_DELETE_LOG;
-        xQueueSend(sdcard_command_queue, (void *)&msg, 30);
-    }
-
-    return 0;
-}
-static void register_sdcard_command(void)
-{
-
-    sdcard_args.disk = arg_lit0("d", NULL, "Get Disk Information");
-    sdcard_args.write = arg_lit0("w", NULL, "Write a to file example");
-    sdcard_args.log_control = arg_int0("l", NULL, "0|1", "Stop/Start logging");
-    sdcard_args.delete_log = arg_lit0("r", NULL, "Delete the current log file and stop logging");
-    sdcard_args.end = arg_end(2);
-
-    const esp_console_cmd_t cmd = {
-        .command = "sd",
-        .help = "SD Card Commands",
-        .hint = NULL,
-        .func = &sdcard,
-        .argtable = &sdcard_args};
-    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
-}
-#endif
 
 static struct
 {
