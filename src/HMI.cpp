@@ -106,15 +106,98 @@ void HMI::display()
     }
 }
 
+void HMI::editHour(bool increase)
+{
+    dateTime.hour = increase ? dateTime.hour + 1 : dateTime.hour - 1;
+    if (dateTime.hour > 23)
+        dateTime.hour = 0;
+    else if (dateTime.hour == 0)
+        dateTime.hour = 23;
+    lcd.SetCursor(0, 0);
+    ESP_LOGI("HMI", "Hour %d", dateTime.hour);
+    lcd.WriteDigit(dateTime.hour / 10);
+    lcd.WriteDigit(dateTime.hour % 10);
+}
+
+void HMI::editMinute(bool increase)
+{
+    dateTime.minute = increase ? dateTime.minute + 1 : dateTime.minute - 1;
+    if (dateTime.minute > 59)
+        dateTime.minute = 0;
+    else if (dateTime.minute == 0)
+        dateTime.minute = 59;
+    lcd.SetCursor(0, 0);
+    ESP_LOGI("HMI", "Minute %d", dateTime.minute);
+    lcd.WriteDigit(dateTime.minute / 10);
+    lcd.WriteDigit(dateTime.minute % 10);
+}
+
+void HMI::editSecond(bool increase)
+{
+    dateTime.second = increase ? dateTime.second + 1 : dateTime.second - 1;
+    if (dateTime.second > 59)
+        dateTime.second = 0;
+    else if (dateTime.second == 0)
+        dateTime.second = 59;
+    lcd.SetCursor(0, 0);
+    ESP_LOGI("HMI", "Second %d", dateTime.second);
+    lcd.WriteDigit(dateTime.second / 10);
+    lcd.WriteDigit(dateTime.second % 10);
+}
+
 void HMI::editingTime()
 {
     COMMAND_MESSAGE msg;
     if (recieveButtonCommand(&msg))
     {
-        if (msg.id == EDIT_MODE_PRESSED)
+        if (entriesToEdit == 3)
         {
-            displayState = DISPLAYING;
-            displayCurrentState();
+            if (msg.id == UP_PRESSED)
+            {
+                editHour(true);
+            }
+            else if (msg.id == DOWN_PRESSED)
+            {
+                editHour(false);
+            }
+            else if (msg.id == EDIT_MODE_PRESSED)
+            {
+                --entriesToEdit;
+                setHours24Mode(dateTime.hour);
+            }
+        }
+        else if (entriesToEdit == 2)
+        {
+            if (msg.id == UP_PRESSED)
+            {
+                editMinute(true);
+            }
+            else if (msg.id == DOWN_PRESSED)
+            {
+                editMinute(false);
+            }
+            else if (msg.id == EDIT_MODE_PRESSED)
+            {
+                --entriesToEdit;
+                setMinutes(dateTime.minute);
+            }
+        }
+        else if (entriesToEdit == 1)
+        {
+            if (msg.id == UP_PRESSED)
+            {
+                editSecond(true);
+            }
+            else if (msg.id == DOWN_PRESSED)
+            {
+                editSecond(false);
+            }
+            else if (msg.id == EDIT_MODE_PRESSED)
+            {
+                displayState = DISPLAYING;
+                displayCurrentState();
+                setSeconds(dateTime.second);
+            }
         }
     }
 }
