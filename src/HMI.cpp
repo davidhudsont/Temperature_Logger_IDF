@@ -119,6 +119,17 @@ void HMI::editingTime()
     }
 }
 
+void HMI::editMonth(bool increase)
+{
+    dateTime.month = increase ? dateTime.month + 1 : dateTime.month - 1;
+    if (dateTime.month > 12)
+        dateTime.month = 1;
+    lcd.SetCursor(0, 0);
+    ESP_LOGI("HMI", "Month %d", dateTime.month);
+    lcd.WriteDigit(dateTime.month / 10);
+    lcd.WriteDigit(dateTime.month % 10);
+}
+
 void HMI::editingDate()
 {
     COMMAND_MESSAGE msg;
@@ -128,25 +139,13 @@ void HMI::editingDate()
         {
             if (msg.id == UP_PRESSED)
             {
-                dateTime.month = dateTime.month + 1;
-                if (dateTime.month > 12)
-                    dateTime.month = 1;
-                lcd.SetCursor(0, 0);
-                ESP_LOGI("HMI", "Month %d", dateTime.month);
-                lcd.WriteDigit(dateTime.month / 10);
-                lcd.WriteDigit(dateTime.month % 10);
+                editMonth(true);
             }
-            if (msg.id == DOWN_PRESSED)
+            else if (msg.id == DOWN_PRESSED)
             {
-                dateTime.month = dateTime.month - 1;
-                if (dateTime.month == 0)
-                    dateTime.month = 12;
-                lcd.SetCursor(0, 0);
-                ESP_LOGI("HMI", "Month %d", dateTime.month);
-                lcd.WriteDigit(dateTime.month / 10);
-                lcd.WriteDigit(dateTime.month % 10);
+                editMonth(false);
             }
-            if (msg.id == EDIT_MODE_PRESSED)
+            else if (msg.id == EDIT_MODE_PRESSED)
             {
                 --entriesToEdit;
                 setMonth(dateTime.month);
