@@ -37,6 +37,9 @@ private:
     void editDayOfMonth(bool increase);
     void editYear(bool increase);
     void editingDate();
+    void editHour(bool increase);
+    void editMinute(bool increase);
+    void editSecond(bool increase);
     void editingTime();
     void changeTemp();
 
