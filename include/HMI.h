@@ -5,19 +5,6 @@
 #include "DeviceCommands.h"
 #include "DEADONRTC.h"
 
-enum HMIState
-{
-    DISPLAYING,
-    EDITING
-};
-
-enum HMISettings
-{
-    SETTING_DATE,
-    SETTING_TIME,
-    SETTING_TEMP
-};
-
 class HMI
 {
 private:
@@ -28,8 +15,30 @@ private:
     float temperatureC;
     DATE_TIME dateTime;
 
+    enum HMIState
+    {
+        DISPLAYING,
+        EDITING
+    };
+
+    enum HMISettings
+    {
+        SETTING_DATE,
+        SETTING_TIME,
+        SETTING_TEMP
+    };
+
     HMIState displayState = DISPLAYING;
     HMISettings settingState = SETTING_DATE;
+    int entriesToEdit;
+
+    void displayCurrentState();
+    void editMonth(bool increase);
+    void editDayOfMonth(bool increase);
+    void editYear(bool increase);
+    void editingDate();
+    void editingTime();
+    void changeTemp();
 
     void editing();
     void display();

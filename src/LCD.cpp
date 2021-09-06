@@ -256,3 +256,20 @@ void LCD::ResetCursor()
 
     delay(50);
 }
+
+void LCD::ClearRow(uint8_t row)
+{
+    if (row > 3)
+        row = 3;
+    SetCursor(row, 0);
+    char emptyStr[] = "                   ";
+    WriteCharacters(emptyStr, 20);
+}
+
+void LCD::WriteDigit(char digit)
+{
+    if (digit > 10)
+        return;
+    char c = digit + '0';
+    WriteCharacter(c);
+}

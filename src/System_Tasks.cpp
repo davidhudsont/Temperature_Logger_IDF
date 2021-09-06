@@ -241,12 +241,15 @@ static void rtc_intr_task(void *pvParameter)
                 break;
             case SET_DAYOFMONTH:
                 rtc.WRITE_DATE(cmd_msg.arg1);
+                dateTime.dayofMonth = cmd_msg.arg1;
                 break;
             case SET_MONTH:
                 rtc.WRITE_MONTH(cmd_msg.arg1);
+                dateTime.month = cmd_msg.arg1;
                 break;
             case SET_YEAR:
                 rtc.WRITE_YEAR(cmd_msg.arg1);
+                dateTime.year = cmd_msg.arg1;
                 break;
             default:
                 break;
@@ -391,21 +394,21 @@ static void console_task(void *pvParameter)
 static void button_task(void *pvParameter)
 {
     ESP_LOGI("BTN", "Starting Button Interface");
-    Button editButton(GPIO_NUM_13);
+    Button editSettingButton(GPIO_NUM_13);
     Button editModeButton(GPIO_NUM_12);
     Button downButton(GPIO_NUM_14);
     Button upButton(GPIO_NUM_27);
     while (true)
     {
-        if (editButton)
+        if (editSettingButton)
         {
-            ESP_LOGI("BTN", "Edit Button Pressed");
-            buttonPressed(EDIT_MODE_PRESSED);
+            ESP_LOGI("BTN", "Edit Setting Button Pressed");
+            buttonPressed(EDIT_SETTING_PRESSED);
         }
         else if (editModeButton)
         {
             ESP_LOGI("BTN", "Edit Mode Button Pressed");
-            buttonPressed(EDIT_SETTING_PRESSED);
+            buttonPressed(EDIT_MODE_PRESSED);
         }
         else if (downButton)
         {
