@@ -1,12 +1,9 @@
 #include "ConsoleCommands.h"
 #include "esp_log.h"
 #include "esp_console.h"
-#include "esp_system.h"
-#include "esp_spi_flash.h"
 #include "argtable3/argtable3.h"
 #include "DeviceCommands.h"
 
-static void register_version(void);
 static void register_time(void);
 static void register_date(void);
 static void register_getdatetime(void);
@@ -17,44 +14,12 @@ static void register_lcd_command(void);
 // cppcheck-suppress unusedFunction
 void register_system(void)
 {
-    register_version();
     register_time();
     register_date();
     register_getdatetime();
     register_temperature();
     register_adjust_log_level_command();
     register_lcd_command();
-}
-
-static int get_version(int argc, char **argv)
-{
-    esp_chip_info_t info;
-    esp_chip_info(&info);
-    printf("IDF Version:%s\r\n", esp_get_idf_version());
-    printf("Chip info:\r\n");
-    printf("\tmodel:%s\r\n", info.model == CHIP_ESP32 ? "ESP32" : "Unknown");
-    printf("\tcores:%d\r\n", info.cores);
-    printf("\tfeature:%s%s%s%s%d%s\r\n",
-           info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "",
-           info.features & CHIP_FEATURE_BLE ? "/BLE" : "",
-           info.features & CHIP_FEATURE_BT ? "/BT" : "",
-           info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
-           (int)spi_flash_get_chip_size() / (1024 * 1024), " MB");
-    printf("\trevision number:%d\r\n", info.revision);
-    return 0;
-}
-
-static void register_version(void)
-{
-    const esp_console_cmd_t cmd = {
-        .command = "version",
-        .help = "Get version of chip and SDK",
-        .hint = NULL,
-        .func = &get_version,
-        .argtable = NULL,
-    };
-
-    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
 static struct
