@@ -430,8 +430,6 @@ void RTCDS3234::ISR_Init()
 
     gpio_set_intr_type(DEADON_ALERT_PIN_NUM, GPIO_INTR_NEGEDGE);
 
-    // gpio_install_isr_service(DEADON_RTC_INTR_FLAGS_DEFAULT);
-
     gpio_isr_handler_add(DEADON_ALERT_PIN_NUM, alert_isr_handler, (void *)NULL);
 }
 

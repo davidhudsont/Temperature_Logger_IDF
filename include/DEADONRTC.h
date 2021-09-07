@@ -8,7 +8,6 @@
 
 // Active Low INT_BAR
 #define DEADON_ALERT_PIN_NUM (GPIO_NUM_25) // Interrupt Pin
-#define DEADON_RTC_INTR_FLAGS_DEFAULT (0)  //
 
 typedef enum DAYS
 {
