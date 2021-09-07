@@ -1,19 +1,22 @@
-
-#include "ConsoleCommands.h"
-#include "BSPConsole.h"
+// Standard Libraries
 #include <stdio.h>
-#include <string.h>
-#include "esp_system.h"
-#include "esp_log.h"
-#include "esp_console.h"
-#include "esp_vfs_dev.h"
-#include "driver/uart.h"
-#include "linenoise/linenoise.h"
+
+// RTOS
 #include "argtable3/argtable3.h"
+#include "driver/uart.h"
+#include "esp_console.h"
+#include "esp_log.h"
+#include "esp_system.h"
+#include "esp_vfs_dev.h"
 #include "esp_vfs_fat.h"
-#include "nvs.h"
+#include "linenoise/linenoise.h"
 #include "nvs_flash.h"
+#include "nvs.h"
 #include "sdkconfig.h"
+
+// User Headers
+#include "BSPConsole.h"
+#include "ConsoleCommands.h"
 
 void Start_Console()
 {
