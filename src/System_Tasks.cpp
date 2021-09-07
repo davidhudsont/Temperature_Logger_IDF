@@ -1,25 +1,30 @@
 
-#include "ConsoleCommands.h"
-#include "System_Tasks.h"
+// Standard Libraries
 #include <stdio.h>
 #include <string.h>
-#include "sdkconfig.h"
+#include <sys/stat.h>
+#include <sys/unistd.h>
+
+// RTOS
+#include "esp_console.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
-#include "DEADONRTC.h"
-#include "TMP102.h"
-#include "LCD.h"
-#include "bspConsole.h"
+#include "freertos/task.h"
 #include "linenoise/linenoise.h"
-#include "esp_console.h"
-#include <sys/unistd.h>
-#include <sys/stat.h>
+#include "sdkconfig.h"
+
+// User Headers
+#include "BSPConsole.h"
 #include "Button.h"
+#include "ConsoleCommands.h"
+#include "DEADONRTC.h"
 #include "DeviceCommands.h"
 #include "HMI.h"
+#include "LCD.h"
+#include "System_Tasks.h"
+#include "TMP102.h"
 
 static SemaphoreHandle_t alarm_semiphore;
 static SemaphoreHandle_t lcd_semiphore;

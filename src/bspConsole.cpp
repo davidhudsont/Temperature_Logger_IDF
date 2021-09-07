@@ -1,6 +1,6 @@
 
 #include "ConsoleCommands.h"
-#include "bspConsole.h"
+#include "BSPConsole.h"
 #include <stdio.h>
 #include <string.h>
 #include "esp_system.h"
