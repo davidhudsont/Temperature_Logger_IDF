@@ -13,11 +13,7 @@ int main()
 
 #else
 
-#include <stdio.h>
-#include <string.h>
-#include "sdkconfig.h"
-#include "System_Tasks.h"
-#include "esp_log.h"
+#include "SystemTasks.h"
 
 extern "C"
 {
@@ -27,7 +23,6 @@ extern "C"
 // cppcheck-suppress unusedFunction
 void app_main()
 {
-    ESP_LOGI("Main", "Starting Tasks");
     Create_Semaphores();
     Create_Tasks();
 }
