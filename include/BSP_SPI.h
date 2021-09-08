@@ -2,9 +2,7 @@
 
 #include "driver/spi_common.h"
 #include "driver/spi_master.h"
-#include "driver/spi_slave.h"
 #include "driver/gpio.h"
-#include <string.h>
 
 namespace BSP
 {
