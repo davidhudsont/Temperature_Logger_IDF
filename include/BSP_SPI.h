@@ -28,7 +28,7 @@ namespace BSP
         SPI();
 
         /**
-         * @brief Initializes a SPI device on the VSPI Channel
+         * @brief Initializes a SPI device
          * 
          * @param clock_speed - spi_handle data rate
          * @return esp_err_t - Returns an error if the intialization fails
