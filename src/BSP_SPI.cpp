@@ -13,7 +13,7 @@ namespace BSP
         m_dma_chan = 0;
     }
 
-    esp_err_t SPI::Init(int clock_speed)
+    esp_err_t SPI::Initialize(int clock_speed)
     {
         memset(&m_bus_config, 0, sizeof(spi_bus_config_t));
         memset(&m_host, 0, sizeof(spi_host_device_t));

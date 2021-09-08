@@ -33,13 +33,12 @@ namespace BSP
          * @param clock_speed - spi_handle data rate
          * @return esp_err_t - Returns an error if the intialization fails
          */
-        esp_err_t Init(int clock_speed);
+        esp_err_t Initialize(int clock_speed);
 
         /**
          * @brief reads a 8bit register from a spi_handle device with
          *        address as a command
          * 
-         * @param spi_handle - spi_handle device handle
          * @param address - address of the register
          * @return uint8_t - value stored in the register at the address
          */
