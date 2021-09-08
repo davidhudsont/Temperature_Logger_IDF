@@ -1,8 +1,12 @@
 #include "HMI.h"
+
 #include <string>
 #include <sstream>
 #include <iomanip>
+
 #include "esp_log.h"
+
+#include "DeviceCommands.h"
 
 HMI::HMI()
 {
