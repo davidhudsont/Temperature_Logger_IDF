@@ -41,14 +41,14 @@ private:
      * @param address 
      * @return uint8_t 
      */
-    uint8_t Read_Register(uint8_t address);
+    uint8_t ReadRegister(uint8_t address);
 
     /**
      * @brief Write a value to the TMP102 register
      * @param address 
      * @param data 
      */
-    void Write_Register(uint8_t address, uint8_t data);
+    void WriteRegister(uint8_t address, uint8_t data);
 
 public:
     /**
@@ -66,7 +66,7 @@ public:
      * @brief Set the conversion rate of the TMP102
      * @param mode 
      */
-    void Set_Conversion_Rate(CONVERSION_MODES mode);
+    void SetConversionRate(CONVERSION_MODES mode);
 
     /**
      * @brief Put the TMP102 device to sleep
@@ -82,53 +82,53 @@ public:
     /**
      * @brief Configure the one shot
      */
-    void Set_OneShot();
+    void SetOneShot();
 
     /**
      * @brief Get the current oneshot value.
      * @return true if one shot has triggered 
      */
-    bool Get_OneShot();
+    bool GetOneShot();
 
     /**
      * @brief Write to the configuration register with currently stored config value
      */
-    void Write_Config();
+    void WriteConfig();
 
     /**
      * @brief Read the configuration register
      */
-    void Read_Config();
+    void ReadConfig();
 
     /**
      * @brief Reads a sample from the TMP102
      *        and stores the temperature
      */
-    void Read_Temperature();
+    void ReadTemperature();
 
     /**
      * @brief Return the current sampled temperature in degreees Celsius
      * @return float 
      */
-    float Get_Temperature();
+    float Temperature();
 
     /**
      * @brief Return the current sampled temperature in degrees Fahrenheit
      * @return float 
      */
-    float Get_TemperatureF();
+    float TemperatureF();
 
     /**
      * @brief Get a string of the temperature in Fahrenheit
      * 
      * @return std::string 
      */
-    std::string Get_TemperatureF_ToString();
+    std::string TemperatureFToString();
 
     /**
      * @brief Get a string of the temperature in Celsius
      * 
      * @return std::string 
      */
-    std::string Get_TemperatureC_ToString();
+    std::string TemperatureCToString();
 };

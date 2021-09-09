@@ -203,14 +203,14 @@ static void OneShotTemperatureRead(TMP102 &tmp102)
     if (oneshot == false)
     {
         ESP_LOGI("TMP", "Set the OneShot!");
-        tmp102.Set_OneShot();
+        tmp102.SetOneShot();
         delay(30);
-        oneshot = tmp102.Get_OneShot();
+        oneshot = tmp102.GetOneShot();
     }
 
     if (oneshot)
     {
-        tmp102.Read_Temperature();
+        tmp102.ReadTemperature();
         ESP_LOGI("TMP", "Temperature has been Read");
         oneshot = false;
     }
@@ -223,21 +223,21 @@ static void tmp102_task(void *pvParameter)
 
     ESP_LOGI("TMP", "TMP102 Task Start!");
     tmp102.Begin();
-    tmp102.Set_Conversion_Rate(CONVERSION_MODE_1);
+    tmp102.SetConversionRate(CONVERSION_MODE_1);
     delay(100);
     tmp102.Sleep();
     delay(300);
     OneShotTemperatureRead(tmp102);
     OneShotTemperatureRead(tmp102);
-    temperatureF = tmp102.Get_TemperatureF();
-    temperatureC = tmp102.Get_Temperature();
+    temperatureF = tmp102.TemperatureF();
+    temperatureC = tmp102.Temperature();
 
     while (1)
     {
         if (xSemaphoreTake(alarm_semiphore, 0))
         {
             OneShotTemperatureRead(tmp102);
-            std::string temperature_readingf = tmp102.Get_TemperatureF_ToString();
+            std::string temperature_readingf = tmp102.TemperatureFToString();
             ESP_LOGI("TMP", "%sF", temperature_readingf.c_str());
         }
 
@@ -247,12 +247,12 @@ static void tmp102_task(void *pvParameter)
             {
             case GET_TEMPF:
                 OneShotTemperatureRead(tmp102);
-                temperatureF = tmp102.Get_TemperatureF();
+                temperatureF = tmp102.TemperatureF();
                 ESP_LOGI("TMP", "%3.3fC", temperatureF);
                 break;
             case GET_TEMPC:
                 OneShotTemperatureRead(tmp102);
-                temperatureC = tmp102.Get_Temperature();
+                temperatureC = tmp102.Temperature();
                 ESP_LOGI("TMP", "%2.3fC", temperatureC);
                 break;
             default:
