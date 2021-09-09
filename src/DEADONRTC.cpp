@@ -1,6 +1,7 @@
 
 #include "DEADONRTC.h"
-#include "string.h"
+#include "DEADONRTC_Registers.h"
+#include <string.h>
 #include <sstream>
 #include <iomanip>
 #include "esp_log.h"

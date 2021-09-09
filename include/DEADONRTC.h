@@ -9,7 +9,7 @@
 // Active Low INT_BAR
 #define DEADON_ALERT_PIN_NUM (GPIO_NUM_25) // Interrupt Pin
 
-typedef enum DAYS
+enum DAYS
 {
     SUNDAY = 1,
     MONDAY,
@@ -18,25 +18,25 @@ typedef enum DAYS
     THURSDAY,
     FRIDAY,
     SATURDAY,
-} DAYS;
+};
 
-typedef enum ALARM1_MODES
+enum ALARM1_MODES
 {
     ALARM1_PER_SECOND = 0,
     ALARM1_SECONDS_MATCH,
     ALARM1_MIN_SEC_MATCH,
     ALARM1_HR_MIN_SEC_MATCH,
     ALARM1_DT_HR_MIN_SEC_MATCH
-} ALARM1_MODES;
+};
 
-typedef enum ALARM2_MODES
+enum ALARM2_MODES
 {
     ALARM2_PER_MIN = 0,
     ALARM2_MIN_MATCH,
     ALARM2_HR_MIN_MATCH,
     ALARM2_DT_HR_MIN_MATCH
 
-} ALARM2_MODES;
+};
 
 struct DATE_TIME
 {
