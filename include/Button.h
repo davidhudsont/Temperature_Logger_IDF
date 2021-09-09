@@ -7,16 +7,15 @@ class Button
 {
 public:
     Button(gpio_num_t pin);
-
     operator bool();
 
 private:
-    bool get_button_state();
     gpio_num_t pin;
     int64_t lastDebounceTime;
     bool buttonState;
     bool lastButtonState;
     const int debounceDelay = 50; // the debounce time(ms); increase if the output flickers
+    bool Debounce();
 };
 
 class ButtonInterrupt
