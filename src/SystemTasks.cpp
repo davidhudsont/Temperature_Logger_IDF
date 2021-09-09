@@ -71,7 +71,7 @@ void Power_On_Test(RTCDS3234 &rtc)
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
     uint8_t data[6] = {0};
     // Check for power lost
-    rtc.SRAM_Burst_Read(0x00, data, 6);
+    rtc.SRAMBurstRead(0x00, data, 6);
     bool power_lost = false;
     for (int i = 0; i < 6; i++)
     {
@@ -85,8 +85,8 @@ void Power_On_Test(RTCDS3234 &rtc)
     if (power_lost)
     {
         ESP_LOGW("RTC", "Lost Power!");
-        rtc.SRAM_Burst_Write(0x00, code, 6);
-        rtc.WRITE_BUILD_DATETIME();
+        rtc.SRAMBurstWrite(0x00, code, 6);
+        rtc.WriteBuildDateTime();
     }
     else
     {
@@ -97,17 +97,17 @@ void Power_On_Test(RTCDS3234 &rtc)
 void Start_Alarms(RTCDS3234 &rtc)
 {
     // Setup the RTC interrupts
-    rtc.ISR_Init();
+    rtc.ISRInitialize();
     delay(1000);
-    rtc.WRITE_ALARM1(10, 0, 0, 0, ALARM1_SECONDS_MATCH);
-    rtc.WRITE_ALARM2(0, 0, 0, ALARM2_PER_MIN);
+    rtc.WriteAlarm1(10, 0, 0, 0, ALARM1_SECONDS_MATCH);
+    rtc.WriteAlarm2(0, 0, 0, ALARM2_PER_MIN);
     delay(100);
-    rtc.Enable_Interrupt(true);
+    rtc.EnableInterrupt(true);
     delay(100);
-    rtc.Enable_Alarms(true, true);
+    rtc.EnableAlarms(true, true);
     // Clear the ALARM flags early
-    rtc.READ_ALARM1_FLAG();
-    rtc.READ_ALARM2_FLAG();
+    rtc.ReadAlarm1Flag();
+    rtc.ReadAlarm2Flag();
 }
 
 static void rtc_task(void *pvParameter)
@@ -125,20 +125,20 @@ static void rtc_task(void *pvParameter)
         // Evaluate Alarm Interrupts
         if (GetInterruptSemiphore())
         {
-            bool alarm1_flag = rtc.READ_ALARM1_FLAG();
-            bool alarm2_flag = rtc.READ_ALARM2_FLAG();
+            bool alarm1_flag = rtc.ReadAlarm1Flag();
+            bool alarm2_flag = rtc.ReadAlarm2Flag();
 
             if (alarm1_flag)
             {
                 ESP_LOGI("RTC", "ALARM1 Triggered");
-                rtc.READ_DATETIME();
-                dateTime = rtc.GET_DATETIME();
+                rtc.ReadDateTime();
+                dateTime = rtc.GetDateTime();
             }
             if (alarm2_flag)
             {
                 ESP_LOGI("RTC", "ALARM2 Triggered");
-                rtc.READ_DATETIME();
-                dateTime = rtc.GET_DATETIME();
+                rtc.ReadDateTime();
+                dateTime = rtc.GetDateTime();
                 xSemaphoreGive(alarm_semiphore);
                 xSemaphoreGive(lcd_semiphore);
             }
@@ -151,42 +151,42 @@ static void rtc_task(void *pvParameter)
             {
             case GET_DATETIME:
             {
-                rtc.READ_DATETIME();
-                std::string logdate = rtc.DATE_TOSTRING();
-                std::string logtime = rtc.TIME_TOSTRING();
+                rtc.ReadDateTime();
+                std::string logdate = rtc.DateToString();
+                std::string logtime = rtc.TimeToString();
                 ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
-                dateTime = rtc.GET_DATETIME();
+                dateTime = rtc.GetDateTime();
                 break;
             }
             case SET_SECONDS:
-                rtc.WRITE_SECONDS(cmd_msg.arg1);
+                rtc.WriteSeconds(cmd_msg.arg1);
                 dateTime.second = cmd_msg.arg1;
                 break;
             case SET_MINUTES:
-                rtc.WRITE_MINUTES(cmd_msg.arg1);
+                rtc.WriteMinutes(cmd_msg.arg1);
                 dateTime.minute = cmd_msg.arg1;
                 break;
             case SET_12HOURS:
-                rtc.WRITE_12HOURS(cmd_msg.arg1, cmd_msg.arg2);
+                rtc.Write12Hours(cmd_msg.arg1, cmd_msg.arg2);
                 dateTime.hour = cmd_msg.arg1;
                 break;
             case SET_24HOURS:
-                rtc.WRITE_24HOURS(cmd_msg.arg1);
+                rtc.Write24Hours(cmd_msg.arg1);
                 dateTime.hour = cmd_msg.arg1;
                 break;
             case SET_WEEKDAY:
-                rtc.WRITE_DAYS((DAYS)cmd_msg.arg1);
+                rtc.WriteDays((DAYS)cmd_msg.arg1);
                 break;
             case SET_DAYOFMONTH:
-                rtc.WRITE_DATE(cmd_msg.arg1);
+                rtc.WriteDate(cmd_msg.arg1);
                 dateTime.dayofMonth = cmd_msg.arg1;
                 break;
             case SET_MONTH:
-                rtc.WRITE_MONTH(cmd_msg.arg1);
+                rtc.WriteMonth(cmd_msg.arg1);
                 dateTime.month = cmd_msg.arg1;
                 break;
             case SET_YEAR:
-                rtc.WRITE_YEAR(cmd_msg.arg1);
+                rtc.WriteYear(cmd_msg.arg1);
                 dateTime.year = cmd_msg.arg1;
                 break;
             default:
