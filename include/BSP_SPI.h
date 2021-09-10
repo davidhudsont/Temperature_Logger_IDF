@@ -14,11 +14,7 @@ namespace BSP
     class SPI
     {
     private:
-        spi_bus_config_t m_bus_config;
-        spi_host_device_t m_host;
-        spi_device_interface_config_t m_devcfg;
         spi_device_handle_t m_spi_handle;
-        int m_dma_chan;
 
     public:
         /**
