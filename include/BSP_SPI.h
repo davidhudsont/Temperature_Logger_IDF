@@ -16,6 +16,8 @@ namespace BSP
     private:
         spi_device_handle_t m_spi_handle;
 
+        void sendTransaction(spi_transaction_t *transaction);
+
     public:
         /**
          * @brief Construct a new SPI object

@@ -51,6 +51,15 @@ namespace BSP
         return init_fail | device_add_fail;
     }
 
+    void SPI::sendTransaction(spi_transaction_t *transaction)
+    {
+        esp_err_t err;
+        gpio_set_level(PIN_NUM_CS, 0);
+        err = spi_device_polling_transmit(m_spi_handle, transaction);
+        gpio_set_level(PIN_NUM_CS, 1);
+        assert(err == ESP_OK);
+    }
+
     uint8_t SPI::readReg(const uint8_t address)
     {
         spi_transaction_t transaction;
@@ -60,11 +69,7 @@ namespace BSP
         transaction.length = 8;
         transaction.flags = SPI_TRANS_USE_RXDATA;
 
-        esp_err_t err;
-        gpio_set_level(PIN_NUM_CS, 0);
-        err = spi_device_polling_transmit(m_spi_handle, &transaction);
-        gpio_set_level(PIN_NUM_CS, 1);
-        assert(err == ESP_OK);
+        sendTransaction(&transaction);
 
         return transaction.rx_data[0];
     }
@@ -79,11 +84,7 @@ namespace BSP
         transaction.tx_data[0] = data;
         transaction.cmd = address;
 
-        esp_err_t err;
-        gpio_set_level(PIN_NUM_CS, 0);
-        err = spi_device_polling_transmit(m_spi_handle, &transaction);
-        gpio_set_level(PIN_NUM_CS, 1);
-        assert(err == ESP_OK);
+        sendTransaction(&transaction);
     }
 
     void SPI::burstRead(const uint8_t address, uint8_t *buf, uint32_t size)
@@ -95,12 +96,7 @@ namespace BSP
         transaction.length = size * 8;
         transaction.rx_buffer = buf;
 
-        esp_err_t err;
-        gpio_set_level(PIN_NUM_CS, 0);
-        err = spi_device_polling_transmit(m_spi_handle, &transaction);
-        gpio_set_level(PIN_NUM_CS, 1);
-
-        assert(err == ESP_OK);
+        sendTransaction(&transaction);
     }
 
     void SPI::burstWrite(const uint8_t address, uint8_t *buf, uint32_t size)
@@ -112,11 +108,7 @@ namespace BSP
         transaction.length = size * 8;
         transaction.tx_buffer = buf;
 
-        esp_err_t err;
-        gpio_set_level(PIN_NUM_CS, 0);
-        err = spi_device_polling_transmit(m_spi_handle, &transaction);
-        gpio_set_level(PIN_NUM_CS, 1);
-        assert(err == ESP_OK);
+        sendTransaction(&transaction);
     }
 
 } // namespace BSP
