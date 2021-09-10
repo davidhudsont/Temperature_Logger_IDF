@@ -4,7 +4,7 @@
 
 namespace BSP
 {
-    esp_err_t SPI::Initialize(int clock_speed)
+    void SPI::Initialize(int clock_speed)
     {
         memset(&m_spi_handle, 0, sizeof(spi_device_handle_t));
         spi_bus_config_t spiBusConfig;
@@ -42,8 +42,6 @@ namespace BSP
         gpio_pad_select_gpio(PIN_NUM_CS);
         gpio_set_direction(PIN_NUM_CS, GPIO_MODE_OUTPUT);
         gpio_set_level(PIN_NUM_CS, 1);
-
-        return init_fail | device_add_fail;
     }
 
     void SPI::sendTransaction(spi_transaction_t *transaction)

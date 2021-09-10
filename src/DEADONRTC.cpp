@@ -94,12 +94,7 @@ RTCDS3234::RTCDS3234()
 void RTCDS3234::Begin()
 {
     volatile int clock_speed = 4 * 1000 * 1000; // Clock speed 4MHz
-    esp_err_t err = false;
-    err = spi.Initialize(clock_speed);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE("RTC", "Spi Configuration Error");
-    }
+    spi.Initialize(clock_speed);
 }
 
 void RTCDS3234::ReadDateTime()
