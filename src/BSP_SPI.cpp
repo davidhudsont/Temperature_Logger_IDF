@@ -4,11 +4,6 @@
 
 namespace BSP
 {
-    SPI::SPI()
-    {
-        memset(&m_spi_handle, 0, sizeof(spi_device_handle_t));
-    }
-
     esp_err_t SPI::Initialize(int clock_speed)
     {
         memset(&m_spi_handle, 0, sizeof(spi_device_handle_t));

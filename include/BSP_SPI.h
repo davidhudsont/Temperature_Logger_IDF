@@ -20,12 +20,6 @@ namespace BSP
 
     public:
         /**
-         * @brief Construct a new SPI object
-         * 
-         */
-        SPI();
-
-        /**
          * @brief Initializes a SPI device
          * 
          * @param clock_speed - spi_handle data rate
