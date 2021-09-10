@@ -50,6 +50,29 @@
 #define BUILD_SECOND_1 (__TIME__[7] - 0x30)
 #define BUILD_SECOND ((BUILD_SECOND_0 * 10) + BUILD_SECOND_1)
 
+uint8_t calculateDayOfMonth(uint8_t dayOfMonth, uint8_t month, uint8_t year)
+{
+    // Credit to : http://www.codecodex.com/wiki/Calculate_the_number_of_days_in_a_month
+    // This protects against invalid months
+    int numberOfDays;
+    if (month == 4 || month == 6 || month == 9 || month == 11)
+        numberOfDays = 30;
+    else if (month == 2)
+    {
+        bool isLeapYear = (((year % 4) == 0) && ((year % 100) != 0)) || ((year % 400) == 0);
+        if (isLeapYear)
+            numberOfDays = 29;
+        else
+            numberOfDays = 28;
+    }
+    else
+        numberOfDays = 31;
+
+    if (dayOfMonth > numberOfDays)
+        dayOfMonth = numberOfDays;
+    return dayOfMonth;
+}
+
 SemaphoreHandle_t semiphore;
 
 int GetInterruptSemiphore()
