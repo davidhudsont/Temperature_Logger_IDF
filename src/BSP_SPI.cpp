@@ -7,6 +7,7 @@ namespace BSP
     void SPI::Initialize(int clock_speed)
     {
         memset(&m_spi_handle, 0, sizeof(spi_device_handle_t));
+        memset(&devcfg, 0, sizeof(spi_device_interface_config_t));
         spi_bus_config_t spiBusConfig;
         spiBusConfig.miso_io_num = PIN_NUM_MISO;
         spiBusConfig.mosi_io_num = PIN_NUM_MOSI;
@@ -20,7 +21,6 @@ namespace BSP
         spi_host_device_t host = VSPI_HOST;
         int dma_chan = 0;
 
-        spi_device_interface_config_t devcfg;
         devcfg.mode = 3;
         devcfg.queue_size = 1;
         // set spi_handle clock speed to passed in parameter
