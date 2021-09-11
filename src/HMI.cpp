@@ -20,13 +20,14 @@ HMI::HMI()
 void HMI::displayCurrentState()
 {
     lcd.SetCursor(3, 0);
-    if (displayState)
+    switch (displayState)
     {
+    case DISPLAYING:
         lcd.WriteCharacters("DISP ", 5);
-    }
-    else
-    {
+        break;
+    case EDITING:
         lcd.WriteCharacters("EDIT ", 5);
+        break;
     }
     lcd.WriteCharacters("SETN: ", 6);
     switch (settingState)
