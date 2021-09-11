@@ -50,7 +50,7 @@
 #define BUILD_SECOND_1 (__TIME__[7] - 0x30)
 #define BUILD_SECOND ((BUILD_SECOND_0 * 10) + BUILD_SECOND_1)
 
-uint8_t calculateDayOfMonth(uint8_t dayOfMonth, uint8_t month, uint8_t year)
+uint8_t calculateMaxDayOfMonth(uint8_t month, uint8_t year)
 {
     // Credit to : http://www.codecodex.com/wiki/Calculate_the_number_of_days_in_a_month
     // This protects against invalid months
@@ -68,9 +68,7 @@ uint8_t calculateDayOfMonth(uint8_t dayOfMonth, uint8_t month, uint8_t year)
     else
         numberOfDays = 31;
 
-    if (dayOfMonth > numberOfDays)
-        dayOfMonth = numberOfDays;
-    return dayOfMonth;
+    return numberOfDays;
 }
 
 SemaphoreHandle_t semiphore;

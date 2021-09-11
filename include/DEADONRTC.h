@@ -9,7 +9,7 @@
 // Active Low INT_BAR
 #define DEADON_ALERT_PIN_NUM (GPIO_NUM_25) // Interrupt Pin
 
-uint8_t calculateDayOfMonth(uint8_t dayOfMonth, uint8_t month, uint8_t year);
+uint8_t calculateMaxDayOfMonth(uint8_t month, uint8_t year);
 
 enum DAYS
 {
