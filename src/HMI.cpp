@@ -235,11 +235,13 @@ void HMI::editMonth(bool increase)
 
 void HMI::editDayOfMonth(bool increase)
 {
+
     dateTime.dayofMonth = increase ? dateTime.dayofMonth + 1 : dateTime.dayofMonth - 1;
-    if (dateTime.dayofMonth > 28)
+    uint8_t maxDaysOfMonth = calculateMaxDayOfMonth(dateTime.month, dateTime.year);
+    if (dateTime.dayofMonth > maxDaysOfMonth)
         dateTime.dayofMonth = 1;
     else if (dateTime.dayofMonth == 0)
-        dateTime.dayofMonth = 28;
+        dateTime.dayofMonth = maxDaysOfMonth;
     lcd.SetCursor(0, 3);
     ESP_LOGI("HMI", "Day Of Month %d", dateTime.dayofMonth);
     lcd.WriteDigit(dateTime.dayofMonth / 10);
