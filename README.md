@@ -1,73 +1,53 @@
-# Temperature_Logger IDF Project
+# Clock Display IDF Project
 
-A temperature logging device using the ESP32 Micro-controller with the IDF RTOS
+A device that displays the current date, time and temperature to a LCD display. The project is powered using the ESP32 Micro-controller with the IDF RTOS.
 
 ## Devices
 
 1. TMP102 Temperature Sensor
+   * [TMP102 DataSheet](https://www.sparkfun.com/datasheets/Sensors/Temperature/tmp102.pdf)
+   * [TMP102 Hookup Guide](https://learn.sparkfun.com/tutorials/tmp102-digital-temperature-sensor-hookup-guide)
 2. DS3234 Real Time Clock
-3. SparkFun Micro SD Breakout
+   * [DS3234 DataSheet](https://www.sparkfun.com/datasheets/BreakoutBoards/DS3234.pdf)
+   * [DS3234 Hookup Guide](https://learn.sparkfun.com/tutorials/deadon-rtc-breakout-hookup-guide)
+3. SparkFun 20x4 SerLCD - RGB Backlight (Qwiic)
+   * [LCD Display](https://www.sparkfun.com/products/16398)
+4. SparkFun Breadboard Power Supply - 5V/3.3V
+   * [Power Supply](https://www.sparkfun.com/products/13032)
 
 ## Console Commands
 
 * 'help' - Displays the various console commands and options
 
-* 'version' - Prints information related to the ESP32 Chip
-  
 * 'time' - Set the time of the Real Time Clock (RTC)
-  * Argument -s: Set the seconds of the RTC (0-59) seconds
-  * Argument -m: Set the minutes of the RTC (0-59) minutes
-  * Argument -h: Set the hours of the RTC in 12 hour mode (1-12)
-  * Argument -h: Add a second argument to set RTC in either AM or PM time
-  * Argument -t: Set the hours of the RTC in 24 hour mode (0-23)
+  * -s <0-59>: Set the seconds of the RTC seconds
+  * -m <0-59>:Set the minutes of the RTC minutes
+  * -h <1-12>: Set the hours of the RTC in 12 hour mode
+  * -h <0-1>: Add a second argument to set RTC in either AM or PM time
+  * -t <0-23>: Set the hours of the RTC in 24 hour mode
 
 * 'date' - Set the current date
-  * Argument -w: Set the weekday
-  * Argument -d: Set the day of month
-  * Argument -m: Set the month
-  * Argument -y: Set the year
+  * -w <1-7>: Set the weekday
+  * -d <1-31>: Set the day of month
+  * -m <1-12>: Set the month
+  * -y <0-99>: Set the year
 
-* 'datetime' - Print the current date and time
+* 'datetime' - Print the current date and time to the console
 
-* temperature - Get the current temperature
-  * Argument -f: Get the temperature in Fahrenheit
-  * Argument -c: Get the temperature in Celsius
+* 'temperature' - Print the current temperature to the console
+  * -f: Print the temperature in Fahrenheit
+  * -c: Print the temperature in Celsius
 
-* loglevel - Set the current log level
-  * Argument -l: Set the current log level
+* 'loglevel' - Set the current log level
+  * -l <0-5>: Set the current log level
 
-* sd - SD Card commands
-  * Argument -d: Get the Disk Information
-  * Argument -l: Stop/Start Logging (0|1)
-  * Argument -r: Delete the current log file and stop logging
+* 'lcd' - Controls various functions of the LCD Display
+  * -d <0-1>: Turn Display On/Off
+  * -c <0-255>: Set the LCD's Contrast
+  * -b <0-255>r <0-255>g <0-255>b: Set the backlight color
+  * -r: Clear the display
 
-## Console Examples
+## Schematic and PCB
 
-* time -s 32 (Set clock to second 32)
-* time -m 59 (Set clock to minute 59)
-* time -h 7 -h 0 (Set clock to hour 7 AM)
-* time -t 13 (Set clock to hour 13)
-
-![Console Screen Capture](images/Console_Capture.JPG)
-
-![Console Screen Capture 2](images/Console_Capture2.JPG)
-
-## Links
-
-### TMP102
-
-* [TMP102 DataSheet](https://www.sparkfun.com/datasheets/Sensors/Temperature/tmp102.pdf)
-* [TMP102 Hookup Guide](https://learn.sparkfun.com/tutorials/tmp102-digital-temperature-sensor-hookup-guide)
-
-### DS3234 DeadOn RTC
-
-* [DS3234 DataSheet](https://www.sparkfun.com/datasheets/BreakoutBoards/DS3234.pdf)
-* [DS3234 Hookup Guide](https://learn.sparkfun.com/tutorials/deadon-rtc-breakout-hookup-guide)
-
-### SparkFun micro SD Card Breakout
-
-* [Micro SD Card Breakout](https://www.sparkfun.com/products/544)
-
-### SparkFun LCD Display
-
-* [LCD Display](https://www.sparkfun.com/products/16398)
+* [Schematic PDF](hardware/Schematic_ClockAndThermometer.pdf)
+* [PCB PDF](hardware/PCB_ClockAndThermometer.pdf)
