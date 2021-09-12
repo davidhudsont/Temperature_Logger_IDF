@@ -222,7 +222,6 @@ static void register_temperature_command(void)
 static struct
 {
     struct arg_int *level;
-    struct arg_str *tag;
     struct arg_end *end;
 } level_args;
 
@@ -255,11 +254,10 @@ static int set_log_level(int argc, char **argv)
 static void register_log_level_command(void)
 {
     level_args.level = arg_int0("l", NULL, "0..5", "Set the log level");
-    level_args.tag = arg_str0("t", NULL, "string", "Set log level based on tag");
     level_args.end = arg_end(2);
 
     const esp_console_cmd_t cmd = {
-        .command = "loglevel",
+        .command = "log",
         .help = "Set log level",
         .hint = NULL,
         .func = &set_log_level,
