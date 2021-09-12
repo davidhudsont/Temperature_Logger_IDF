@@ -1,6 +1,7 @@
 
 #include "DEADONRTC.h"
-#include "string.h"
+#include "DEADONRTC_Registers.h"
+#include <string.h>
 #include <sstream>
 #include <iomanip>
 #include "esp_log.h"
@@ -49,6 +50,27 @@
 #define BUILD_SECOND_1 (__TIME__[7] - 0x30)
 #define BUILD_SECOND ((BUILD_SECOND_0 * 10) + BUILD_SECOND_1)
 
+uint8_t calculateMaxDayOfMonth(uint8_t month, uint8_t year)
+{
+    // Credit to : http://www.codecodex.com/wiki/Calculate_the_number_of_days_in_a_month
+    // This protects against invalid months
+    int numberOfDays;
+    if (month == 4 || month == 6 || month == 9 || month == 11)
+        numberOfDays = 30;
+    else if (month == 2)
+    {
+        bool isLeapYear = (((year % 4) == 0) && ((year % 100) != 0)) || ((year % 400) == 0);
+        if (isLeapYear)
+            numberOfDays = 29;
+        else
+            numberOfDays = 28;
+    }
+    else
+        numberOfDays = 31;
+
+    return numberOfDays;
+}
+
 SemaphoreHandle_t semiphore;
 
 int GetInterruptSemiphore()
@@ -93,17 +115,12 @@ RTCDS3234::RTCDS3234()
 void RTCDS3234::Begin()
 {
     volatile int clock_speed = 4 * 1000 * 1000; // Clock speed 4MHz
-    esp_err_t err = false;
-    err = spi.Init(clock_speed);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE("RTC", "Spi Configuration Error");
-    }
+    spi.Initialize(clock_speed);
 }
 
-void RTCDS3234::READ_DATETIME()
+void RTCDS3234::ReadDateTime()
 {
-    Register_Burst_Read(REG_SECONDS, raw_time, 7);
+    RegisterBurstRead(REG_SECONDS, raw_time, 7);
 
     seconds = BCDtoDEC(raw_time[0]);
     minutes = BCDtoDEC(raw_time[1]);
@@ -136,8 +153,8 @@ void RTCDS3234::READ_DATETIME()
  * @param month 
  * @param year 
  */
-void RTCDS3234::WRITE_DATETIME(uint8_t seconds, uint8_t minutes, uint8_t hours,
-                               uint8_t day, uint8_t date, uint8_t month, uint8_t year)
+void RTCDS3234::WriteDateTime(uint8_t seconds, uint8_t minutes, uint8_t hours,
+                              uint8_t day, uint8_t date, uint8_t month, uint8_t year)
 {
     uint8_t time_config[7];
 
@@ -149,10 +166,10 @@ void RTCDS3234::WRITE_DATETIME(uint8_t seconds, uint8_t minutes, uint8_t hours,
     time_config[5] = DECtoBCD(month);
     time_config[6] = DECtoBCD(year);
 
-    Register_Burst_Write(REG_SECONDS, time_config, 7);
+    RegisterBurstWrite(REG_SECONDS, time_config, 7);
 }
 
-void RTCDS3234::WRITE_BUILD_DATETIME()
+void RTCDS3234::WriteBuildDateTime()
 {
     uint8_t time_config[7];
 
@@ -172,10 +189,10 @@ void RTCDS3234::WRITE_BUILD_DATETIME()
     weekday += 1; // Library defines Sunday=1, Saturday=7
     time_config[3] = DECtoBCD(weekday);
 
-    Register_Burst_Write(REG_SECONDS, time_config, 7);
+    RegisterBurstWrite(REG_SECONDS, time_config, 7);
 }
 
-std::string RTCDS3234::DATE_TOSTRING()
+std::string RTCDS3234::DateToString()
 {
     std::stringstream ss;
     // date is day of month
@@ -186,7 +203,7 @@ std::string RTCDS3234::DATE_TOSTRING()
     return ss.str();
 }
 
-std::string RTCDS3234::TIME_TOSTRING()
+std::string RTCDS3234::TimeToString()
 {
     std::stringstream ss;
     ss << std::setfill('0') << std::setw(2) << (int)hours << ":";
@@ -200,7 +217,7 @@ std::string RTCDS3234::TIME_TOSTRING()
     return ss.str();
 }
 
-DATE_TIME RTCDS3234::GET_DATETIME()
+DATE_TIME RTCDS3234::GetDateTime()
 {
     DATE_TIME dateTime;
     dateTime.year = year;
@@ -215,31 +232,31 @@ DATE_TIME RTCDS3234::GET_DATETIME()
     return dateTime;
 }
 
-void RTCDS3234::WRITE_SECONDS(uint8_t seconds)
+void RTCDS3234::WriteSeconds(uint8_t seconds)
 {
-    Register_Write(REG_SECONDS, DECtoBCD(seconds));
+    RegisterWrite(REG_SECONDS, DECtoBCD(seconds));
 }
 
-uint8_t RTCDS3234::READ_SECONDS()
+uint8_t RTCDS3234::ReadSeconds()
 {
-    uint8_t reg_data = Register_Read(REG_SECONDS);
+    uint8_t reg_data = RegisterRead(REG_SECONDS);
     uint8_t seconds = BCDtoDEC(reg_data);
     return seconds;
 }
 
-void RTCDS3234::WRITE_MINUTES(uint8_t minutes)
+void RTCDS3234::WriteMinutes(uint8_t minutes)
 {
-    Register_Write(REG_MINUTES, DECtoBCD(minutes));
+    RegisterWrite(REG_MINUTES, DECtoBCD(minutes));
 }
 
-uint8_t RTCDS3234::READ_MINUTES()
+uint8_t RTCDS3234::ReadMinutes()
 {
-    uint8_t reg_data = Register_Read(REG_MINUTES);
+    uint8_t reg_data = RegisterRead(REG_MINUTES);
     uint8_t minutes = BCDtoDEC(reg_data);
     return minutes;
 }
 
-void RTCDS3234::WRITE_12HOURS(uint8_t hours, bool PM_NotAM)
+void RTCDS3234::Write12Hours(uint8_t hours, bool PM_NotAM)
 {
     uint8_t reg_data = 0x00;
     if (hours > 12)
@@ -257,25 +274,25 @@ void RTCDS3234::WRITE_12HOURS(uint8_t hours, bool PM_NotAM)
         reg_data |= HOUR_12_N24;
         reg_data |= DECtoBCD(hours);
     }
-    Register_Write(REG_HOURS, reg_data);
+    RegisterWrite(REG_HOURS, reg_data);
 }
 
-void RTCDS3234::WRITE_24HOURS(uint8_t hours)
+void RTCDS3234::Write24Hours(uint8_t hours)
 {
     if (hours > 23)
         hours = 23;
-    Register_Write(REG_HOURS, DECtoBCD(hours));
+    RegisterWrite(REG_HOURS, DECtoBCD(hours));
 }
 
-void RTCDS3234::WRITE_DAYS(DAYS days)
+void RTCDS3234::WriteDays(DAYS days)
 {
-    Register_Write(REG_DAYS, BCDtoDEC((uint8_t)days));
+    RegisterWrite(REG_DAYS, BCDtoDEC((uint8_t)days));
 }
 
-void RTCDS3234::WRITE_DATE(uint8_t date)
+void RTCDS3234::WriteDate(uint8_t date)
 {
-    int year = BCDtoDEC(RTCDS3234::Register_Read(REG_YEAR)) + 2000;
-    int month = BCDtoDEC(RTCDS3234::Register_Read(REG_MONTH));
+    int year = BCDtoDEC(RTCDS3234::RegisterRead(REG_YEAR)) + 2000;
+    int month = BCDtoDEC(RTCDS3234::RegisterRead(REG_MONTH));
     // Credit to : http://www.codecodex.com/wiki/Calculate_the_number_of_days_in_a_month
     // This protects against invalid months
     int numberOfDays;
@@ -295,25 +312,25 @@ void RTCDS3234::WRITE_DATE(uint8_t date)
     if (date > numberOfDays)
         date = numberOfDays;
 
-    Register_Write(REG_DATE, DECtoBCD(date));
+    RegisterWrite(REG_DATE, DECtoBCD(date));
 }
 
-void RTCDS3234::WRITE_MONTH(uint8_t month)
+void RTCDS3234::WriteMonth(uint8_t month)
 {
     if (month > 12)
         month = 12;
-    Register_Write(REG_MONTH, DECtoBCD(month));
+    RegisterWrite(REG_MONTH, DECtoBCD(month));
 }
 
-void RTCDS3234::WRITE_YEAR(uint8_t year)
+void RTCDS3234::WriteYear(uint8_t year)
 {
     if (year > 99)
         year = 99;
-    Register_Write(REG_YEAR, DECtoBCD(year));
+    RegisterWrite(REG_YEAR, DECtoBCD(year));
 }
 
-void RTCDS3234::WRITE_ALARM1(uint8_t seconds, uint8_t minutes,
-                             uint8_t hours, uint8_t date, ALARM1_MODES mode)
+void RTCDS3234::WriteAlarm1(uint8_t seconds, uint8_t minutes,
+                            uint8_t hours, uint8_t date, ALARM1_MODES mode)
 {
     uint8_t alarm_config[4] = {0};
 
@@ -339,11 +356,11 @@ void RTCDS3234::WRITE_ALARM1(uint8_t seconds, uint8_t minutes,
         break;
     }
 
-    Register_Burst_Write(REG_ALARM1_SECONDS, alarm_config, 4);
+    RegisterBurstWrite(REG_ALARM1_SECONDS, alarm_config, 4);
 }
 
-void RTCDS3234::WRITE_ALARM2(uint8_t minutes,
-                             uint8_t hours, uint8_t date, ALARM2_MODES mode)
+void RTCDS3234::WriteAlarm2(uint8_t minutes,
+                            uint8_t hours, uint8_t date, ALARM2_MODES mode)
 {
     uint8_t alarm_config[3] = {0};
 
@@ -366,18 +383,18 @@ void RTCDS3234::WRITE_ALARM2(uint8_t minutes,
         break;
     }
 
-    Register_Burst_Write(REG_ALRAM2_MINUTES, alarm_config, 3);
+    RegisterBurstWrite(REG_ALRAM2_MINUTES, alarm_config, 3);
 }
 
-bool RTCDS3234::READ_ALARM1_FLAG()
+bool RTCDS3234::ReadAlarm1Flag()
 {
-    uint8_t status = Register_Read(REG_CONTROL_STATUS);
+    uint8_t status = RegisterRead(REG_CONTROL_STATUS);
 
     if ((status & A1F_BIT) == A1F_BIT)
     {
         uint8_t mask = 0xFE;
         status &= mask;
-        Register_Write(REG_CONTROL_STATUS, status);
+        RegisterWrite(REG_CONTROL_STATUS, status);
         return true;
     }
     else
@@ -386,15 +403,15 @@ bool RTCDS3234::READ_ALARM1_FLAG()
     }
 }
 
-bool RTCDS3234::READ_ALARM2_FLAG()
+bool RTCDS3234::ReadAlarm2Flag()
 {
-    uint8_t status = Register_Read(REG_CONTROL_STATUS);
+    uint8_t status = RegisterRead(REG_CONTROL_STATUS);
 
     if ((status & A2F_BIT) == A2F_BIT)
     {
         uint8_t mask = 0xFD;
         status &= mask;
-        Register_Write(REG_CONTROL_STATUS, status);
+        RegisterWrite(REG_CONTROL_STATUS, status);
         return true;
     }
     else
@@ -414,7 +431,7 @@ static void IRAM_ATTR alert_isr_handler(void *arg)
     xSemaphoreGiveFromISR(semiphore, &xHigherPriorityTaskWoken);
 }
 
-void RTCDS3234::ISR_Init()
+void RTCDS3234::ISRInitialize()
 {
 
     semiphore = xSemaphoreCreateBinary();
@@ -430,14 +447,12 @@ void RTCDS3234::ISR_Init()
 
     gpio_set_intr_type(DEADON_ALERT_PIN_NUM, GPIO_INTR_NEGEDGE);
 
-    // gpio_install_isr_service(DEADON_RTC_INTR_FLAGS_DEFAULT);
-
     gpio_isr_handler_add(DEADON_ALERT_PIN_NUM, alert_isr_handler, (void *)NULL);
 }
 
-void RTCDS3234::Enable_Interrupt(bool enable)
+void RTCDS3234::EnableInterrupt(bool enable)
 {
-    uint8_t config = Register_Read(REG_CONTROL);
+    uint8_t config = RegisterRead(REG_CONTROL);
     uint8_t mask = 0xFB;
     config &= mask;
 
@@ -450,13 +465,13 @@ void RTCDS3234::Enable_Interrupt(bool enable)
         config |= 0x00;
     }
 
-    Register_Write(REG_CONTROL, config);
+    RegisterWrite(REG_CONTROL, config);
     intr_enable = enable;
 }
 
-void RTCDS3234::Enable_Alarms(bool alarm1, bool alarm2)
+void RTCDS3234::EnableAlarms(bool alarm1, bool alarm2)
 {
-    uint8_t config = Register_Read(REG_CONTROL);
+    uint8_t config = RegisterRead(REG_CONTROL);
     uint8_t mask = 0xFC;
     config &= mask;
 
@@ -469,52 +484,52 @@ void RTCDS3234::Enable_Alarms(bool alarm1, bool alarm2)
         config |= A2IE_BIT;
     }
 
-    Register_Write(REG_CONTROL, config);
+    RegisterWrite(REG_CONTROL, config);
     alarm1_enable = alarm1;
     alarm2_enable = alarm2;
 }
 
-uint8_t RTCDS3234::SRAM_Read(uint8_t address)
+uint8_t RTCDS3234::SRAMRead(uint8_t address)
 {
-    Register_Write(REG_SRAM_ADDR, address);
-    return Register_Read(REG_SRAM_DATA);
+    RegisterWrite(REG_SRAM_ADDR, address);
+    return RegisterRead(REG_SRAM_DATA);
 }
 
-void RTCDS3234::SRAM_Write(uint8_t address, uint8_t data)
+void RTCDS3234::SRAMWrite(uint8_t address, uint8_t data)
 {
-    Register_Write(REG_SRAM_ADDR, address);
-    Register_Write(REG_SRAM_DATA, address);
+    RegisterWrite(REG_SRAM_ADDR, address);
+    RegisterWrite(REG_SRAM_DATA, address);
 }
 
-void RTCDS3234::SRAM_Burst_Read(uint8_t address, uint8_t *data, uint32_t len)
+void RTCDS3234::SRAMBurstRead(uint8_t address, uint8_t *data, uint32_t len)
 {
-    Register_Write(REG_SRAM_ADDR, address);
-    Register_Burst_Read(REG_SRAM_DATA, data, len);
+    RegisterWrite(REG_SRAM_ADDR, address);
+    RegisterBurstRead(REG_SRAM_DATA, data, len);
 }
 
-void RTCDS3234::SRAM_Burst_Write(uint8_t address, uint8_t *data, uint32_t len)
+void RTCDS3234::SRAMBurstWrite(uint8_t address, uint8_t *data, uint32_t len)
 {
-    Register_Write(REG_SRAM_ADDR, address);
-    Register_Burst_Write(REG_SRAM_DATA, data, len);
+    RegisterWrite(REG_SRAM_ADDR, address);
+    RegisterBurstWrite(REG_SRAM_DATA, data, len);
 }
 
-uint8_t RTCDS3234::Register_Read(uint8_t register_address)
+uint8_t RTCDS3234::RegisterRead(uint8_t register_address)
 {
     uint8_t data = spi.readReg(register_address & 0x7F);
     return data;
 }
 
-void RTCDS3234::Register_Write(uint8_t register_address, uint8_t data)
+void RTCDS3234::RegisterWrite(uint8_t register_address, uint8_t data)
 {
     spi.writeReg(register_address | 0x80, data);
 }
 
-void RTCDS3234::Register_Burst_Read(uint8_t address, uint8_t *data, uint32_t len)
+void RTCDS3234::RegisterBurstRead(uint8_t address, uint8_t *data, uint32_t len)
 {
     spi.burstRead(address & 0x7F, data, len);
 }
 
-void RTCDS3234::Register_Burst_Write(uint8_t address, uint8_t *data, uint32_t len)
+void RTCDS3234::RegisterBurstWrite(uint8_t address, uint8_t *data, uint32_t len)
 {
     spi.burstWrite(address | 0x80, data, len);
 }

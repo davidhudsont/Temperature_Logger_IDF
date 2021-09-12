@@ -15,64 +15,64 @@ void TMP102::Begin()
     i2c.Setup();
 }
 
-void TMP102::Set_Conversion_Rate(CONVERSION_MODES mode)
+void TMP102::SetConversionRate(CONVERSION_MODES mode)
 {
-    Read_Config();
+    ReadConfig();
 
     uint8_t mask = 0x3F;
     config[1] &= mask;
     config[1] |= (uint8_t)mode;
 
-    Write_Config();
+    WriteConfig();
 }
 
 void TMP102::Sleep()
 {
-    config[0] = Read_Register(REG_CONFIG);
+    config[0] = ReadRegister(REG_CONFIG);
     uint8_t mask = 0xFE;
     config[0] &= mask;
     config[0] |= CONFIG_SD;
 
-    Write_Register(REG_CONFIG, config[0]);
+    WriteRegister(REG_CONFIG, config[0]);
 }
 
 void TMP102::Wake()
 {
     // Keep all the configured bits except SD
-    config[0] = Read_Register(REG_CONFIG);
+    config[0] = ReadRegister(REG_CONFIG);
     uint8_t mask = 0xFE;
     config[0] &= mask;
-    Write_Register(REG_CONFIG, config[0]);
+    WriteRegister(REG_CONFIG, config[0]);
 }
 
-void TMP102::Set_OneShot()
+void TMP102::SetOneShot()
 {
-    config[0] = Read_Register(REG_CONFIG);
+    config[0] = ReadRegister(REG_CONFIG);
     uint8_t mask = 0x7F;
     config[0] &= mask;
     config[0] |= CONFIG_ONESHOT;
-    Write_Register(REG_CONFIG, config[0]);
+    WriteRegister(REG_CONFIG, config[0]);
 }
 
-bool TMP102::Get_OneShot()
+bool TMP102::GetOneShot()
 {
     uint8_t config = 0x00;
-    config = Read_Register(REG_CONFIG);
+    config = ReadRegister(REG_CONFIG);
     // Check to see if os bit is set
     return (config & CONFIG_ONESHOT) == CONFIG_ONESHOT;
 }
 
-void TMP102::Write_Config()
+void TMP102::WriteConfig()
 {
     i2c.writeBurst(TMP102_DEV_ADDR_A, REG_CONFIG, config, 2);
 }
 
-void TMP102::Read_Config()
+void TMP102::ReadConfig()
 {
     i2c.readBurst(TMP102_DEV_ADDR_A, REG_CONFIG, config, 2);
 }
 
-void TMP102::Read_Temperature()
+void TMP102::ReadTemperature()
 {
     uint8_t data[2];
     i2c.readBurst(TMP102_DEV_ADDR_A, REG_TEMPERATURE, data, 2);
@@ -105,36 +105,36 @@ void TMP102::Read_Temperature()
     temperature = raw_temperature * TEMPERATURE_SCALE;
 }
 
-float TMP102::Get_Temperature()
+float TMP102::Temperature()
 {
     return temperature;
 }
 
-float TMP102::Get_TemperatureF()
+float TMP102::TemperatureF()
 {
     return temperature * (9.0f / 5.0f) + 32.0f;
 }
 
-std::string TMP102::Get_TemperatureF_ToString()
+std::string TMP102::TemperatureFToString()
 {
     std::stringstream ss;
-    ss << std::setprecision(5) << Get_TemperatureF();
+    ss << std::setprecision(5) << TemperatureF();
     return ss.str();
 }
 
-std::string TMP102::Get_TemperatureC_ToString()
+std::string TMP102::TemperatureCToString()
 {
     std::stringstream ss;
     ss << std::setprecision(5) << temperature;
     return ss.str();
 }
 
-uint8_t TMP102::Read_Register(uint8_t address)
+uint8_t TMP102::ReadRegister(uint8_t address)
 {
     return i2c.readByte(TMP102_DEV_ADDR_A, address);
 }
 
-void TMP102::Write_Register(uint8_t address, uint8_t data)
+void TMP102::WriteRegister(uint8_t address, uint8_t data)
 {
     i2c.writeByte(TMP102_DEV_ADDR_A, address, data);
 }

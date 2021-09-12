@@ -1,8 +1,6 @@
 #pragma once
 
 #include "LCD.h"
-#include "Button.h"
-#include "DeviceCommands.h"
 #include "DEADONRTC.h"
 
 class HMI

@@ -8,9 +8,10 @@
 
 // Active Low INT_BAR
 #define DEADON_ALERT_PIN_NUM (GPIO_NUM_25) // Interrupt Pin
-#define DEADON_RTC_INTR_FLAGS_DEFAULT (0)  //
 
-typedef enum DAYS
+uint8_t calculateMaxDayOfMonth(uint8_t month, uint8_t year);
+
+enum DAYS
 {
     SUNDAY = 1,
     MONDAY,
@@ -19,25 +20,25 @@ typedef enum DAYS
     THURSDAY,
     FRIDAY,
     SATURDAY,
-} DAYS;
+};
 
-typedef enum ALARM1_MODES
+enum ALARM1_MODES
 {
     ALARM1_PER_SECOND = 0,
     ALARM1_SECONDS_MATCH,
     ALARM1_MIN_SEC_MATCH,
     ALARM1_HR_MIN_SEC_MATCH,
     ALARM1_DT_HR_MIN_SEC_MATCH
-} ALARM1_MODES;
+};
 
-typedef enum ALARM2_MODES
+enum ALARM2_MODES
 {
     ALARM2_PER_MIN = 0,
     ALARM2_MIN_MATCH,
     ALARM2_HR_MIN_MATCH,
     ALARM2_DT_HR_MIN_MATCH
 
-} ALARM2_MODES;
+};
 
 struct DATE_TIME
 {
@@ -82,7 +83,7 @@ private:
      * @param register_address 
      * @return uint8_t 
      */
-    uint8_t Register_Read(uint8_t register_address);
+    uint8_t RegisterRead(uint8_t register_address);
 
     /**
      * @brief Write to a register
@@ -90,7 +91,7 @@ private:
      * @param register_address 
      * @param data 
      */
-    void Register_Write(uint8_t register_address, uint8_t data);
+    void RegisterWrite(uint8_t register_address, uint8_t data);
 
     /**
      * @brief Read multiple bytes from registers
@@ -99,7 +100,7 @@ private:
      * @param data 
      * @param len 
      */
-    void Register_Burst_Read(uint8_t address, uint8_t *data, uint32_t len);
+    void RegisterBurstRead(uint8_t address, uint8_t *data, uint32_t len);
 
     /**
      * @brief Write to bytes to registers
@@ -108,7 +109,7 @@ private:
      * @param data 
      * @param len 
      */
-    void Register_Burst_Write(uint8_t address, uint8_t *data, uint32_t len);
+    void RegisterBurstWrite(uint8_t address, uint8_t *data, uint32_t len);
 
 public:
     /**
@@ -126,7 +127,7 @@ public:
     /**
      * @brief Read the current data and time from the RTC.
      */
-    void READ_DATETIME();
+    void ReadDateTime();
 
     /**
      * @brief Write the date and time
@@ -138,47 +139,50 @@ public:
      * @param month 
      * @param year 
      */
-    void WRITE_DATETIME(uint8_t seconds, uint8_t minutes, uint8_t hours,
-                        uint8_t day, uint8_t date, uint8_t month,
-                        uint8_t year);
+    void WriteDateTime(uint8_t seconds, uint8_t minutes, uint8_t hours,
+                       uint8_t day, uint8_t date, uint8_t month,
+                       uint8_t year);
 
     /**
      * @brief Get the date and time from the build date
      * 
      */
-    void WRITE_BUILD_DATETIME();
+    void WriteBuildDateTime();
 
     /**
      * @brief Get Date string
      * 
      * @return std::string 
      */
-    std::string DATE_TOSTRING();
+    std::string DateToString();
 
     /**
      * @brief Get the Time string
      * 
      * @return std::string 
      */
-    std::string TIME_TOSTRING();
+    std::string TimeToString();
 
-    DATE_TIME GET_DATETIME();
+    DATE_TIME GetDateTime();
 
-    void WRITE_SECONDS(uint8_t second);
-    uint8_t READ_SECONDS();
+    void WriteSeconds(uint8_t second);
+    uint8_t ReadSeconds();
 
-    void WRITE_MINUTES(uint8_t minutes);
-    uint8_t READ_MINUTES();
+    void WriteMinutes(uint8_t minutes);
+    uint8_t ReadMinutes();
 
-    // input : hours 1-12
-    void WRITE_12HOURS(uint8_t hours, bool PM_NotAM);
-    // input : hours 0-23
-    void WRITE_24HOURS(uint8_t hours);
-
-    void WRITE_DAYS(DAYS days);
-    void WRITE_DATE(uint8_t date);
-    void WRITE_MONTH(uint8_t month);
-    void WRITE_YEAR(uint8_t year);
+    // @param hours 1-12
+    void Write12Hours(uint8_t hours, bool PM_NotAM);
+    // @param hours 0-23
+    void Write24Hours(uint8_t hours);
+    // @param days
+    void WriteDays(DAYS days);
+    // @param date 1-31
+    void WriteDate(uint8_t date);
+    // @param month 1-12
+    void WriteMonth(uint8_t month);
+    // @param year 0-99
+    void WriteYear(uint8_t year);
 
     /**
      * @brief 
@@ -189,8 +193,8 @@ public:
      * @param date 
      * @param mode 
      */
-    void WRITE_ALARM1(uint8_t seconds, uint8_t minutes,
-                      uint8_t hours, uint8_t date, ALARM1_MODES mode);
+    void WriteAlarm1(uint8_t seconds, uint8_t minutes,
+                     uint8_t hours, uint8_t date, ALARM1_MODES mode);
 
     /**
      * @brief 
@@ -200,70 +204,70 @@ public:
      * @param date 
      * @param mode 
      */
-    void WRITE_ALARM2(uint8_t minutes,
-                      uint8_t hours, uint8_t date, ALARM2_MODES mode);
+    void WriteAlarm2(uint8_t minutes,
+                     uint8_t hours, uint8_t date, ALARM2_MODES mode);
 
     /**
      * @brief 
     * @return true if flag was set, false otherwise
      */
-    bool READ_ALARM1_FLAG();
+    bool ReadAlarm1Flag();
 
     /**
      * @brief Read Alarm 2 flag
      * @return true if flag was set, false otherwise
      */
-    bool READ_ALARM2_FLAG();
+    bool ReadAlarm2Flag();
 
     /**
      * @brief Initialize ISR for Alert Pin
      */
-    void ISR_Init();
+    void ISRInitialize();
 
     /**
      * @brief Enable the RTC's interrupts
      * @param bool enable 
      */
-    void Enable_Interrupt(bool enable);
+    void EnableInterrupt(bool enable);
 
     /**
      * @brief Enable Alarm 1 and/or Alarm 2
      * @param bool alarm1 - enable alarm 1 if true
      * @param bool alarm2 - enable alarm 2 if true
      */
-    void Enable_Alarms(bool alarm1, bool alarm2);
+    void EnableAlarms(bool alarm1, bool alarm2);
 
     /**
      * @brief Read the RTC's SRAM at a specified address
-     * @note The size of the memoy if 256 bytes
+     * @note The size of the memory if 256 bytes
      * @param address range: 0x00 - 0xff
      * @return uint8_t 
      */
-    uint8_t SRAM_Read(uint8_t address);
+    uint8_t SRAMRead(uint8_t address);
 
     /**
      * @brief Write to the RTC's SRAM at a specified address
-     * @note The size of the memoy if 256 bytes
+     * @note The size of the memory if 256 bytes
      * @param address range: 0x00 - 0xff
      * @param data - The data we want to write 
      */
-    void SRAM_Write(uint8_t address, uint8_t data);
+    void SRAMWrite(uint8_t address, uint8_t data);
 
     /**
      * @brief Read the RTC's SRAM at a specified address
-     * @note The size of the memoy if 256 bytes
+     * @note The size of the memory if 256 bytes
      * @param address - Starting address
      * @param data - data buffer
      * @param len - Number of bytes to read
      */
-    void SRAM_Burst_Read(uint8_t address, uint8_t *data, uint32_t len);
+    void SRAMBurstRead(uint8_t address, uint8_t *data, uint32_t len);
 
     /**
      * @brief Write the RTC's SRAM at a specified address
-     * @note The size of the memoy if 256 bytes
+     * @note The size of the memory if 256 bytes
      * @param address - Starting address
      * @param data - data buffer
      * @param len - Number of bytes to write
      */
-    void SRAM_Burst_Write(uint8_t address, uint8_t *data, uint32_t len);
+    void SRAMBurstWrite(uint8_t address, uint8_t *data, uint32_t len);
 };

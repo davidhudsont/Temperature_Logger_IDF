@@ -7,13 +7,16 @@ static int64_t millis()
 }
 
 Button::Button(gpio_num_t pin)
-    : pin(pin)
+    : pin(pin),
+      lastDebounceTime(0),
+      buttonState(false),
+      lastButtonState(false)
 {
     gpio_set_direction(pin, GPIO_MODE_INPUT);
     gpio_set_pull_mode(pin, GPIO_PULLDOWN_ONLY);
 }
 
-bool Button::get_button_state()
+bool Button::Debounce()
 {
     bool ret = false;
     int reading = gpio_get_level(pin);
@@ -50,7 +53,7 @@ bool Button::get_button_state()
 
 Button::operator bool()
 {
-    return get_button_state();
+    return Debounce();
 }
 
 ButtonInterrupt::ButtonInterrupt(gpio_num_t pin, gpio_isr_t isr_handler)

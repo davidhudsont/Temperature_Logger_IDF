@@ -2,9 +2,7 @@
 
 #include "driver/spi_common.h"
 #include "driver/spi_master.h"
-#include "driver/spi_slave.h"
 #include "driver/gpio.h"
-#include <string.h>
 
 namespace BSP
 {
@@ -16,32 +14,22 @@ namespace BSP
     class SPI
     {
     private:
-        spi_bus_config_t m_bus_config;
-        spi_host_device_t m_host;
-        spi_device_interface_config_t m_devcfg;
         spi_device_handle_t m_spi_handle;
-        int m_dma_chan;
+
+        void sendTransaction(spi_transaction_t *transaction);
 
     public:
         /**
-         * @brief Construct a new SPI object
-         * 
-         */
-        SPI();
-
-        /**
-         * @brief Initializes a SPI device on the VSPI Channel
+         * @brief Initializes a SPI device
          * 
          * @param clock_speed - spi_handle data rate
-         * @return esp_err_t - Returns an error if the intialization fails
          */
-        esp_err_t Init(int clock_speed);
+        void Initialize(int clock_speed);
 
         /**
          * @brief reads a 8bit register from a spi_handle device with
          *        address as a command
          * 
-         * @param spi_handle - spi_handle device handle
          * @param address - address of the register
          * @return uint8_t - value stored in the register at the address
          */

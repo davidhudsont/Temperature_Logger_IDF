@@ -1,31 +1,31 @@
 
-#include "ConsoleCommands.h"
-#include "System_Tasks.h"
+// Standard Libraries
 #include <stdio.h>
 #include <string.h>
-#include "sdkconfig.h"
+#include <sys/stat.h>
+#include <sys/unistd.h>
+
+// RTOS
+#include "esp_console.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
-#include "DEADONRTC.h"
-#include "TMP102.h"
-#include "LCD.h"
-#include "bspConsole.h"
+#include "freertos/task.h"
 #include "linenoise/linenoise.h"
-#include "esp_console.h"
-#include <sys/unistd.h>
-#include <sys/stat.h>
+#include "sdkconfig.h"
+
+// User Headers
+#include "BSPConsole.h"
 #include "Button.h"
+#include "ConsoleCommands.h"
+#include "DEADONRTC.h"
 #include "DeviceCommands.h"
 #include "HMI.h"
-#define DISABLE_SD_CARD
-#ifndef DISABLE_SD_CARD
-#include "BSP_SD.h"
-#endif
+#include "LCD.h"
+#include "SystemTasks.h"
+#include "TMP102.h"
 
-static SemaphoreHandle_t log_semiphore;
 static SemaphoreHandle_t alarm_semiphore;
 static SemaphoreHandle_t lcd_semiphore;
 
@@ -34,17 +34,13 @@ static float temperatureF;
 static float temperatureC;
 
 static void tmp102_task(void *pvParameter);
-static void rtc_intr_task(void *pvParameter);
+static void rtc_task(void *pvParameter);
 static void console_task(void *pvParameter);
-#ifndef DISABLE_SD_CARD
-static void sdcard_task(void *pvParameter);
-#endif
 static void button_task(void *pvParameter);
 static void hmi_task(void *pvParameter);
 
 void Create_Semaphores(void)
 {
-    log_semiphore = xSemaphoreCreateBinary();
     alarm_semiphore = xSemaphoreCreateBinary();
     lcd_semiphore = xSemaphoreCreateBinary();
 }
@@ -63,81 +59,19 @@ void Create_Tasks(void)
 {
     gpio_install_isr_service(0);
     // Larger number equals higher priority
-    xTaskCreate(&rtc_intr_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
+    xTaskCreate(&rtc_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
     xTaskCreate(&hmi_task, "HMI Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
     xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
-
-#ifndef DISABLE_SD_CARD
-    xTaskCreate(&sdcard_task, "SDCard_Task", configMINIMAL_STACK_SIZE * 4, NULL, 6, NULL);
-#endif
 }
-
-#ifndef DISABLE_SD_CARD
-static void sdcard_task(void *pvParameter)
-{
-    BSP::SD sd;
-    sd.Mount();
-    std::string file_name = "TLOG.csv";
-
-    while (1)
-    {
-        COMMAND_MESSAGE_STRUCT msg;
-        if (recieve_sdcard_command(&msg))
-        {
-            if (msg.id == COMMAND_GET_DISK)
-            {
-                sd.PrintDiskInfo();
-            }
-            else if (msg.id == COMMAND_WRITE_DISK)
-            {
-            }
-            else if (msg.id == COMMAND_START_LOG)
-            {
-                ESP_LOGI("LOG", "Started Logging");
-                sd.OpenFile(file_name);
-                if (sd.IsFileOpen())
-                {
-                    std::string column_names = "Date, Time, Temperature(F)";
-                    sd.WriteLine(column_names);
-                }
-            }
-            else if (msg.id == COMMAND_STOP_LOG)
-            {
-                ESP_LOGI("LOG", "Stopped Logging");
-                sd.CloseFile();
-            }
-            else if (msg.id == COMMAND_DELETE_LOG)
-            {
-                ESP_LOGI("LOG", "Deleting Logging File and stopped Logging");
-                if (sd.IsFileOpen())
-                {
-                    sd.CloseFile();
-                }
-                sd.DeleteFile(file_name);
-            }
-        }
-        if (xSemaphoreTake(log_semiphore, 0))
-        {
-            std::string logline = logdate + ", " + logtime + ", " + temperature_reading;
-            ESP_LOGI("LOG", "%s", logline.c_str());
-            if (sd.IsFileOpen())
-            {
-                ESP_LOGI("LOG", "Logging to SD Card");
-                sd.WriteLine(logline);
-            }
-        }
-    }
-}
-#endif
 
 void Power_On_Test(RTCDS3234 &rtc)
 {
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
     uint8_t data[6] = {0};
     // Check for power lost
-    rtc.SRAM_Burst_Read(0x00, data, 6);
+    rtc.SRAMBurstRead(0x00, data, 6);
     bool power_lost = false;
     for (int i = 0; i < 6; i++)
     {
@@ -151,8 +85,8 @@ void Power_On_Test(RTCDS3234 &rtc)
     if (power_lost)
     {
         ESP_LOGW("RTC", "Lost Power!");
-        rtc.SRAM_Burst_Write(0x00, code, 6);
-        rtc.WRITE_BUILD_DATETIME();
+        rtc.SRAMBurstWrite(0x00, code, 6);
+        rtc.WriteBuildDateTime();
     }
     else
     {
@@ -163,20 +97,20 @@ void Power_On_Test(RTCDS3234 &rtc)
 void Start_Alarms(RTCDS3234 &rtc)
 {
     // Setup the RTC interrupts
-    rtc.ISR_Init();
+    rtc.ISRInitialize();
     delay(1000);
-    rtc.WRITE_ALARM1(10, 0, 0, 0, ALARM1_SECONDS_MATCH);
-    rtc.WRITE_ALARM2(0, 0, 0, ALARM2_PER_MIN);
+    rtc.WriteAlarm1(10, 0, 0, 0, ALARM1_SECONDS_MATCH);
+    rtc.WriteAlarm2(0, 0, 0, ALARM2_PER_MIN);
     delay(100);
-    rtc.Enable_Interrupt(true);
+    rtc.EnableInterrupt(true);
     delay(100);
-    rtc.Enable_Alarms(true, true);
+    rtc.EnableAlarms(true, true);
     // Clear the ALARM flags early
-    rtc.READ_ALARM1_FLAG();
-    rtc.READ_ALARM2_FLAG();
+    rtc.ReadAlarm1Flag();
+    rtc.ReadAlarm2Flag();
 }
 
-static void rtc_intr_task(void *pvParameter)
+static void rtc_task(void *pvParameter)
 {
     ESP_LOGI("RTC", "RTC Task Start!");
     RTCDS3234 rtc;
@@ -191,20 +125,20 @@ static void rtc_intr_task(void *pvParameter)
         // Evaluate Alarm Interrupts
         if (GetInterruptSemiphore())
         {
-            bool alarm1_flag = rtc.READ_ALARM1_FLAG();
-            bool alarm2_flag = rtc.READ_ALARM2_FLAG();
+            bool alarm1_flag = rtc.ReadAlarm1Flag();
+            bool alarm2_flag = rtc.ReadAlarm2Flag();
 
             if (alarm1_flag)
             {
                 ESP_LOGI("RTC", "ALARM1 Triggered");
-                rtc.READ_DATETIME();
-                dateTime = rtc.GET_DATETIME();
+                rtc.ReadDateTime();
+                dateTime = rtc.GetDateTime();
             }
             if (alarm2_flag)
             {
                 ESP_LOGI("RTC", "ALARM2 Triggered");
-                rtc.READ_DATETIME();
-                dateTime = rtc.GET_DATETIME();
+                rtc.ReadDateTime();
+                dateTime = rtc.GetDateTime();
                 xSemaphoreGive(alarm_semiphore);
                 xSemaphoreGive(lcd_semiphore);
             }
@@ -217,42 +151,42 @@ static void rtc_intr_task(void *pvParameter)
             {
             case GET_DATETIME:
             {
-                rtc.READ_DATETIME();
-                std::string logdate = rtc.DATE_TOSTRING();
-                std::string logtime = rtc.TIME_TOSTRING();
+                rtc.ReadDateTime();
+                std::string logdate = rtc.DateToString();
+                std::string logtime = rtc.TimeToString();
                 ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
-                dateTime = rtc.GET_DATETIME();
+                dateTime = rtc.GetDateTime();
                 break;
             }
             case SET_SECONDS:
-                rtc.WRITE_SECONDS(cmd_msg.arg1);
+                rtc.WriteSeconds(cmd_msg.arg1);
                 dateTime.second = cmd_msg.arg1;
                 break;
             case SET_MINUTES:
-                rtc.WRITE_MINUTES(cmd_msg.arg1);
+                rtc.WriteMinutes(cmd_msg.arg1);
                 dateTime.minute = cmd_msg.arg1;
                 break;
             case SET_12HOURS:
-                rtc.WRITE_12HOURS(cmd_msg.arg1, cmd_msg.arg2);
+                rtc.Write12Hours(cmd_msg.arg1, cmd_msg.arg2);
                 dateTime.hour = cmd_msg.arg1;
                 break;
             case SET_24HOURS:
-                rtc.WRITE_24HOURS(cmd_msg.arg1);
+                rtc.Write24Hours(cmd_msg.arg1);
                 dateTime.hour = cmd_msg.arg1;
                 break;
             case SET_WEEKDAY:
-                rtc.WRITE_DAYS((DAYS)cmd_msg.arg1);
+                rtc.WriteDays((DAYS)cmd_msg.arg1);
                 break;
             case SET_DAYOFMONTH:
-                rtc.WRITE_DATE(cmd_msg.arg1);
+                rtc.WriteDate(cmd_msg.arg1);
                 dateTime.dayofMonth = cmd_msg.arg1;
                 break;
             case SET_MONTH:
-                rtc.WRITE_MONTH(cmd_msg.arg1);
+                rtc.WriteMonth(cmd_msg.arg1);
                 dateTime.month = cmd_msg.arg1;
                 break;
             case SET_YEAR:
-                rtc.WRITE_YEAR(cmd_msg.arg1);
+                rtc.WriteYear(cmd_msg.arg1);
                 dateTime.year = cmd_msg.arg1;
                 break;
             default:
@@ -269,14 +203,14 @@ static void OneShotTemperatureRead(TMP102 &tmp102)
     if (oneshot == false)
     {
         ESP_LOGI("TMP", "Set the OneShot!");
-        tmp102.Set_OneShot();
+        tmp102.SetOneShot();
         delay(30);
-        oneshot = tmp102.Get_OneShot();
+        oneshot = tmp102.GetOneShot();
     }
 
     if (oneshot)
     {
-        tmp102.Read_Temperature();
+        tmp102.ReadTemperature();
         ESP_LOGI("TMP", "Temperature has been Read");
         oneshot = false;
     }
@@ -289,23 +223,22 @@ static void tmp102_task(void *pvParameter)
 
     ESP_LOGI("TMP", "TMP102 Task Start!");
     tmp102.Begin();
-    tmp102.Set_Conversion_Rate(CONVERSION_MODE_1);
+    tmp102.SetConversionRate(CONVERSION_MODE_1);
     delay(100);
     tmp102.Sleep();
     delay(300);
     OneShotTemperatureRead(tmp102);
     OneShotTemperatureRead(tmp102);
-    temperatureF = tmp102.Get_TemperatureF();
-    temperatureC = tmp102.Get_Temperature();
+    temperatureF = tmp102.TemperatureF();
+    temperatureC = tmp102.Temperature();
 
     while (1)
     {
         if (xSemaphoreTake(alarm_semiphore, 0))
         {
             OneShotTemperatureRead(tmp102);
-            std::string temperature_readingf = tmp102.Get_TemperatureF_ToString();
+            std::string temperature_readingf = tmp102.TemperatureFToString();
             ESP_LOGI("TMP", "%sF", temperature_readingf.c_str());
-            xSemaphoreGive(log_semiphore);
         }
 
         if (recieveTMPCommand(&cmd_msg))
@@ -314,12 +247,12 @@ static void tmp102_task(void *pvParameter)
             {
             case GET_TEMPF:
                 OneShotTemperatureRead(tmp102);
-                temperatureF = tmp102.Get_TemperatureF();
+                temperatureF = tmp102.TemperatureF();
                 ESP_LOGI("TMP", "%3.3fC", temperatureF);
                 break;
             case GET_TEMPC:
                 OneShotTemperatureRead(tmp102);
-                temperatureC = tmp102.Get_Temperature();
+                temperatureC = tmp102.Temperature();
                 ESP_LOGI("TMP", "%2.3fC", temperatureC);
                 break;
             default:
