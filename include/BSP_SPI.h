@@ -24,7 +24,7 @@ namespace BSP
          * 
          * @param clock_speed - spi_handle data rate
          */
-        void Initialize(int clock_speed);
+        void Setup(int clock_speed);
 
         /**
          * @brief reads a 8bit register from a spi_handle device with

@@ -4,7 +4,7 @@
 
 namespace BSP
 {
-    void SPI::Initialize(int clock_speed)
+    void SPI::Setup(int clock_speed)
     {
         memset(&m_spi_handle, 0, sizeof(spi_device_handle_t));
         spi_bus_config_t spiBusConfig;
