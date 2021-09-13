@@ -1,6 +1,6 @@
 /**
  * @author David Hudson
- * @brief Main Application for Temperature Logger
+ * @brief Main Application for Clock Display
  * 
  */
 
@@ -23,8 +23,8 @@ extern "C"
 // cppcheck-suppress unusedFunction
 void app_main()
 {
-    Create_Semaphores();
-    Create_Tasks();
+    CreateSemaphores();
+    CreateTasks();
 }
 
 #endif

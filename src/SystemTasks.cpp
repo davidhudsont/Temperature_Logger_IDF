@@ -38,7 +38,7 @@ static void rtc_task(void *pvParameter);
 static void button_task(void *pvParameter);
 static void hmi_task(void *pvParameter);
 
-void Create_Semaphores(void)
+void CreateSemaphores(void)
 {
     alarm_semiphore = xSemaphoreCreateBinary();
     lcd_semiphore = xSemaphoreCreateBinary();
@@ -54,7 +54,7 @@ void delay(uint32_t time_ms)
     vTaskDelay(time_ms / portTICK_PERIOD_MS);
 }
 
-void Create_Tasks(void)
+void CreateTasks(void)
 {
     gpio_install_isr_service(0);
     // Larger number equals higher priority
@@ -65,7 +65,7 @@ void Create_Tasks(void)
     xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
 }
 
-void Power_On_Test(RTCDS3234 &rtc)
+void PowerOnTest(RTCDS3234 &rtc)
 {
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
     uint8_t data[6] = {0};
@@ -93,7 +93,7 @@ void Power_On_Test(RTCDS3234 &rtc)
     }
 }
 
-void Start_Alarms(RTCDS3234 &rtc)
+void StartAlarms(RTCDS3234 &rtc)
 {
     // Setup the RTC interrupts
     rtc.ISRInitialize();
@@ -116,8 +116,8 @@ static void rtc_task(void *pvParameter)
     COMMAND_MESSAGE cmd_msg;
     rtc.Begin();
 
-    Power_On_Test(rtc);
-    Start_Alarms(rtc);
+    PowerOnTest(rtc);
+    StartAlarms(rtc);
 
     while (1)
     {
