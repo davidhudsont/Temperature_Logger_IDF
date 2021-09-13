@@ -16,9 +16,8 @@
 #include "sdkconfig.h"
 
 // User Headers
-#include "BSPConsole.h"
+#include "Console.h"
 #include "Button.h"
-#include "ConsoleCommands.h"
 #include "DEADONRTC.h"
 #include "DeviceCommands.h"
 #include "HMI.h"
