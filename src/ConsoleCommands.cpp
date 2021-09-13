@@ -44,26 +44,26 @@ static int set_time(int argc, char **argv)
     if (time_args.seconds->count)
     {
         uint8_t seconds = time_args.seconds->ival[0];
-        printf("Set Seconds to: %d\n", time_args.seconds->ival[0]);
+        ESP_LOGI("RTC", "Set seconds to: %d\n", time_args.seconds->ival[0]);
         setSeconds(seconds);
     }
     else if (time_args.minutes->count)
     {
         uint8_t minutes = time_args.minutes->ival[0];
-        printf("Minutes: %d\n", minutes);
+        ESP_LOGI("RTC", "Set minutes to: %d\n", minutes);
         setMinutes(minutes);
     }
     else if (time_args.hours12->count)
     {
         bool PM_notAM = time_args.hours12->ival[1];
-        int hours = time_args.hours12->ival[0];
-        printf("Hours: %d, %s\n", hours, (PM_notAM ? "PM" : "AM"));
+        uint8_t hours = time_args.hours12->ival[0];
+        ESP_LOGI("RTC", "Set hours to: %d, %s\n", hours, (PM_notAM ? "PM" : "AM"));
         setHours12Mode(hours, PM_notAM);
     }
     else if (time_args.hours24->count)
     {
-        int hours = time_args.hours24->ival[0];
-        printf("Hours: %d\n", hours);
+        uint8_t hours = time_args.hours24->ival[0];
+        ESP_LOGI("RTC", "Set hours to: %d\n", hours);
         setHours24Mode(hours);
     }
 
@@ -72,10 +72,10 @@ static int set_time(int argc, char **argv)
 
 static void register_time_command(void)
 {
-    time_args.seconds = arg_int0("s", "seconds", "<s>", "Set seconds!");
-    time_args.minutes = arg_int0("m", "minutes", "<m>", "Set minutes!");
-    time_args.hours12 = arg_intn("h", "hours12", "<h>, <0 AM|1 PM>", 0, 2, "Set hours in 12 hour format!");
-    time_args.hours24 = arg_int0("t", "hours24", "<h>", "Set hours in 24 hour format!");
+    time_args.seconds = arg_int0("s", "seconds", "<0-59>", "Set seconds!");
+    time_args.minutes = arg_int0("m", "minutes", "<0-59>", "Set minutes!");
+    time_args.hours12 = arg_intn("h12", "hours12", "<1-12>, <0 AM|1 PM>", 0, 2, "Set hours in 12 hour format!");
+    time_args.hours24 = arg_int0("h24", "hours24", "<0-23>", "Set hours in 24 hour format!");
     time_args.end = arg_end(4);
 
     const esp_console_cmd_t cmd = {
@@ -111,25 +111,25 @@ static int set_date(int argc, char **argv)
     if (date_args.days->count)
     {
         int days = date_args.days->ival[0];
-        printf("Set Days to: %d\n", date_args.days->ival[0]);
+        ESP_LOGI("RTC", "Set Days to: %d\n", date_args.days->ival[0]);
         setWeekDay(days);
     }
     else if (date_args.date->count)
     {
         int dayOfMonth = date_args.date->ival[0];
-        printf("Set Date to: %d\n", dayOfMonth);
+        ESP_LOGI("RTC", "Set Date to: %d\n", dayOfMonth);
         setDayOfMonth(dayOfMonth);
     }
     else if (date_args.month->count)
     {
         int month = date_args.month->ival[0];
-        printf("Set Month to: %d\n", month);
+        ESP_LOGI("RTC", "Set Month to: %d\n", month);
         setMonth(month);
     }
     else if (date_args.year->count)
     {
         int year = date_args.year->ival[0];
-        printf("Set Year to: %d\n", year);
+        ESP_LOGI("RTC", "Set Year to: %d\n", year);
         setYear(year);
     }
 
@@ -138,10 +138,10 @@ static int set_date(int argc, char **argv)
 
 static void register_date_command(void)
 {
-    date_args.days = arg_int0("w", NULL, "<w>", "Set weekday!");
-    date_args.date = arg_int0("d", NULL, "<d>", "Set the day of the month!");
-    date_args.month = arg_int0("m", NULL, "<m>", "Set the months!");
-    date_args.year = arg_int0("y", NULL, "<y>", "Set the year!");
+    date_args.days = arg_int0("w", NULL, "<1-7>", "Set weekday!");
+    date_args.date = arg_int0("d", NULL, "<1-31>", "Set the day of the month!");
+    date_args.month = arg_int0("m", NULL, "<1-12>", "Set the months!");
+    date_args.year = arg_int0("y", NULL, "<0-99>", "Set the year!");
     date_args.end = arg_end(4);
 
     const esp_console_cmd_t cmd = {
@@ -241,7 +241,7 @@ static int set_log_level(int argc, char **argv)
         if (loglevel >= ESP_LOG_NONE && loglevel <= ESP_LOG_VERBOSE)
         {
             esp_log_level_set("*", (esp_log_level_t)loglevel);
-            printf("Setting Log Level %d\n", loglevel);
+            ESP_LOGI("LOG", "Setting Log Level %d\n", loglevel);
         }
         else
         {
@@ -253,7 +253,7 @@ static int set_log_level(int argc, char **argv)
 
 static void register_log_level_command(void)
 {
-    level_args.level = arg_int0("l", NULL, "0..5", "Set the log level");
+    level_args.level = arg_int0("l", NULL, "<0-5>", "Set the log level");
     level_args.end = arg_end(2);
 
     const esp_console_cmd_t cmd = {
@@ -290,13 +290,20 @@ static int lcd(int argc, char **argv)
     {
         bool turnDisplayOn = lcd_args.display_toggle->ival[0] ? true : false;
         if (turnDisplayOn)
+        {
+            ESP_LOGI("LCD", "Turn Display On");
             displayOn();
+        }
         else
+        {
+            ESP_LOGI("LCD", "Turn Display Off");
             displayOff();
+        }
     }
     else if (lcd_args.contrast->count)
     {
         uint8_t contrast = lcd_args.contrast->ival[0];
+        ESP_LOGI("LCD", "Set Contrast to %d", contrast);
         setContrast(contrast);
     }
     else if (lcd_args.backlight->count)
@@ -307,12 +314,14 @@ static int lcd(int argc, char **argv)
             uint8_t g = 0;
             uint8_t b = 0;
             setBackLight(r, g, b);
+            ESP_LOGI("LCD", "Set backlight to %d, %d, %d", r, g, b);
         }
         else if (lcd_args.backlight->count == 2)
         {
             uint8_t r = lcd_args.backlight->ival[0];
             uint8_t g = lcd_args.backlight->ival[1];
             uint8_t b = 0;
+            ESP_LOGI("LCD", "Set backlight to %d, %d, %d", r, g, b);
             setBackLight(r, g, b);
         }
         else if (lcd_args.backlight->count == 3)
@@ -320,11 +329,13 @@ static int lcd(int argc, char **argv)
             uint8_t r = lcd_args.backlight->ival[0];
             uint8_t g = lcd_args.backlight->ival[1];
             uint8_t b = lcd_args.backlight->ival[2];
+            ESP_LOGI("LCD", "Set backlight to %d, %d, %d", r, g, b);
             setBackLight(r, g, b);
         }
     }
     else if (lcd_args.clear->count)
     {
+        ESP_LOGI("LCD", "Clear Display");
         clearDisplay();
     }
 
