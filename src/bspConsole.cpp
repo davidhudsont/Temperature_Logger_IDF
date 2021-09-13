@@ -63,11 +63,8 @@ void StartConsole()
 
     // Don't return empty lines
     linenoiseAllowEmpty(false);
-}
 
-// Register the consoles commands after the console is started
-void RegisterConsoleCommands()
-{
+    // Register the consoles commands after the console is started
     esp_console_register_help_command();
     register_system();
 }

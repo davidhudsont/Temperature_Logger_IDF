@@ -267,8 +267,6 @@ static void console_task(void *pvParameter)
 {
     StartConsole();
 
-    RegisterConsoleCommands();
-
     const char *prompt = LOG_COLOR_I "esp> " LOG_RESET_COLOR;
 
     printf("\n"
