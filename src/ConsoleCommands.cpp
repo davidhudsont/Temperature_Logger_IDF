@@ -12,7 +12,7 @@ static void register_log_level_command(void);
 static void register_lcd_command(void);
 
 // cppcheck-suppress unusedFunction
-void register_system(void)
+void register_console_commands(void)
 {
     register_time_command();
     register_date_command();
