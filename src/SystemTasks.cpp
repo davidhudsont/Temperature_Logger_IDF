@@ -265,9 +265,9 @@ static void tmp102_task(void *pvParameter)
 
 static void console_task(void *pvParameter)
 {
-    Start_Console();
+    StartConsole();
 
-    Register_Console_Commands();
+    RegisterConsoleCommands();
 
     const char *prompt = LOG_COLOR_I "esp> " LOG_RESET_COLOR;
 

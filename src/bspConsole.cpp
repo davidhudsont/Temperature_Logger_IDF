@@ -13,7 +13,7 @@
 #include "BSPConsole.h"
 #include "ConsoleCommands.h"
 
-void Start_Console()
+void StartConsole()
 {
     // Drain stdout before reconfiguring it
     fflush(stdout);
@@ -66,7 +66,7 @@ void Start_Console()
 }
 
 // Register the consoles commands after the console is started
-void Register_Console_Commands()
+void RegisterConsoleCommands()
 {
     esp_console_register_help_command();
     register_system();
