@@ -27,7 +27,7 @@ namespace BSP
         uart_port_t m_port;
 
     public:
-        void Begin(int buadrate, int TX_Pin, int RX_Pin, uart_port_t port);
+        void Setup(int buadrate, int TX_Pin, int RX_Pin, uart_port_t port);
 
         int BurstRead(uint8_t *data, uint32_t len);
         void WriteBurst(uint8_t *data, uint32_t len);

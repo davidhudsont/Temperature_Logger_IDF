@@ -14,7 +14,7 @@ namespace BSP
      * @param RX_Pin   - Recieve Pin
      * @param port     - Port number
      */
-    void UART::Begin(int buadrate, int TX_Pin, int RX_Pin, uart_port_t port)
+    void UART::Setup(int buadrate, int TX_Pin, int RX_Pin, uart_port_t port)
     {
         memset(&m_config, 0, sizeof(uart_config_t));
 
