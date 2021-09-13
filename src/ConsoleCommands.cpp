@@ -44,26 +44,26 @@ static int set_time(int argc, char **argv)
     if (time_args.seconds->count)
     {
         uint8_t seconds = time_args.seconds->ival[0];
-        ESP_LOGI("RTC", "Set seconds to: %d\n", time_args.seconds->ival[0]);
+        ESP_LOGI("RTC", "Set seconds to: %d", time_args.seconds->ival[0]);
         setSeconds(seconds);
     }
     else if (time_args.minutes->count)
     {
         uint8_t minutes = time_args.minutes->ival[0];
-        ESP_LOGI("RTC", "Set minutes to: %d\n", minutes);
+        ESP_LOGI("RTC", "Set minutes to: %d", minutes);
         setMinutes(minutes);
     }
     else if (time_args.hours12->count)
     {
         bool PM_notAM = time_args.hours12->ival[1];
         uint8_t hours = time_args.hours12->ival[0];
-        ESP_LOGI("RTC", "Set hours to: %d, %s\n", hours, (PM_notAM ? "PM" : "AM"));
+        ESP_LOGI("RTC", "Set hours to: %d, %s", hours, (PM_notAM ? "PM" : "AM"));
         setHours12Mode(hours, PM_notAM);
     }
     else if (time_args.hours24->count)
     {
         uint8_t hours = time_args.hours24->ival[0];
-        ESP_LOGI("RTC", "Set hours to: %d\n", hours);
+        ESP_LOGI("RTC", "Set hours to: %d", hours);
         setHours24Mode(hours);
     }
 
@@ -80,7 +80,7 @@ static void register_time_command(void)
 
     const esp_console_cmd_t cmd = {
         .command = "time",
-        .help = "Set the time!",
+        .help = "Time Commands",
         .hint = NULL,
         .func = &set_time,
         .argtable = &time_args,
@@ -111,25 +111,25 @@ static int set_date(int argc, char **argv)
     if (date_args.days->count)
     {
         int days = date_args.days->ival[0];
-        ESP_LOGI("RTC", "Set Days to: %d\n", date_args.days->ival[0]);
+        ESP_LOGI("RTC", "Set Days to: %d", date_args.days->ival[0]);
         setWeekDay(days);
     }
     else if (date_args.date->count)
     {
         int dayOfMonth = date_args.date->ival[0];
-        ESP_LOGI("RTC", "Set Date to: %d\n", dayOfMonth);
+        ESP_LOGI("RTC", "Set Date to: %d", dayOfMonth);
         setDayOfMonth(dayOfMonth);
     }
     else if (date_args.month->count)
     {
         int month = date_args.month->ival[0];
-        ESP_LOGI("RTC", "Set Month to: %d\n", month);
+        ESP_LOGI("RTC", "Set Month to: %d", month);
         setMonth(month);
     }
     else if (date_args.year->count)
     {
         int year = date_args.year->ival[0];
-        ESP_LOGI("RTC", "Set Year to: %d\n", year);
+        ESP_LOGI("RTC", "Set Year to: %d", year);
         setYear(year);
     }
 
@@ -146,7 +146,7 @@ static void register_date_command(void)
 
     const esp_console_cmd_t cmd = {
         .command = "date",
-        .help = "Set the date!",
+        .help = "Date Commands",
         .hint = NULL,
         .func = &set_date,
         .argtable = &date_args,
@@ -209,8 +209,8 @@ static void register_temperature_command(void)
     temperature_args.end = arg_end(2);
 
     const esp_console_cmd_t cmd = {
-        .command = "temperature",
-        .help = "Print the Temperature",
+        .command = "tmp",
+        .help = "Temperature Commands",
         .hint = NULL,
         .func = &get_temperature,
         .argtable = &temperature_args,
@@ -241,11 +241,11 @@ static int set_log_level(int argc, char **argv)
         if (loglevel >= ESP_LOG_NONE && loglevel <= ESP_LOG_VERBOSE)
         {
             esp_log_level_set("*", (esp_log_level_t)loglevel);
-            ESP_LOGI("LOG", "Setting Log Level %d\n", loglevel);
+            ESP_LOGI("LOG", "Setting Log Level %d", loglevel);
         }
         else
         {
-            printf("Invalid Log Level %d\n", loglevel);
+            ESP_LOGI("LOG", "Invalid Log Level %d", loglevel);
         }
     }
     return 0;
