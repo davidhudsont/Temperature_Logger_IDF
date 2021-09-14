@@ -3,6 +3,12 @@
 #include "LCD.h"
 #include "DEADONRTC.h"
 
+enum HMIState
+{
+    DISPLAYING,
+    EDITING
+};
+
 class HMI
 {
 private:
@@ -12,12 +18,6 @@ private:
     float temperatureF;
     float temperatureC;
     DATE_TIME dateTime;
-
-    enum HMIState
-    {
-        DISPLAYING,
-        EDITING
-    };
 
     enum HMISettings
     {
@@ -50,4 +50,5 @@ public:
     void process();
     void setDisplayTemperature(float temperatureF, float temperatureC);
     void setDisplayDateTime(DATE_TIME &dateTime);
+    HMIState getCurrentState();
 };
