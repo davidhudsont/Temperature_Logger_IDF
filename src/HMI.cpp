@@ -428,3 +428,8 @@ void HMI::setDisplayDateTime(DATE_TIME &dateTime)
 {
     this->dateTime = dateTime;
 }
+
+HMIState HMI::getCurrentState()
+{
+    return displayState;
+}

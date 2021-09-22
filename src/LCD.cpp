@@ -36,7 +36,7 @@ void LCD::EndTransmit()
 // -------------------------------------LCD Public Functions-----------------------------------------------------
 void LCD::Begin()
 {
-    uart.Begin(9600, UART2_TX_PIN_NUM, UART2_RX_PIN_NUM, UART_NUM_2);
+    uart.Setup(9600, UART2_TX_PIN_NUM, UART2_RX_PIN_NUM, UART_NUM_2);
 
     delay(20);
 

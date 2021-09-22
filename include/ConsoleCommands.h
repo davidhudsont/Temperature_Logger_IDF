@@ -4,4 +4,4 @@
  * @brief Register all the console commands
  * 
  */
-void register_system(void);
+void register_console_commands(void);

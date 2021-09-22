@@ -16,9 +16,8 @@
 #include "sdkconfig.h"
 
 // User Headers
-#include "BSPConsole.h"
+#include "Console.h"
 #include "Button.h"
-#include "ConsoleCommands.h"
 #include "DEADONRTC.h"
 #include "DeviceCommands.h"
 #include "HMI.h"
@@ -35,11 +34,10 @@ static float temperatureC;
 
 static void tmp102_task(void *pvParameter);
 static void rtc_task(void *pvParameter);
-static void console_task(void *pvParameter);
 static void button_task(void *pvParameter);
 static void hmi_task(void *pvParameter);
 
-void Create_Semaphores(void)
+void CreateSemaphores(void)
 {
     alarm_semiphore = xSemaphoreCreateBinary();
     lcd_semiphore = xSemaphoreCreateBinary();
@@ -55,7 +53,7 @@ void delay(uint32_t time_ms)
     vTaskDelay(time_ms / portTICK_PERIOD_MS);
 }
 
-void Create_Tasks(void)
+void CreateTasks(void)
 {
     gpio_install_isr_service(0);
     // Larger number equals higher priority
@@ -66,7 +64,7 @@ void Create_Tasks(void)
     xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
 }
 
-void Power_On_Test(RTCDS3234 &rtc)
+void PowerOnTest(RTCDS3234 &rtc)
 {
     uint8_t code[] = {0x12, 0xF3, 0xBF, 0x65, 0x89, 0x90};
     uint8_t data[6] = {0};
@@ -94,7 +92,7 @@ void Power_On_Test(RTCDS3234 &rtc)
     }
 }
 
-void Start_Alarms(RTCDS3234 &rtc)
+void StartAlarms(RTCDS3234 &rtc)
 {
     // Setup the RTC interrupts
     rtc.ISRInitialize();
@@ -117,8 +115,8 @@ static void rtc_task(void *pvParameter)
     COMMAND_MESSAGE cmd_msg;
     rtc.Begin();
 
-    Power_On_Test(rtc);
-    Start_Alarms(rtc);
+    PowerOnTest(rtc);
+    StartAlarms(rtc);
 
     while (1)
     {
@@ -263,71 +261,6 @@ static void tmp102_task(void *pvParameter)
     }
 }
 
-static void console_task(void *pvParameter)
-{
-    Start_Console();
-
-    Register_Console_Commands();
-
-    const char *prompt = LOG_COLOR_I "esp> " LOG_RESET_COLOR;
-
-    printf("\n"
-           "***************************\n"
-           "*      ESP 32 Console     *\n"
-           "*    Temperature Logger   *\n"
-           "***************************\n"
-           "\n");
-
-    printf("\n"
-           "Type 'help' to get the list of commands.\n"
-           "Use UP/DOWN arrows to navigate through command history.\n"
-           "Press TAB when typing command name to auto-complete.\n");
-
-    int probe_status = linenoiseProbe();
-    if (probe_status)
-    {
-        printf("\n"
-               "Your terminal application does not support escape sequences.\n"
-               "Line editing and history features are disabled.\n"
-               "On Windows, try using Putty instead.\n");
-        linenoiseSetDumbMode(1);
-
-        prompt = "esp32> ";
-    }
-
-    while (1)
-    {
-        char *line = linenoise(prompt);
-        if (line == NULL)
-        {
-            continue;
-        }
-
-        linenoiseHistoryAdd(line);
-
-        // Try to run a command
-        int ret;
-        esp_err_t err = esp_console_run(line, &ret);
-        if (err == ESP_ERR_NOT_FOUND)
-        {
-            printf("Unrecognized Command\n");
-        }
-        else if (err == ESP_ERR_INVALID_ARG)
-        {
-        }
-        else if (err == ESP_OK && ret != ESP_OK)
-        {
-            printf("Command returned non-zero error code: 0x%x (%s)\n", ret, esp_err_to_name(ret));
-        }
-        else if (err != ESP_OK)
-        {
-            printf("Internal error: %s\n", esp_err_to_name(err));
-        }
-
-        linenoiseFree(line);
-    }
-}
-
 static void button_task(void *pvParameter)
 {
     ESP_LOGI("BTN", "Starting Button Interface");
@@ -367,7 +300,7 @@ static void hmi_task(void *pvParameter)
     while (1)
     {
 
-        if (xSemaphoreTake(lcd_semiphore, 0))
+        if (xSemaphoreTake(lcd_semiphore, 0) && !hmi.getCurrentState() == DISPLAYING)
         {
             hmi.setDisplayDateTime(dateTime);
             hmi.setDisplayTemperature(temperatureF, temperatureC);
