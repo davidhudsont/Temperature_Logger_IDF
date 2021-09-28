@@ -300,7 +300,7 @@ static void hmi_task(void *pvParameter)
     while (1)
     {
 
-        if (xSemaphoreTake(lcd_semiphore, 0) && !hmi.getCurrentState() == DISPLAYING)
+        if (xSemaphoreTake(lcd_semiphore, 0) && hmi.getCurrentState() == DISPLAYING)
         {
             hmi.setDisplayDateTime(dateTime);
             hmi.setDisplayTemperature(temperatureF, temperatureC);
