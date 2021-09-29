@@ -297,6 +297,9 @@ static void button_task(void *pvParameter)
 static void hmi_task(void *pvParameter)
 {
     HMI hmi = HMI();
+
+    readDateTime();
+
     while (1)
     {
 
