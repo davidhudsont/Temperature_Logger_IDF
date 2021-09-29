@@ -17,7 +17,7 @@ HMI::HMI()
     lcd.SetBackLightFast(125, 125, 125);
 }
 
-void HMI::display()
+void HMI::displayMode()
 {
     COMMAND_MESSAGE msg;
     if (recieveLCDCommand(&msg))
@@ -46,7 +46,7 @@ void HMI::display()
             lcd.Clear();
             break;
         case LCD_DISPLAY_UPDATE:
-            update();
+            updateDisplay();
             break;
         default:
             break;
@@ -326,7 +326,7 @@ void HMI::changeTemp()
     displayCurrentState();
 }
 
-void HMI::editing()
+void HMI::editMode()
 {
     switch (settingState)
     {
@@ -416,7 +416,7 @@ void HMI::displayCurrentState()
     }
 }
 
-void HMI::update()
+void HMI::updateDisplay()
 {
     displayDate();
     displayTime();
@@ -430,10 +430,10 @@ void HMI::process()
     switch (displayState)
     {
     case DISPLAYING:
-        display();
+        displayMode();
         break;
     case EDITING:
-        editing();
+        editMode();
         break;
     default:
         break;

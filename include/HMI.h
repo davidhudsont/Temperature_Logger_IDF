@@ -30,7 +30,6 @@ private:
     HMISettings settingState = SETTING_DATE;
     int entriesToEdit;
 
-    void displayCurrentState();
     void editMonth(bool increase);
     void editDayOfMonth(bool increase);
     void editYear(bool increase);
@@ -41,12 +40,13 @@ private:
     void editingTime();
     void changeTemp();
 
-    void editing();
-    void display();
+    void editMode();
+    void displayMode();
     void displayDate();
     void displayTime();
+    void displayCurrentState();
     void displayTemperature();
-    void update();
+    void updateDisplay();
 
 public:
     HMI();
