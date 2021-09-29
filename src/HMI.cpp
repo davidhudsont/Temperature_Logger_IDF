@@ -308,21 +308,7 @@ void HMI::changeTemp()
     displayTempF_notC = !displayTempF_notC;
     ESP_LOGI("HMI", "Changed Tempearture Display Units");
     displayState = DISPLAYING;
-    lcd.ClearRow(2);
-    std::stringstream ss3;
-    if (displayTempF_notC)
-    {
-        ss3 << std::setprecision(5) << temperatureF << DEGREE_SYMBOL << "F";
-    }
-    else
-    {
-        ss3 << std::setprecision(5) << temperatureC << DEGREE_SYMBOL << "C";
-    }
-
-    std::string logtemp = ss3.str();
-    lcd.SetCursor(2, 0);
-    lcd.WriteCharacters(logtemp.c_str(), logtemp.length());
-
+    displayTemperature();
     displayCurrentState();
 }
 
@@ -347,46 +333,50 @@ void HMI::editMode()
 void HMI::displayDate()
 {
     // Date Update
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(2) << (int)dateTime.month << "/";
-    ss << std::setfill('0') << std::setw(2) << (int)dateTime.dayofMonth << "/";
-    ss << (int)(dateTime.year + 2000);
-    std::string logdate = ss.str();
+    static const size_t DateStringSize = 15;
+    static char dateString[DateStringSize];
+    snprintf(dateString, DateStringSize, "%02d/%02d/%d", dateTime.month, dateTime.dayofMonth, dateTime.year + 2000);
     lcd.SetCursor(0, 0);
-    lcd.WriteCharacters(logdate.c_str(), logdate.length());
+    lcd.WriteCharacters(dateString, 10);
 }
 
 void HMI::displayTime()
 {
     // Time update
-    std::stringstream ss2;
-    ss2 << std::setfill('0') << std::setw(2) << (int)dateTime.hour << ":";
-    ss2 << std::setfill('0') << std::setw(2) << (int)dateTime.minute << ":";
-    ss2 << std::setfill('0') << std::setw(2) << (int)dateTime.second;
+    static const size_t TimeStringSize = 15;
+    static char timeString[TimeStringSize];
+    lcd.SetCursor(1, 0);
     if (dateTime.hour12_not24)
     {
-        ss2 << " " << (dateTime.PM_notAM ? "PM" : "AM");
+        snprintf(timeString, TimeStringSize, "%02d:%02d:%02d %s", dateTime.hour, dateTime.minute, dateTime.second, (dateTime.PM_notAM ? "PM" : "AM"));
+        lcd.WriteCharacters(timeString, 11);
     }
-    std::string logtime = ss2.str();
-    lcd.SetCursor(1, 0);
-    lcd.WriteCharacters(logtime.c_str(), logtime.length());
+    else
+    {
+        snprintf(timeString, TimeStringSize, "%02d:%02d:%02d", dateTime.hour, dateTime.minute, dateTime.second);
+        lcd.WriteCharacters(timeString, 8);
+    }
 }
 
 void HMI::displayTemperature()
 {
+    static const size_t TempStringSize = 15;
+    static char tempString[TempStringSize];
+    lcd.SetCursor(2, 0);
     std::stringstream ss3;
     if (displayTempF_notC)
     {
-        ss3 << std::setprecision(5) << temperatureF << DEGREE_SYMBOL << "F";
+        if (temperatureF > 100)
+            snprintf(tempString, TempStringSize, "%3.2f%cF", temperatureF, DEGREE_SYMBOL);
+        else
+            snprintf(tempString, TempStringSize, "%2.3f%cF", temperatureF, DEGREE_SYMBOL);
     }
     else
     {
-        ss3 << std::setprecision(5) << temperatureC << DEGREE_SYMBOL << "C";
+        snprintf(tempString, TempStringSize, "%2.3f%cC", temperatureC, DEGREE_SYMBOL);
     }
 
-    std::string logtemp = ss3.str();
-    lcd.SetCursor(2, 0);
-    lcd.WriteCharacters(logtemp.c_str(), logtemp.length());
+    lcd.WriteCharacters(tempString, 8);
 }
 
 void HMI::displayCurrentState()

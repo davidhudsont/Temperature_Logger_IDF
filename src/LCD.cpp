@@ -262,7 +262,7 @@ void LCD::ClearRow(uint8_t row)
     if (row > 3)
         row = 3;
     SetCursor(row, 0);
-    char emptyStr[] = "                   ";
+    char emptyStr[] = "                    ";
     WriteCharacters(emptyStr, 20);
 }
 
