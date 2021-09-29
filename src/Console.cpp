@@ -29,6 +29,7 @@ void StartConsole()
 
     // Configure the UART Port for the ESP32 Console
     uart_config_t uart_config;
+    memset(&uart_config, 0, sizeof(uart_config_t));
     uart_config.baud_rate = CONFIG_ESP_CONSOLE_UART_BAUDRATE;
     uart_config.data_bits = UART_DATA_8_BITS;
     uart_config.parity = UART_PARITY_DISABLE;
@@ -44,6 +45,7 @@ void StartConsole()
 
     // Configure the console
     esp_console_config_t console_config;
+    memset(&console_config, 0, sizeof(esp_console_config_t));
     console_config.max_cmdline_length = 256;
     console_config.max_cmdline_args = 8;
     console_config.hint_color = atoi(LOG_COLOR_CYAN);
