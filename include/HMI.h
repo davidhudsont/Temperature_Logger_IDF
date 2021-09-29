@@ -43,6 +43,9 @@ private:
 
     void editing();
     void display();
+    void displayDate();
+    void displayTime();
+    void displayTemperature();
     void update();
 
 public:

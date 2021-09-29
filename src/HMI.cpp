@@ -17,33 +17,6 @@ HMI::HMI()
     lcd.SetBackLightFast(125, 125, 125);
 }
 
-void HMI::displayCurrentState()
-{
-    lcd.SetCursor(3, 0);
-    switch (displayState)
-    {
-    case DISPLAYING:
-        lcd.WriteCharacters("DISP ", 5);
-        break;
-    case EDITING:
-        lcd.WriteCharacters("EDIT ", 5);
-        break;
-    }
-    lcd.WriteCharacters("SETN: ", 6);
-    switch (settingState)
-    {
-    case SETTING_DATE:
-        lcd.WriteCharacters("DATE", 4);
-        break;
-    case SETTING_TIME:
-        lcd.WriteCharacters("TIME", 4);
-        break;
-    case SETTING_TEMP:
-        lcd.WriteCharacters("TEMP", 4);
-        break;
-    }
-}
-
 void HMI::display()
 {
     COMMAND_MESSAGE msg;
@@ -371,9 +344,8 @@ void HMI::editing()
     }
 }
 
-void HMI::update()
+void HMI::displayDate()
 {
-
     // Date Update
     std::stringstream ss;
     ss << std::setfill('0') << std::setw(2) << (int)dateTime.month << "/";
@@ -382,7 +354,10 @@ void HMI::update()
     std::string logdate = ss.str();
     lcd.SetCursor(0, 0);
     lcd.WriteCharacters(logdate.c_str(), logdate.length());
+}
 
+void HMI::displayTime()
+{
     // Time update
     std::stringstream ss2;
     ss2 << std::setfill('0') << std::setw(2) << (int)dateTime.hour << ":";
@@ -395,7 +370,10 @@ void HMI::update()
     std::string logtime = ss2.str();
     lcd.SetCursor(1, 0);
     lcd.WriteCharacters(logtime.c_str(), logtime.length());
+}
 
+void HMI::displayTemperature()
+{
     std::stringstream ss3;
     if (displayTempF_notC)
     {
@@ -409,7 +387,40 @@ void HMI::update()
     std::string logtemp = ss3.str();
     lcd.SetCursor(2, 0);
     lcd.WriteCharacters(logtemp.c_str(), logtemp.length());
+}
 
+void HMI::displayCurrentState()
+{
+    lcd.SetCursor(3, 0);
+    switch (displayState)
+    {
+    case DISPLAYING:
+        lcd.WriteCharacters("DISP ", 5);
+        break;
+    case EDITING:
+        lcd.WriteCharacters("EDIT ", 5);
+        break;
+    }
+    lcd.WriteCharacters("SETN: ", 6);
+    switch (settingState)
+    {
+    case SETTING_DATE:
+        lcd.WriteCharacters("DATE", 4);
+        break;
+    case SETTING_TIME:
+        lcd.WriteCharacters("TIME", 4);
+        break;
+    case SETTING_TEMP:
+        lcd.WriteCharacters("TEMP", 4);
+        break;
+    }
+}
+
+void HMI::update()
+{
+    displayDate();
+    displayTime();
+    displayTemperature();
     displayCurrentState();
 }
 
