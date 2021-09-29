@@ -101,23 +101,34 @@ void HMI::display()
             }
             displayCurrentState();
         }
-        if (msg.id == EDIT_SETTING_PRESSED)
+        else if (msg.id == UP_PRESSED)
         {
             switch (settingState)
             {
             case SETTING_DATE:
                 settingState = SETTING_TIME;
-                ESP_LOGI("BTN", "Setting Mode State: Time");
                 break;
             case SETTING_TIME:
                 settingState = SETTING_TEMP;
-                ESP_LOGI("BTN", "Setting Mode State: Temp");
                 break;
             case SETTING_TEMP:
                 settingState = SETTING_DATE;
-                ESP_LOGI("BTN", "Setting Mode State: Date");
                 break;
-            default:
+            }
+            displayCurrentState();
+        }
+        else if (msg.id == DOWN_PRESSED)
+        {
+            switch (settingState)
+            {
+            case SETTING_DATE:
+                settingState = SETTING_TEMP;
+                break;
+            case SETTING_TIME:
+                settingState = SETTING_DATE;
+                break;
+            case SETTING_TEMP:
+                settingState = SETTING_TIME;
                 break;
             }
             displayCurrentState();
