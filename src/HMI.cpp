@@ -1,9 +1,5 @@
 #include "HMI.h"
 
-#include <string>
-#include <sstream>
-#include <iomanip>
-
 #include "esp_log.h"
 
 #include "DeviceCommands.h"
@@ -363,7 +359,6 @@ void HMI::displayTemperature()
     static const size_t TempStringSize = 15;
     static char tempString[TempStringSize];
     lcd.SetCursor(2, 0);
-    std::stringstream ss3;
     if (displayTempF_notC)
     {
         if (temperatureF > 100)
