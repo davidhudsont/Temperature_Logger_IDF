@@ -102,36 +102,18 @@ void HMI::displayMode()
             }
             displayCurrentState();
         }
-        else if (msg.id == UP_PRESSED)
+        else if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {
-            switch (settingState)
+            int settingStateInt = msg.id == UP_PRESSED ? (int)settingState + 1 : (int)settingState - 1;
+            if (settingStateInt >= (int)SETTINGS_COUNT)
             {
-            case SETTING_DATE:
-                settingState = SETTING_TIME;
-                break;
-            case SETTING_TIME:
-                settingState = SETTING_TEMP;
-                break;
-            case SETTING_TEMP:
-                settingState = SETTING_DATE;
-                break;
+                settingStateInt = 0;
             }
-            displayCurrentState();
-        }
-        else if (msg.id == DOWN_PRESSED)
-        {
-            switch (settingState)
+            else if (settingStateInt < 0)
             {
-            case SETTING_DATE:
-                settingState = SETTING_TEMP;
-                break;
-            case SETTING_TIME:
-                settingState = SETTING_DATE;
-                break;
-            case SETTING_TEMP:
-                settingState = SETTING_TIME;
-                break;
+                settingStateInt = (int)SETTINGS_COUNT - 1;
             }
+            settingState = (HMISettings)settingStateInt;
             displayCurrentState();
         }
     }
@@ -208,6 +190,8 @@ void HMI::displayCurrentState()
         break;
     case SETTING_TEMP:
         lcd.WriteCharacters("TEMP", 4);
+        break;
+    default:
         break;
     }
 }

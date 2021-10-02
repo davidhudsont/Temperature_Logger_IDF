@@ -23,7 +23,8 @@ private:
     {
         SETTING_DATE,
         SETTING_TIME,
-        SETTING_TEMP
+        SETTING_TEMP,
+        SETTINGS_COUNT
     };
 
     HMIState displayState = DISPLAYING;
