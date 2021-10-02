@@ -243,53 +243,32 @@ void HMI::editingDate()
     COMMAND_MESSAGE msg;
     if (recieveButtonCommand(&msg))
     {
-        if (entriesToEdit == 3)
+        if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {
-            if (msg.id == UP_PRESSED)
+            bool increase = msg.id == UP_PRESSED;
+            if (entriesToEdit == 3)
             {
-                editMonth(true);
+                editMonth(increase);
             }
-            else if (msg.id == DOWN_PRESSED)
+            else if (entriesToEdit == 2)
             {
-                editMonth(false);
+                editDayOfMonth(increase);
             }
-            else if (msg.id == EDIT_MODE_PRESSED)
+            else if (entriesToEdit == 1)
             {
-                --entriesToEdit;
+                editYear(increase);
+            }
+        }
+        else if (msg.id == EDIT_MODE_PRESSED)
+        {
+            entriesToEdit--;
+            if (entriesToEdit == 0)
+            {
                 setMonth(dateTime.month);
-            }
-        }
-        else if (entriesToEdit == 2)
-        {
-            if (msg.id == UP_PRESSED)
-            {
-                editDayOfMonth(true);
-            }
-            else if (msg.id == DOWN_PRESSED)
-            {
-                editDayOfMonth(false);
-            }
-            else if (msg.id == EDIT_MODE_PRESSED)
-            {
-                --entriesToEdit;
                 setDayOfMonth(dateTime.dayofMonth);
-            }
-        }
-        else if (entriesToEdit == 1)
-        {
-            if (msg.id == UP_PRESSED)
-            {
-                editYear(true);
-            }
-            else if (msg.id == DOWN_PRESSED)
-            {
-                editYear(false);
-            }
-            else if (msg.id == EDIT_MODE_PRESSED)
-            {
+                setYear(dateTime.year);
                 displayState = DISPLAYING;
                 displayCurrentState();
-                setYear(dateTime.year);
             }
         }
     }
@@ -341,53 +320,32 @@ void HMI::editingTime()
     COMMAND_MESSAGE msg;
     if (recieveButtonCommand(&msg))
     {
-        if (entriesToEdit == 3)
+        if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {
-            if (msg.id == UP_PRESSED)
+            bool increase = msg.id == UP_PRESSED;
+            if (entriesToEdit == 3)
             {
-                editHour(true);
+                editHour(increase);
             }
-            else if (msg.id == DOWN_PRESSED)
+            else if (entriesToEdit == 2)
             {
-                editHour(false);
+                editMinute(increase);
             }
-            else if (msg.id == EDIT_MODE_PRESSED)
+            else if (entriesToEdit == 1)
             {
-                --entriesToEdit;
+                editSecond(increase);
+            }
+        }
+        else if (msg.id == EDIT_MODE_PRESSED)
+        {
+            entriesToEdit--;
+            if (entriesToEdit == 0)
+            {
                 setHours24Mode(dateTime.hour);
-            }
-        }
-        else if (entriesToEdit == 2)
-        {
-            if (msg.id == UP_PRESSED)
-            {
-                editMinute(true);
-            }
-            else if (msg.id == DOWN_PRESSED)
-            {
-                editMinute(false);
-            }
-            else if (msg.id == EDIT_MODE_PRESSED)
-            {
-                --entriesToEdit;
                 setMinutes(dateTime.minute);
-            }
-        }
-        else if (entriesToEdit == 1)
-        {
-            if (msg.id == UP_PRESSED)
-            {
-                editSecond(true);
-            }
-            else if (msg.id == DOWN_PRESSED)
-            {
-                editSecond(false);
-            }
-            else if (msg.id == EDIT_MODE_PRESSED)
-            {
+                setSeconds(dateTime.second);
                 displayState = DISPLAYING;
                 displayCurrentState();
-                setSeconds(dateTime.second);
             }
         }
     }
