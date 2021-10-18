@@ -9,12 +9,27 @@ enum HMIState
     EDITING
 };
 
+struct SETTING
+{
+    int max_value = 0;
+    int min_value = 0;
+    int value = 0;
+
+    void adjust(bool increase)
+    {
+        value = increase ? value + 1 : value - 1;
+        if (value > max_value)
+            value = min_value;
+        else if (value < min_value)
+            value = max_value;
+    }
+};
+
 class HMI
 {
 private:
     LCD lcd;
 
-    bool displayTempF_notC;
     float temperatureF;
     float temperatureC;
     DATE_TIME dateTime;
@@ -31,6 +46,24 @@ private:
     HMISettings settingState = SETTING_DATE;
     int entriesToEdit;
 
+    struct DateSetting
+    {
+        SETTING month;
+        SETTING dayOfMonth;
+        SETTING year;
+    };
+
+    struct TimeSetting
+    {
+        SETTING hour;
+        SETTING minute;
+        SETTING second;
+    };
+
+    DateSetting dateSetting;
+    TimeSetting timeSetting;
+    SETTING tempSetting;
+
     // Display Mode related functions
     void displayMode();
     void displayDate();
@@ -41,13 +74,7 @@ private:
 
     // Edit Mode related functions
     void editMode();
-    void editMonth(bool increase);
-    void editDayOfMonth(bool increase);
-    void editYear(bool increase);
     void editingDate();
-    void editHour(bool increase);
-    void editMinute(bool increase);
-    void editSecond(bool increase);
     void editingTime();
     void changeTemp();
 

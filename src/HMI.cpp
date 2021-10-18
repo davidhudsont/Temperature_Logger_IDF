@@ -12,6 +12,23 @@ HMI::HMI()
     lcd.DisableSystemMessages();
     lcd.Display();
     lcd.SetBackLightFast(125, 125, 125);
+
+    dateSetting.month.max_value = 12;
+    dateSetting.month.min_value = 1;
+    dateSetting.dayOfMonth.max_value = 31;
+    dateSetting.dayOfMonth.min_value = 1;
+    dateSetting.year.max_value = 256;
+    dateSetting.year.min_value = 0;
+
+    timeSetting.hour.max_value = 23;
+    timeSetting.hour.min_value = 0;
+    timeSetting.minute.max_value = 59;
+    timeSetting.minute.min_value = 0;
+    timeSetting.second.max_value = 59;
+    timeSetting.second.min_value = 0;
+
+    tempSetting.max_value = 1;
+    tempSetting.min_value = 0;
 }
 
 void HMI::process()
@@ -39,6 +56,13 @@ void HMI::setDisplayTemperature(float temperatureF, float temperatureC)
 void HMI::setDisplayDateTime(DATE_TIME &dateTime)
 {
     this->dateTime = dateTime;
+    dateSetting.month.value = dateTime.month;
+    dateSetting.dayOfMonth.value = dateTime.dayofMonth;
+    dateSetting.year.value = dateTime.year;
+
+    timeSetting.hour.value = dateTime.hour;
+    timeSetting.minute.value = dateTime.minute;
+    timeSetting.second.value = dateTime.second;
 }
 
 HMIState HMI::getCurrentState()
@@ -124,7 +148,10 @@ void HMI::displayDate()
     // Date Update
     static const size_t DateStringSize = 15;
     static char dateString[DateStringSize];
-    snprintf(dateString, DateStringSize, "%02d/%02d/%d", dateTime.month, dateTime.dayofMonth, dateTime.year + 2000);
+    snprintf(dateString, DateStringSize, "%02d/%02d/%d",
+             (uint8_t)dateSetting.month.value,
+             (uint8_t)dateSetting.dayOfMonth.value,
+             (uint16_t)dateSetting.year.value + 2000);
     lcd.SetCursor(0, 0);
     lcd.WriteCharacters(dateString, 10);
 }
@@ -137,12 +164,19 @@ void HMI::displayTime()
     lcd.SetCursor(1, 0);
     if (dateTime.hour12_not24)
     {
-        snprintf(timeString, TimeStringSize, "%02d:%02d:%02d %s", dateTime.hour, dateTime.minute, dateTime.second, (dateTime.PM_notAM ? "PM" : "AM"));
+        snprintf(timeString, TimeStringSize, "%02d:%02d:%02d %s",
+                 (uint8_t)timeSetting.hour.value,
+                 (uint8_t)timeSetting.minute.value,
+                 (uint8_t)timeSetting.second.value,
+                 (dateTime.PM_notAM ? "PM" : "AM"));
         lcd.WriteCharacters(timeString, 11);
     }
     else
     {
-        snprintf(timeString, TimeStringSize, "%02d:%02d:%02d", dateTime.hour, dateTime.minute, dateTime.second);
+        snprintf(timeString, TimeStringSize, "%02d:%02d:%02d",
+                 timeSetting.hour.value,
+                 timeSetting.minute.value,
+                 timeSetting.second.value);
         lcd.WriteCharacters(timeString, 8);
     }
 }
@@ -152,7 +186,7 @@ void HMI::displayTemperature()
     static const size_t TempStringSize = 15;
     static char tempString[TempStringSize];
     lcd.SetCursor(2, 0);
-    if (displayTempF_notC)
+    if (tempSetting.value)
     {
         if (temperatureF > 100)
             snprintf(tempString, TempStringSize, "%3.2f%cF", temperatureF, DEGREE_SYMBOL);
@@ -232,15 +266,15 @@ void HMI::editingDate()
             bool increase = msg.id == UP_PRESSED;
             if (entriesToEdit == 3)
             {
-                editMonth(increase);
+                dateSetting.month.adjust(increase);
             }
             else if (entriesToEdit == 2)
             {
-                editDayOfMonth(increase);
+                dateSetting.dayOfMonth.adjust(increase);
             }
             else if (entriesToEdit == 1)
             {
-                editYear(increase);
+                dateSetting.year.adjust(increase);
             }
             displayDate();
         }
@@ -259,33 +293,6 @@ void HMI::editingDate()
     }
 }
 
-void HMI::editMonth(bool increase)
-{
-    dateTime.month = increase ? dateTime.month + 1 : dateTime.month - 1;
-    if (dateTime.month > 12)
-        dateTime.month = 1;
-    else if (dateTime.month == 0)
-        dateTime.month = 12;
-}
-
-void HMI::editDayOfMonth(bool increase)
-{
-
-    dateTime.dayofMonth = increase ? dateTime.dayofMonth + 1 : dateTime.dayofMonth - 1;
-    uint8_t maxDaysOfMonth = calculateMaxDayOfMonth(dateTime.month, dateTime.year);
-    if (dateTime.dayofMonth > maxDaysOfMonth)
-        dateTime.dayofMonth = 1;
-    else if (dateTime.dayofMonth == 0)
-        dateTime.dayofMonth = maxDaysOfMonth;
-}
-
-void HMI::editYear(bool increase)
-{
-    dateTime.year = increase ? dateTime.year + 1 : dateTime.year - 1;
-    if (dateTime.year == 0)
-        dateTime.year = 0;
-}
-
 void HMI::editingTime()
 {
     COMMAND_MESSAGE msg;
@@ -296,15 +303,15 @@ void HMI::editingTime()
             bool increase = msg.id == UP_PRESSED;
             if (entriesToEdit == 3)
             {
-                editHour(increase);
+                timeSetting.hour.adjust(increase);
             }
             else if (entriesToEdit == 2)
             {
-                editMinute(increase);
+                timeSetting.minute.adjust(increase);
             }
             else if (entriesToEdit == 1)
             {
-                editSecond(increase);
+                timeSetting.second.adjust(increase);
             }
             displayTime();
         }
@@ -323,37 +330,9 @@ void HMI::editingTime()
     }
 }
 
-void HMI::editHour(bool increase)
-{
-    dateTime.hour = increase ? dateTime.hour + 1 : dateTime.hour - 1;
-    if (dateTime.hour > 23)
-        dateTime.hour = 0;
-    else if (dateTime.hour == 0)
-        dateTime.hour = 23;
-}
-
-void HMI::editMinute(bool increase)
-{
-    dateTime.minute = increase ? dateTime.minute + 1 : dateTime.minute - 1;
-    if (dateTime.minute > 59)
-        dateTime.minute = 0;
-    else if (dateTime.minute == 0)
-        dateTime.minute = 59;
-}
-
-void HMI::editSecond(bool increase)
-{
-    dateTime.second = increase ? dateTime.second + 1 : dateTime.second - 1;
-    if (dateTime.second > 59)
-        dateTime.second = 0;
-    else if (dateTime.second == 0)
-        dateTime.second = 59;
-}
-
 void HMI::changeTemp()
 {
-    displayTempF_notC = !displayTempF_notC;
-    ESP_LOGI("HMI", "Changed Tempearture Display Units");
+    tempSetting.adjust(!tempSetting.value);
     displayState = DISPLAYING;
     displayTemperature();
     displayCurrentState();
