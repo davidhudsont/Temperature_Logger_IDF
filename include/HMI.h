@@ -43,7 +43,6 @@ private:
     };
 
     HMIState displayState = DISPLAYING;
-    HMISettings settingState = SETTING_DATE;
     int entriesToEdit;
 
     struct DateSetting
@@ -63,6 +62,7 @@ private:
     DateSetting dateSetting;
     TimeSetting timeSetting;
     SETTING tempSetting;
+    SETTING settingMode;
 
     // Display Mode related functions
     void displayMode();

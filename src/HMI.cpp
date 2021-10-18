@@ -29,6 +29,9 @@ HMI::HMI()
 
     tempSetting.max_value = 1;
     tempSetting.min_value = 0;
+
+    settingMode.max_value = SETTINGS_COUNT - 1;
+    settingMode.min_value = 0;
 }
 
 void HMI::process()
@@ -110,7 +113,7 @@ void HMI::displayMode()
         {
             displayState = EDITING;
             ESP_LOGI("BTN", "Display Mode State: %d", displayState);
-            switch (settingState)
+            switch (settingMode.value)
             {
             case SETTING_DATE:
                 entriesToEdit = 3;
@@ -128,16 +131,7 @@ void HMI::displayMode()
         }
         else if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {
-            int settingStateInt = msg.id == UP_PRESSED ? (int)settingState + 1 : (int)settingState - 1;
-            if (settingStateInt >= (int)SETTINGS_COUNT)
-            {
-                settingStateInt = 0;
-            }
-            else if (settingStateInt < 0)
-            {
-                settingStateInt = (int)SETTINGS_COUNT - 1;
-            }
-            settingState = (HMISettings)settingStateInt;
+            settingMode.adjust(msg.id == UP_PRESSED);
             displayCurrentState();
         }
     }
@@ -214,7 +208,7 @@ void HMI::displayCurrentState()
         break;
     }
     lcd.WriteCharacters("SETN: ", 6);
-    switch (settingState)
+    switch (settingMode.value)
     {
     case SETTING_DATE:
         lcd.WriteCharacters("DATE", 4);
@@ -240,7 +234,7 @@ void HMI::updateDisplay()
 
 void HMI::editMode()
 {
-    switch (settingState)
+    switch (settingMode.value)
     {
     case SETTING_DATE:
         editingDate();
