@@ -270,6 +270,7 @@ void HMI::editingDate()
             }
             else if (entriesToEdit == 2)
             {
+                dateSetting.dayOfMonth.max_value = calculateMaxDayOfMonth(dateSetting.month.value, dateSetting.year.value);
                 dateSetting.dayOfMonth.adjust(increase);
             }
             else if (entriesToEdit == 1)
