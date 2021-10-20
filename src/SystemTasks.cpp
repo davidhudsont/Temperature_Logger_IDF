@@ -172,6 +172,12 @@ static void rtc_task(void *pvParameter)
                 rtc.Write24Hours(cmd_msg.arg1);
                 dateTime.hour = cmd_msg.arg1;
                 break;
+            case SET_TIME:
+                rtc.WriteTime(cmd_msg.arg1, cmd_msg.arg2, cmd_msg.arg3);
+                dateTime.hour = cmd_msg.arg1;
+                dateTime.minute = cmd_msg.arg2;
+                dateTime.second = cmd_msg.arg3;
+                break;
             case SET_WEEKDAY:
                 rtc.WriteDays((DAYS)cmd_msg.arg1);
                 break;

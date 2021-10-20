@@ -142,17 +142,6 @@ void RTCDS3234::ReadDateTime()
     year = BCDtoDEC(raw_time[6]);
 }
 
-/**
- * @brief Write the date and time
- * 
- * @param seconds 
- * @param minutes 
- * @param hours 
- * @param day 
- * @param date 
- * @param month 
- * @param year 
- */
 void RTCDS3234::WriteDateTime(uint8_t seconds, uint8_t minutes, uint8_t hours,
                               uint8_t day, uint8_t date, uint8_t month, uint8_t year)
 {
@@ -167,6 +156,17 @@ void RTCDS3234::WriteDateTime(uint8_t seconds, uint8_t minutes, uint8_t hours,
     time_config[6] = DECtoBCD(year);
 
     RegisterBurstWrite(REG_SECONDS, time_config, 7);
+}
+
+void RTCDS3234::WriteTime(uint8_t hour, uint8_t minute, uint8_t second)
+{
+    uint8_t time_config[3];
+
+    time_config[0] = DECtoBCD(second);
+    time_config[1] = DECtoBCD(minute);
+    time_config[2] = DECtoBCD(hour);
+
+    RegisterBurstWrite(REG_SECONDS, time_config, 3);
 }
 
 void RTCDS3234::WriteBuildDateTime()

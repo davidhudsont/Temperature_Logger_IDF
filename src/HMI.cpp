@@ -317,9 +317,7 @@ void HMI::editingTime()
             entriesToEdit--;
             if (entriesToEdit == 0)
             {
-                setHours24Mode(timeSetting.hour.value);
-                setMinutes(timeSetting.minute.value);
-                setSeconds(timeSetting.second.value);
+                setTime(timeSetting.hour.value, timeSetting.minute.value, timeSetting.second.value);
                 displayState = DISPLAYING;
                 displayCurrentState();
             }

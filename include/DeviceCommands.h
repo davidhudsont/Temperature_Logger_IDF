@@ -10,6 +10,7 @@ enum COMMANDS
     SET_MINUTES,
     SET_12HOURS,
     SET_24HOURS,
+    SET_TIME,
     SET_WEEKDAY,
     SET_DAYOFMONTH,
     SET_MONTH,
@@ -56,6 +57,7 @@ void setSeconds(uint8_t second);
 void setMinutes(uint8_t minute);
 void setHours12Mode(uint8_t hour, bool AMOrPM);
 void setHours24Mode(uint8_t hour);
+void setTime(uint8_t hour, uint8_t minute, uint8_t second);
 
 bool recieveTimeCommand(COMMAND_MESSAGE *msg);
 

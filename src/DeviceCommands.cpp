@@ -139,6 +139,16 @@ void setHours24Mode(uint8_t hour)
     time_command_queue.Send(msg);
 }
 
+void setTime(uint8_t hour, uint8_t minute, uint8_t second)
+{
+    COMMAND_MESSAGE msg;
+    msg.id = SET_TIME;
+    msg.arg1 = hour;
+    msg.arg2 = minute;
+    msg.arg3 = second;
+    time_command_queue.Send(msg);
+}
+
 bool recieveTimeCommand(COMMAND_MESSAGE *msg)
 {
     return time_command_queue.Recieve(msg);
