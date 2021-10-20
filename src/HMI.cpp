@@ -17,7 +17,7 @@ HMI::HMI()
     dateSetting.month.min_value = 1;
     dateSetting.dayOfMonth.max_value = 31;
     dateSetting.dayOfMonth.min_value = 1;
-    dateSetting.year.max_value = 256;
+    dateSetting.year.max_value = 99;
     dateSetting.year.min_value = 0;
 
     timeSetting.hour.max_value = 23;
@@ -280,9 +280,7 @@ void HMI::editingDate()
             entriesToEdit--;
             if (entriesToEdit == 0)
             {
-                setMonth(dateSetting.month.value);
-                setDayOfMonth(dateSetting.dayOfMonth.value);
-                setYear(dateSetting.year.value);
+                setDate(dateSetting.dayOfMonth.value, dateSetting.month.value, dateSetting.year.value);
                 displayState = DISPLAYING;
                 displayCurrentState();
             }

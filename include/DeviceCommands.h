@@ -15,6 +15,7 @@ enum COMMANDS
     SET_DAYOFMONTH,
     SET_MONTH,
     SET_YEAR,
+    SET_DATE,
     GET_DATETIME,
     GET_TEMPF,
     GET_TEMPC,
@@ -49,6 +50,7 @@ void setWeekDay(uint8_t weekday);
 void setMonth(uint8_t month);
 void setYear(uint8_t year);
 void setDayOfMonth(uint8_t dayOfMonth);
+void setDate(uint8_t dayOfMonth, uint8_t month, uint8_t year);
 
 bool recieveDateCommand(COMMAND_MESSAGE *msg);
 

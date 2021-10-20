@@ -193,6 +193,12 @@ static void rtc_task(void *pvParameter)
                 rtc.WriteYear(cmd_msg.arg1);
                 dateTime.year = cmd_msg.arg1;
                 break;
+            case SET_DATE:
+                rtc.WriteDate(cmd_msg.arg1, cmd_msg.arg2, cmd_msg.arg3);
+                dateTime.dayofMonth = cmd_msg.arg1;
+                dateTime.month = cmd_msg.arg2;
+                dateTime.year = cmd_msg.arg3;
+                break;
             default:
                 break;
             }

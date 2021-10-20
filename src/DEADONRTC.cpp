@@ -158,6 +158,17 @@ void RTCDS3234::WriteDateTime(uint8_t seconds, uint8_t minutes, uint8_t hours,
     RegisterBurstWrite(REG_SECONDS, time_config, 7);
 }
 
+void RTCDS3234::WriteDate(uint8_t date, uint8_t month, uint8_t year)
+{
+    uint8_t date_config[3];
+
+    date_config[0] = DECtoBCD(date);
+    date_config[1] = DECtoBCD(month);
+    date_config[2] = DECtoBCD(year);
+
+    RegisterBurstWrite(REG_DATE, date_config, 3);
+}
+
 void RTCDS3234::WriteTime(uint8_t hour, uint8_t minute, uint8_t second)
 {
     uint8_t time_config[3];
