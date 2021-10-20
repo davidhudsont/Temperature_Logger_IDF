@@ -40,6 +40,8 @@ private:
         SETTING_DATE,
         SETTING_TIME,
         SETTING_TEMP,
+        SETTING_CONTRAST,
+        SETTING_BACKLIGHT,
         SETTINGS_COUNT
     };
 
@@ -60,10 +62,19 @@ private:
         SETTING second;
     };
 
+    struct BacklightSetting
+    {
+        SETTING r;
+        SETTING g;
+        SETTING b;
+    };
+
     DateSetting dateSetting;
     TimeSetting timeSetting;
     SETTING tempSetting;
     SETTING settingMode;
+    SETTING contrastSetting;
+    BacklightSetting backlightSetting;
 
     // Display Mode related functions
     void displayMode();
@@ -78,6 +89,8 @@ private:
     void editingDate();
     void editingTime();
     void changeTemp();
+    void editContrast();
+    void editBackLight();
 
 public:
     HMI();

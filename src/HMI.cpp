@@ -32,6 +32,22 @@ HMI::HMI()
 
     settingMode.max_value = SETTINGS_COUNT - 1;
     settingMode.min_value = 0;
+
+    contrastSetting.max_value = 255;
+    contrastSetting.min_value = 0;
+    contrastSetting.value = 0;
+
+    backlightSetting.r.max_value = 255;
+    backlightSetting.r.min_value = 0;
+    backlightSetting.r.value = 125;
+
+    backlightSetting.g.max_value = 255;
+    backlightSetting.g.min_value = 0;
+    backlightSetting.g.value = 125;
+
+    backlightSetting.b.max_value = 255;
+    backlightSetting.b.min_value = 0;
+    backlightSetting.b.value = 125;
 }
 
 void HMI::process()
@@ -125,6 +141,12 @@ void HMI::displayMode()
                 break;
             case SETTING_TEMP:
                 entriesToEdit = 1;
+                break;
+            case SETTING_CONTRAST:
+                entriesToEdit = 1;
+                break;
+            case SETTING_BACKLIGHT:
+                entriesToEdit = 3;
                 break;
             default:
                 break;
@@ -221,6 +243,12 @@ void HMI::displayCurrentState()
     case SETTING_TEMP:
         lcd.WriteCharacters("TEMP", 4);
         break;
+    case SETTING_CONTRAST:
+        lcd.WriteCharacters("CNTR", 4);
+        break;
+    case SETTING_BACKLIGHT:
+        lcd.WriteCharacters("BKLT", 4);
+        break;
     default:
         break;
     }
@@ -246,6 +274,12 @@ void HMI::editMode()
         break;
     case SETTING_TEMP:
         changeTemp();
+        break;
+    case SETTING_CONTRAST:
+        editContrast();
+        break;
+    case SETTING_BACKLIGHT:
+        editBackLight();
         break;
     default:
         break;
@@ -329,4 +363,72 @@ void HMI::changeTemp()
     displayState = DISPLAYING;
     displayTemperature();
     displayCurrentState();
+}
+
+void HMI::editContrast()
+{
+    COMMAND_MESSAGE msg;
+    static const size_t contrastStringSize = 14;
+    static char contrastString[contrastStringSize];
+    if (recieveButtonCommand(&msg))
+    {
+        if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
+        {
+            bool increase = msg.id == UP_PRESSED;
+            contrastSetting.adjust(increase);
+            lcd.SetCursor(2, 0);
+            snprintf(contrastString, contrastStringSize, "Contrast: %3d", contrastSetting.value);
+            lcd.WriteCharacters(contrastString, contrastStringSize);
+        }
+        else if (msg.id == EDIT_MODE_PRESSED)
+        {
+            entriesToEdit--;
+            if (entriesToEdit == 0)
+            {
+                setContrast(contrastSetting.value);
+                displayState = DISPLAYING;
+                displayCurrentState();
+            }
+        }
+    }
+}
+void HMI::editBackLight()
+{
+    COMMAND_MESSAGE msg;
+    static const size_t backlightStringSize = 17;
+    static char backlightString[backlightStringSize];
+    if (recieveButtonCommand(&msg))
+    {
+        if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
+        {
+            bool increase = msg.id == UP_PRESSED;
+            lcd.SetCursor(2, 0);
+            if (entriesToEdit == 3)
+            {
+                backlightSetting.r.adjust(increase);
+                snprintf(backlightString, backlightStringSize, "Backlight: r %3d", backlightSetting.r.value);
+            }
+            else if (entriesToEdit == 2)
+            {
+                backlightSetting.g.adjust(increase);
+                snprintf(backlightString, backlightStringSize, "Backlight: g %3d", backlightSetting.g.value);
+            }
+            else if (entriesToEdit == 1)
+            {
+                backlightSetting.b.adjust(increase);
+                snprintf(backlightString, backlightStringSize, "Backlight: b %3d", backlightSetting.b.value);
+            }
+            lcd.WriteCharacters(backlightString, backlightStringSize);
+        }
+        else if (msg.id == EDIT_MODE_PRESSED)
+        {
+            entriesToEdit--;
+            if (entriesToEdit == 0)
+            {
+                setBackLight(backlightSetting.r.value, backlightSetting.g.value, backlightSetting.b.value);
+                displayState = DISPLAYING;
+                displayCurrentState();
+            }
+        }
+    }
 }
