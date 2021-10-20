@@ -32,7 +32,8 @@ private:
 
     float temperatureF;
     float temperatureC;
-    DATE_TIME dateTime;
+    bool hour12_not24;
+    bool PM_notAM;
 
     enum HMISettings
     {

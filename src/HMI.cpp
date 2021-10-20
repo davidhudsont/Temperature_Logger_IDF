@@ -58,7 +58,6 @@ void HMI::setDisplayTemperature(float temperatureF, float temperatureC)
 
 void HMI::setDisplayDateTime(DATE_TIME &dateTime)
 {
-    this->dateTime = dateTime;
     dateSetting.month.value = dateTime.month;
     dateSetting.dayOfMonth.value = dateTime.dayofMonth;
     dateSetting.year.value = dateTime.year;
@@ -66,6 +65,9 @@ void HMI::setDisplayDateTime(DATE_TIME &dateTime)
     timeSetting.hour.value = dateTime.hour;
     timeSetting.minute.value = dateTime.minute;
     timeSetting.second.value = dateTime.second;
+
+    hour12_not24 = dateTime.hour12_not24;
+    PM_notAM = dateTime.PM_notAM;
 }
 
 HMIState HMI::getCurrentState()
@@ -156,13 +158,13 @@ void HMI::displayTime()
     static const size_t TimeStringSize = 15;
     static char timeString[TimeStringSize];
     lcd.SetCursor(1, 0);
-    if (dateTime.hour12_not24)
+    if (hour12_not24)
     {
         snprintf(timeString, TimeStringSize, "%02d:%02d:%02d %s",
                  (uint8_t)timeSetting.hour.value,
                  (uint8_t)timeSetting.minute.value,
                  (uint8_t)timeSetting.second.value,
-                 (dateTime.PM_notAM ? "PM" : "AM"));
+                 (PM_notAM ? "PM" : "AM"));
         lcd.WriteCharacters(timeString, 11);
     }
     else
@@ -278,9 +280,9 @@ void HMI::editingDate()
             entriesToEdit--;
             if (entriesToEdit == 0)
             {
-                setMonth(dateTime.month);
-                setDayOfMonth(dateTime.dayofMonth);
-                setYear(dateTime.year);
+                setMonth(dateSetting.month.value);
+                setDayOfMonth(dateSetting.dayOfMonth.value);
+                setYear(dateSetting.year.value);
                 displayState = DISPLAYING;
                 displayCurrentState();
             }
@@ -315,9 +317,9 @@ void HMI::editingTime()
             entriesToEdit--;
             if (entriesToEdit == 0)
             {
-                setHours24Mode(dateTime.hour);
-                setMinutes(dateTime.minute);
-                setSeconds(dateTime.second);
+                setHours24Mode(timeSetting.hour.value);
+                setMinutes(timeSetting.minute.value);
+                setSeconds(timeSetting.second.value);
                 displayState = DISPLAYING;
                 displayCurrentState();
             }
