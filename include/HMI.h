@@ -25,6 +25,21 @@ struct SETTING
     }
 };
 
+struct RGB
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+};
+
+enum BACKLIGHTCOLORS
+{
+    RED,
+    GREEN,
+    BLUE,
+    COLOR_COUNT
+};
+
 class HMI
 {
 private:
@@ -69,12 +84,14 @@ private:
         SETTING b;
     };
 
+    RGB backLightValues[COLOR_COUNT];
+
     DateSetting dateSetting;
     TimeSetting timeSetting;
     SETTING tempSetting;
     SETTING settingMode;
     SETTING contrastSetting;
-    BacklightSetting backlightSetting;
+    SETTING backlightSetting;
 
     // Display Mode related functions
     void displayMode();

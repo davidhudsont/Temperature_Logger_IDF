@@ -4,6 +4,11 @@
 
 #include "DeviceCommands.h"
 
+static char LCD_BCKL_COLORS[COLOR_COUNT][4] = {
+    "RED",
+    "GRN",
+    "BLU"};
+
 // Public
 HMI::HMI()
 {
@@ -37,17 +42,12 @@ HMI::HMI()
     contrastSetting.min_value = 0;
     contrastSetting.value = 0;
 
-    backlightSetting.r.max_value = 255;
-    backlightSetting.r.min_value = 0;
-    backlightSetting.r.value = 125;
+    backlightSetting.max_value = (int)COLOR_COUNT;
+    backlightSetting.min_value = 0;
 
-    backlightSetting.g.max_value = 255;
-    backlightSetting.g.min_value = 0;
-    backlightSetting.g.value = 125;
-
-    backlightSetting.b.max_value = 255;
-    backlightSetting.b.min_value = 0;
-    backlightSetting.b.value = 125;
+    backLightValues[0] = {255, 0, 0};
+    backLightValues[1] = {0, 255, 0};
+    backLightValues[2] = {0, 0, 255};
 }
 
 void HMI::process()
@@ -146,7 +146,7 @@ void HMI::displayMode()
                 entriesToEdit = 1;
                 break;
             case SETTING_BACKLIGHT:
-                entriesToEdit = 3;
+                entriesToEdit = 1;
                 break;
             default:
                 break;
@@ -387,6 +387,8 @@ void HMI::editContrast()
             {
                 setContrast(contrastSetting.value);
                 displayState = DISPLAYING;
+                lcd.SetCursor(2, 0);
+                lcd.ClearRow(2);
                 displayCurrentState();
             }
         }
@@ -395,7 +397,7 @@ void HMI::editContrast()
 void HMI::editBackLight()
 {
     COMMAND_MESSAGE msg;
-    static const size_t backlightStringSize = 17;
+    static const size_t backlightStringSize = 15;
     static char backlightString[backlightStringSize];
     if (recieveButtonCommand(&msg))
     {
@@ -403,30 +405,23 @@ void HMI::editBackLight()
         {
             bool increase = msg.id == UP_PRESSED;
             lcd.SetCursor(2, 0);
-            if (entriesToEdit == 3)
-            {
-                backlightSetting.r.adjust(increase);
-                snprintf(backlightString, backlightStringSize, "Backlight: r %3d", backlightSetting.r.value);
-            }
-            else if (entriesToEdit == 2)
-            {
-                backlightSetting.g.adjust(increase);
-                snprintf(backlightString, backlightStringSize, "Backlight: g %3d", backlightSetting.g.value);
-            }
-            else if (entriesToEdit == 1)
-            {
-                backlightSetting.b.adjust(increase);
-                snprintf(backlightString, backlightStringSize, "Backlight: b %3d", backlightSetting.b.value);
-            }
-            lcd.WriteCharacters(backlightString, backlightStringSize);
+            backlightSetting.adjust(increase);
+            snprintf(backlightString, backlightStringSize, "Backlight: %s", LCD_BCKL_COLORS[backlightSetting.value]);
+            lcd.WriteCharacters(backlightString, backlightStringSize - 1);
         }
         else if (msg.id == EDIT_MODE_PRESSED)
         {
             entriesToEdit--;
             if (entriesToEdit == 0)
             {
-                setBackLight(backlightSetting.r.value, backlightSetting.g.value, backlightSetting.b.value);
+                int index = backlightSetting.value;
+                uint8_t r = backLightValues[index].r;
+                uint8_t g = backLightValues[index].g;
+                uint8_t b = backLightValues[index].b;
+                setBackLight(r, g, b);
                 displayState = DISPLAYING;
+                lcd.SetCursor(2, 0);
+                lcd.ClearRow(2);
                 displayCurrentState();
             }
         }
