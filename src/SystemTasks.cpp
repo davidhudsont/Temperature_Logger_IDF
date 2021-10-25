@@ -102,7 +102,7 @@ void StartAlarms(RTCDS3234 &rtc)
     delay(100);
     rtc.EnableInterrupt(true);
     delay(100);
-    rtc.EnableAlarms(true, true);
+    rtc.EnableAlarms(false, true);
     // Clear the ALARM flags early
     rtc.ReadAlarm1Flag();
     rtc.ReadAlarm2Flag();
@@ -128,13 +128,16 @@ static void rtc_task(void *pvParameter)
 
             if (alarm1_flag)
             {
-                ESP_LOGI("RTC", "ALARM1 Triggered");
+                ESP_LOGV("RTC", "ALARM1 Triggered");
                 rtc.ReadDateTime();
                 dateTime = rtc.GetDateTime();
+                std::string logdate = rtc.DateToString();
+                std::string logtime = rtc.TimeToString();
+                ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
             }
             if (alarm2_flag)
             {
-                ESP_LOGI("RTC", "ALARM2 Triggered");
+                ESP_LOGV("RTC", "ALARM2 Triggered");
                 rtc.ReadDateTime();
                 dateTime = rtc.GetDateTime();
                 xSemaphoreGive(alarm_semiphore);
@@ -212,7 +215,7 @@ static void OneShotTemperatureRead(TMP102 &tmp102)
     static bool oneshot = false;
     if (oneshot == false)
     {
-        ESP_LOGI("TMP", "Set the OneShot!");
+        ESP_LOGV("TMP", "Set the OneShot!");
         tmp102.SetOneShot();
         delay(30);
         oneshot = tmp102.GetOneShot();
@@ -221,7 +224,7 @@ static void OneShotTemperatureRead(TMP102 &tmp102)
     if (oneshot)
     {
         tmp102.ReadTemperature();
-        ESP_LOGI("TMP", "Temperature has been Read");
+        ESP_LOGV("TMP", "Temperature has been Read");
         oneshot = false;
     }
 }
