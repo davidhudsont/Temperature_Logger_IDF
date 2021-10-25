@@ -9,6 +9,40 @@ static char LCD_BCKL_COLORS[COLOR_COUNT][4] = {
     "GRN",
     "BLU"};
 
+static char settingNames[SETTINGS_COUNT][5] = {
+    "DATE",
+    "TIME",
+    "TEMP",
+    "CNTR",
+    "BLKT",
+};
+
+static const size_t backlightStringSize = 15;
+static const size_t DateStringSize = 15;
+static const size_t TimeStringSize = 15;
+static const size_t contrastStringSize = 14;
+static const size_t TempStringSize = 15;
+
+static char dateString[DateStringSize];
+static char timeString[TimeStringSize];
+static char backlightString[backlightStringSize];
+static char contrastString[contrastStringSize];
+
+static uint8_t timeRow = 0;
+static uint8_t timeCol = 0;
+
+static uint8_t dateRow = 1;
+static uint8_t dateCol = 0;
+
+static uint8_t tempRow = 0;
+static uint8_t tempCol = 12;
+
+static uint8_t setnRow = 2;
+static uint8_t setnCol = 0;
+
+static uint8_t altSetnRow = 3;
+static uint8_t altSetnCol = 0;
+
 // Public
 HMI::HMI()
 {
@@ -16,6 +50,7 @@ HMI::HMI()
     lcd.ResetCursor();
     lcd.DisableSystemMessages();
     lcd.Display();
+    lcd.SetContrast(0);
     lcd.SetBackLightFast(125, 125, 125);
 
     dateSetting.month.max_value = 12;
@@ -35,15 +70,16 @@ HMI::HMI()
     tempSetting.max_value = 1;
     tempSetting.min_value = 0;
 
-    settingMode.max_value = SETTINGS_COUNT - 1;
+    settingMode.max_value = (int)SETTINGS_COUNT - 1;
     settingMode.min_value = 0;
 
     contrastSetting.max_value = 255;
     contrastSetting.min_value = 0;
     contrastSetting.value = 0;
 
-    backlightSetting.max_value = (int)COLOR_COUNT;
+    backlightSetting.max_value = (int)COLOR_COUNT - 1;
     backlightSetting.min_value = 0;
+    backlightSetting.value = 0;
 
     backLightValues[0] = {255, 0, 0};
     backLightValues[1] = {0, 255, 0};
@@ -144,9 +180,11 @@ void HMI::displayMode()
                 break;
             case SETTING_CONTRAST:
                 entriesToEdit = 1;
+                displayContrast();
                 break;
             case SETTING_BACKLIGHT:
                 entriesToEdit = 1;
+                displayBacklight();
                 break;
             default:
                 break;
@@ -164,22 +202,18 @@ void HMI::displayMode()
 void HMI::displayDate()
 {
     // Date Update
-    static const size_t DateStringSize = 15;
-    static char dateString[DateStringSize];
     snprintf(dateString, DateStringSize, "%02d/%02d/%d",
              (uint8_t)dateSetting.month.value,
              (uint8_t)dateSetting.dayOfMonth.value,
              (uint16_t)dateSetting.year.value + 2000);
-    lcd.SetCursor(0, 0);
+    lcd.SetCursor(dateRow, dateCol);
     lcd.WriteCharacters(dateString, 10);
 }
 
 void HMI::displayTime()
 {
     // Time update
-    static const size_t TimeStringSize = 15;
-    static char timeString[TimeStringSize];
-    lcd.SetCursor(1, 0);
+    lcd.SetCursor(timeRow, timeCol);
     if (hour12_not24)
     {
         snprintf(timeString, TimeStringSize, "%02d:%02d:%02d %s",
@@ -201,9 +235,8 @@ void HMI::displayTime()
 
 void HMI::displayTemperature()
 {
-    static const size_t TempStringSize = 15;
     static char tempString[TempStringSize];
-    lcd.SetCursor(2, 0);
+    lcd.SetCursor(tempRow, tempCol);
     if (tempSetting.value)
     {
         if (temperatureF > 100)
@@ -221,7 +254,7 @@ void HMI::displayTemperature()
 
 void HMI::displayCurrentState()
 {
-    lcd.SetCursor(3, 0);
+    lcd.SetCursor(setnRow, setnCol);
     switch (displayState)
     {
     case DISPLAYING:
@@ -232,26 +265,7 @@ void HMI::displayCurrentState()
         break;
     }
     lcd.WriteCharacters("SETN: ", 6);
-    switch (settingMode.value)
-    {
-    case SETTING_DATE:
-        lcd.WriteCharacters("DATE", 4);
-        break;
-    case SETTING_TIME:
-        lcd.WriteCharacters("TIME", 4);
-        break;
-    case SETTING_TEMP:
-        lcd.WriteCharacters("TEMP", 4);
-        break;
-    case SETTING_CONTRAST:
-        lcd.WriteCharacters("CNTR", 4);
-        break;
-    case SETTING_BACKLIGHT:
-        lcd.WriteCharacters("BKLT", 4);
-        break;
-    default:
-        break;
-    }
+    lcd.WriteCharacters(settingNames[settingMode.value], 4);
 }
 
 void HMI::updateDisplay()
@@ -260,6 +274,20 @@ void HMI::updateDisplay()
     displayTime();
     displayTemperature();
     displayCurrentState();
+}
+
+void HMI::displayContrast()
+{
+    lcd.SetCursor(altSetnRow, altSetnCol);
+    snprintf(contrastString, contrastStringSize, "Contrast: %3d", contrastSetting.value);
+    lcd.WriteCharacters(contrastString, contrastStringSize - 1);
+}
+
+void HMI::displayBacklight()
+{
+    lcd.SetCursor(altSetnRow, altSetnCol);
+    snprintf(backlightString, backlightStringSize, "Backlight: %s", LCD_BCKL_COLORS[backlightSetting.value]);
+    lcd.WriteCharacters(backlightString, backlightStringSize - 1);
 }
 
 void HMI::editMode()
@@ -368,17 +396,13 @@ void HMI::changeTemp()
 void HMI::editContrast()
 {
     COMMAND_MESSAGE msg;
-    static const size_t contrastStringSize = 14;
-    static char contrastString[contrastStringSize];
     if (recieveButtonCommand(&msg))
     {
         if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {
             bool increase = msg.id == UP_PRESSED;
             contrastSetting.adjust(increase);
-            lcd.SetCursor(2, 0);
-            snprintf(contrastString, contrastStringSize, "Contrast: %3d", contrastSetting.value);
-            lcd.WriteCharacters(contrastString, contrastStringSize);
+            displayContrast();
         }
         else if (msg.id == EDIT_MODE_PRESSED)
         {
@@ -387,8 +411,7 @@ void HMI::editContrast()
             {
                 setContrast(contrastSetting.value);
                 displayState = DISPLAYING;
-                lcd.SetCursor(2, 0);
-                lcd.ClearRow(2);
+                lcd.ClearRow(3);
                 displayCurrentState();
             }
         }
@@ -397,17 +420,13 @@ void HMI::editContrast()
 void HMI::editBackLight()
 {
     COMMAND_MESSAGE msg;
-    static const size_t backlightStringSize = 15;
-    static char backlightString[backlightStringSize];
     if (recieveButtonCommand(&msg))
     {
         if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {
             bool increase = msg.id == UP_PRESSED;
-            lcd.SetCursor(2, 0);
             backlightSetting.adjust(increase);
-            snprintf(backlightString, backlightStringSize, "Backlight: %s", LCD_BCKL_COLORS[backlightSetting.value]);
-            lcd.WriteCharacters(backlightString, backlightStringSize - 1);
+            displayBacklight();
         }
         else if (msg.id == EDIT_MODE_PRESSED)
         {
@@ -420,8 +439,7 @@ void HMI::editBackLight()
                 uint8_t b = backLightValues[index].b;
                 setBackLight(r, g, b);
                 displayState = DISPLAYING;
-                lcd.SetCursor(2, 0);
-                lcd.ClearRow(2);
+                lcd.ClearRow(3);
                 displayCurrentState();
             }
         }

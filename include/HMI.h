@@ -40,6 +40,16 @@ enum BACKLIGHTCOLORS
     COLOR_COUNT
 };
 
+enum HMISettings
+{
+    SETTING_DATE,
+    SETTING_TIME,
+    SETTING_TEMP,
+    SETTING_CONTRAST,
+    SETTING_BACKLIGHT,
+    SETTINGS_COUNT
+};
+
 class HMI
 {
 private:
@@ -49,16 +59,6 @@ private:
     float temperatureC;
     bool hour12_not24;
     bool PM_notAM;
-
-    enum HMISettings
-    {
-        SETTING_DATE,
-        SETTING_TIME,
-        SETTING_TEMP,
-        SETTING_CONTRAST,
-        SETTING_BACKLIGHT,
-        SETTINGS_COUNT
-    };
 
     HMIState displayState = DISPLAYING;
     int entriesToEdit;
@@ -99,6 +99,8 @@ private:
     void displayTime();
     void displayTemperature();
     void displayCurrentState();
+    void displayContrast();
+    void displayBacklight();
     void updateDisplay();
 
     // Edit Mode related functions
