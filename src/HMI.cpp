@@ -7,7 +7,11 @@
 static char LCD_BCKL_COLORS[COLOR_COUNT][4] = {
     "RED",
     "GRN",
-    "BLU"};
+    "BLU",
+    "FUL",
+    "MED",
+    "LOW",
+};
 
 static char settingNames[SETTINGS_COUNT][5] = {
     "DATE",
@@ -84,6 +88,9 @@ HMI::HMI()
     backLightValues[0] = {255, 0, 0};
     backLightValues[1] = {0, 255, 0};
     backLightValues[2] = {0, 0, 255};
+    backLightValues[3] = {255, 255, 255};
+    backLightValues[4] = {128, 128, 128};
+    backLightValues[5] = {0, 0, 0};
 }
 
 void HMI::process()
@@ -190,6 +197,25 @@ void HMI::displayMode()
                 break;
             }
             displayCurrentState();
+        }
+        else if (msg.id == EDIT_SETTING_PRESSED)
+        {
+            static bool displayActive = true;
+            if (displayActive)
+            {
+                lcd.NoDisplay();
+                lcd.SetBackLightFast(0, 0, 0);
+            }
+            else
+            {
+                lcd.Display();
+                int index = backlightSetting.value;
+                uint8_t r = backLightValues[index].r;
+                uint8_t g = backLightValues[index].g;
+                uint8_t b = backLightValues[index].b;
+                setBackLight(r, g, b);
+            }
+            displayActive = !displayActive;
         }
         else if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {

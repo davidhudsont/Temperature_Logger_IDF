@@ -37,7 +37,10 @@ enum BACKLIGHTCOLORS
     RED,
     GREEN,
     BLUE,
-    COLOR_COUNT
+    LOW_BRIGHT,
+    MED_BRIGHT,
+    FULL_BRIGHT,
+    COLOR_COUNT,
 };
 
 enum HMISettings
