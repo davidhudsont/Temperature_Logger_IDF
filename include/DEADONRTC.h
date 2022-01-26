@@ -143,6 +143,10 @@ public:
                        uint8_t day, uint8_t date, uint8_t month,
                        uint8_t year);
 
+    void WriteDate(uint8_t date, uint8_t month, uint8_t year);
+
+    void WriteTime(uint8_t hour, uint8_t minute, uint8_t second);
+
     /**
      * @brief Get the date and time from the build date
      * 

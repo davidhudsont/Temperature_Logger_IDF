@@ -10,10 +10,12 @@ enum COMMANDS
     SET_MINUTES,
     SET_12HOURS,
     SET_24HOURS,
+    SET_TIME,
     SET_WEEKDAY,
     SET_DAYOFMONTH,
     SET_MONTH,
     SET_YEAR,
+    SET_DATE,
     GET_DATETIME,
     GET_TEMPF,
     GET_TEMPC,
@@ -48,6 +50,7 @@ void setWeekDay(uint8_t weekday);
 void setMonth(uint8_t month);
 void setYear(uint8_t year);
 void setDayOfMonth(uint8_t dayOfMonth);
+void setDate(uint8_t dayOfMonth, uint8_t month, uint8_t year);
 
 bool recieveDateCommand(COMMAND_MESSAGE *msg);
 
@@ -56,6 +59,7 @@ void setSeconds(uint8_t second);
 void setMinutes(uint8_t minute);
 void setHours12Mode(uint8_t hour, bool AMOrPM);
 void setHours24Mode(uint8_t hour);
+void setTime(uint8_t hour, uint8_t minute, uint8_t second);
 
 bool recieveTimeCommand(COMMAND_MESSAGE *msg);
 

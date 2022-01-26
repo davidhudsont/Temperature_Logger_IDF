@@ -9,41 +9,110 @@ enum HMIState
     EDITING
 };
 
+struct SETTING
+{
+    int max_value = 0;
+    int min_value = 0;
+    int value = 0;
+
+    void adjust(bool increase)
+    {
+        value = increase ? value + 1 : value - 1;
+        if (value > max_value)
+            value = min_value;
+        else if (value < min_value)
+            value = max_value;
+    }
+};
+
+struct RGB
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+};
+
+enum BACKLIGHTCOLORS
+{
+    RED,
+    GREEN,
+    BLUE,
+    LOW_BRIGHT,
+    MED_BRIGHT,
+    FULL_BRIGHT,
+    COLOR_COUNT,
+};
+
+enum HMISettings
+{
+    SETTING_DATE,
+    SETTING_TIME,
+    SETTING_TEMP,
+    SETTING_CONTRAST,
+    SETTING_BACKLIGHT,
+    SETTINGS_COUNT
+};
+
 class HMI
 {
 private:
     LCD lcd;
 
-    bool displayTempF_notC;
     float temperatureF;
     float temperatureC;
-    DATE_TIME dateTime;
-
-    enum HMISettings
-    {
-        SETTING_DATE,
-        SETTING_TIME,
-        SETTING_TEMP
-    };
+    bool hour12_not24;
+    bool PM_notAM;
 
     HMIState displayState = DISPLAYING;
-    HMISettings settingState = SETTING_DATE;
     int entriesToEdit;
 
+    struct DateSetting
+    {
+        SETTING month;
+        SETTING dayOfMonth;
+        SETTING year;
+    };
+
+    struct TimeSetting
+    {
+        SETTING hour;
+        SETTING minute;
+        SETTING second;
+    };
+
+    struct BacklightSetting
+    {
+        SETTING r;
+        SETTING g;
+        SETTING b;
+    };
+
+    RGB backLightValues[COLOR_COUNT];
+
+    DateSetting dateSetting;
+    TimeSetting timeSetting;
+    SETTING tempSetting;
+    SETTING settingMode;
+    SETTING contrastSetting;
+    SETTING backlightSetting;
+
+    // Display Mode related functions
+    void displayMode();
+    void displayDate();
+    void displayTime();
+    void displayTemperature();
     void displayCurrentState();
-    void editMonth(bool increase);
-    void editDayOfMonth(bool increase);
-    void editYear(bool increase);
+    void displayContrast();
+    void displayBacklight();
+    void updateDisplay();
+
+    // Edit Mode related functions
+    void editMode();
     void editingDate();
-    void editHour(bool increase);
-    void editMinute(bool increase);
-    void editSecond(bool increase);
     void editingTime();
     void changeTemp();
-
-    void editing();
-    void display();
-    void update();
+    void editContrast();
+    void editBackLight();
 
 public:
     HMI();

@@ -1,50 +1,141 @@
 #include "HMI.h"
 
-#include <string>
-#include <sstream>
-#include <iomanip>
-
 #include "esp_log.h"
 
 #include "DeviceCommands.h"
 
+static char LCD_BCKL_COLORS[COLOR_COUNT][4] = {
+    "RED",
+    "GRN",
+    "BLU",
+    "FUL",
+    "MED",
+    "LOW",
+};
+
+static char settingNames[SETTINGS_COUNT][5] = {
+    "DATE",
+    "TIME",
+    "TEMP",
+    "CNTR",
+    "BLKT",
+};
+
+static const size_t backlightStringSize = 15;
+static const size_t DateStringSize = 15;
+static const size_t TimeStringSize = 15;
+static const size_t contrastStringSize = 14;
+static const size_t TempStringSize = 15;
+
+static char dateString[DateStringSize];
+static char timeString[TimeStringSize];
+static char backlightString[backlightStringSize];
+static char contrastString[contrastStringSize];
+
+static uint8_t timeRow = 0;
+static uint8_t timeCol = 0;
+
+static uint8_t dateRow = 1;
+static uint8_t dateCol = 0;
+
+static uint8_t tempRow = 0;
+static uint8_t tempCol = 12;
+
+static uint8_t setnRow = 2;
+static uint8_t setnCol = 0;
+
+static uint8_t altSetnRow = 3;
+static uint8_t altSetnCol = 0;
+
+// Public
 HMI::HMI()
 {
     lcd.Begin();
     lcd.ResetCursor();
     lcd.DisableSystemMessages();
     lcd.Display();
+    lcd.SetContrast(0);
     lcd.SetBackLightFast(125, 125, 125);
+
+    dateSetting.month.max_value = 12;
+    dateSetting.month.min_value = 1;
+    dateSetting.dayOfMonth.max_value = 31;
+    dateSetting.dayOfMonth.min_value = 1;
+    dateSetting.year.max_value = 99;
+    dateSetting.year.min_value = 0;
+
+    timeSetting.hour.max_value = 23;
+    timeSetting.hour.min_value = 0;
+    timeSetting.minute.max_value = 59;
+    timeSetting.minute.min_value = 0;
+    timeSetting.second.max_value = 59;
+    timeSetting.second.min_value = 0;
+
+    tempSetting.max_value = 1;
+    tempSetting.min_value = 0;
+
+    settingMode.max_value = (int)SETTINGS_COUNT - 1;
+    settingMode.min_value = 0;
+
+    contrastSetting.max_value = 255;
+    contrastSetting.min_value = 0;
+    contrastSetting.value = 0;
+
+    backlightSetting.max_value = (int)COLOR_COUNT - 1;
+    backlightSetting.min_value = 0;
+    backlightSetting.value = 0;
+
+    backLightValues[0] = {255, 0, 0};
+    backLightValues[1] = {0, 255, 0};
+    backLightValues[2] = {0, 0, 255};
+    backLightValues[3] = {255, 255, 255};
+    backLightValues[4] = {128, 128, 128};
+    backLightValues[5] = {0, 0, 0};
 }
 
-void HMI::displayCurrentState()
+void HMI::process()
 {
-    lcd.SetCursor(3, 0);
+
     switch (displayState)
     {
     case DISPLAYING:
-        lcd.WriteCharacters("DISP ", 5);
+        displayMode();
         break;
     case EDITING:
-        lcd.WriteCharacters("EDIT ", 5);
+        editMode();
         break;
-    }
-    lcd.WriteCharacters("SETN: ", 6);
-    switch (settingState)
-    {
-    case SETTING_DATE:
-        lcd.WriteCharacters("DATE", 4);
-        break;
-    case SETTING_TIME:
-        lcd.WriteCharacters("TIME", 4);
-        break;
-    case SETTING_TEMP:
-        lcd.WriteCharacters("TEMP", 4);
+    default:
         break;
     }
 }
 
-void HMI::display()
+void HMI::setDisplayTemperature(float temperatureF, float temperatureC)
+{
+    this->temperatureF = temperatureF;
+    this->temperatureC = temperatureC;
+}
+
+void HMI::setDisplayDateTime(DATE_TIME &dateTime)
+{
+    dateSetting.month.value = dateTime.month;
+    dateSetting.dayOfMonth.value = dateTime.dayofMonth;
+    dateSetting.year.value = dateTime.year;
+
+    timeSetting.hour.value = dateTime.hour;
+    timeSetting.minute.value = dateTime.minute;
+    timeSetting.second.value = dateTime.second;
+
+    hour12_not24 = dateTime.hour12_not24;
+    PM_notAM = dateTime.PM_notAM;
+}
+
+HMIState HMI::getCurrentState()
+{
+    return displayState;
+}
+
+// Private
+void HMI::displayMode()
 {
     COMMAND_MESSAGE msg;
     if (recieveLCDCommand(&msg))
@@ -73,9 +164,7 @@ void HMI::display()
             lcd.Clear();
             break;
         case LCD_DISPLAY_UPDATE:
-            update();
-            break;
-        default:
+            updateDisplay();
             break;
         }
     }
@@ -85,7 +174,7 @@ void HMI::display()
         {
             displayState = EDITING;
             ESP_LOGI("BTN", "Display Mode State: %d", displayState);
-            switch (settingState)
+            switch (settingMode.value)
             {
             case SETTING_DATE:
                 entriesToEdit = 3;
@@ -96,255 +185,140 @@ void HMI::display()
             case SETTING_TEMP:
                 entriesToEdit = 1;
                 break;
-            default:
+            case SETTING_CONTRAST:
+                entriesToEdit = 1;
+                displayContrast();
                 break;
-            }
-            displayCurrentState();
-        }
-        if (msg.id == EDIT_SETTING_PRESSED)
-        {
-            switch (settingState)
-            {
-            case SETTING_DATE:
-                settingState = SETTING_TIME;
-                ESP_LOGI("BTN", "Setting Mode State: Time");
-                break;
-            case SETTING_TIME:
-                settingState = SETTING_TEMP;
-                ESP_LOGI("BTN", "Setting Mode State: Temp");
-                break;
-            case SETTING_TEMP:
-                settingState = SETTING_DATE;
-                ESP_LOGI("BTN", "Setting Mode State: Date");
+            case SETTING_BACKLIGHT:
+                entriesToEdit = 1;
+                displayBacklight();
                 break;
             default:
                 break;
             }
             displayCurrentState();
         }
-    }
-}
-
-void HMI::editHour(bool increase)
-{
-    dateTime.hour = increase ? dateTime.hour + 1 : dateTime.hour - 1;
-    if (dateTime.hour > 23)
-        dateTime.hour = 0;
-    else if (dateTime.hour == 0)
-        dateTime.hour = 23;
-    lcd.SetCursor(1, 0);
-    ESP_LOGI("HMI", "Hour %d", dateTime.hour);
-    lcd.WriteDigit(dateTime.hour / 10);
-    lcd.WriteDigit(dateTime.hour % 10);
-}
-
-void HMI::editMinute(bool increase)
-{
-    dateTime.minute = increase ? dateTime.minute + 1 : dateTime.minute - 1;
-    if (dateTime.minute > 59)
-        dateTime.minute = 0;
-    else if (dateTime.minute == 0)
-        dateTime.minute = 59;
-    lcd.SetCursor(1, 3);
-    ESP_LOGI("HMI", "Minute %d", dateTime.minute);
-    lcd.WriteDigit(dateTime.minute / 10);
-    lcd.WriteDigit(dateTime.minute % 10);
-}
-
-void HMI::editSecond(bool increase)
-{
-    dateTime.second = increase ? dateTime.second + 1 : dateTime.second - 1;
-    if (dateTime.second > 59)
-        dateTime.second = 0;
-    else if (dateTime.second == 0)
-        dateTime.second = 59;
-    lcd.SetCursor(1, 6);
-    ESP_LOGI("HMI", "Second %d", dateTime.second);
-    lcd.WriteDigit(dateTime.second / 10);
-    lcd.WriteDigit(dateTime.second % 10);
-}
-
-void HMI::editingTime()
-{
-    COMMAND_MESSAGE msg;
-    if (recieveButtonCommand(&msg))
-    {
-        if (entriesToEdit == 3)
+        else if (msg.id == EDIT_SETTING_PRESSED)
         {
-            if (msg.id == UP_PRESSED)
+            static bool displayActive = true;
+            if (displayActive)
             {
-                editHour(true);
+                lcd.NoDisplay();
+                lcd.SetBackLightFast(0, 0, 0);
             }
-            else if (msg.id == DOWN_PRESSED)
+            else
             {
-                editHour(false);
+                lcd.Display();
+                int index = backlightSetting.value;
+                uint8_t r = backLightValues[index].r;
+                uint8_t g = backLightValues[index].g;
+                uint8_t b = backLightValues[index].b;
+                setBackLight(r, g, b);
             }
-            else if (msg.id == EDIT_MODE_PRESSED)
-            {
-                --entriesToEdit;
-                setHours24Mode(dateTime.hour);
-            }
+            displayActive = !displayActive;
         }
-        else if (entriesToEdit == 2)
+        else if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {
-            if (msg.id == UP_PRESSED)
-            {
-                editMinute(true);
-            }
-            else if (msg.id == DOWN_PRESSED)
-            {
-                editMinute(false);
-            }
-            else if (msg.id == EDIT_MODE_PRESSED)
-            {
-                --entriesToEdit;
-                setMinutes(dateTime.minute);
-            }
-        }
-        else if (entriesToEdit == 1)
-        {
-            if (msg.id == UP_PRESSED)
-            {
-                editSecond(true);
-            }
-            else if (msg.id == DOWN_PRESSED)
-            {
-                editSecond(false);
-            }
-            else if (msg.id == EDIT_MODE_PRESSED)
-            {
-                displayState = DISPLAYING;
-                displayCurrentState();
-                setSeconds(dateTime.second);
-            }
+            settingMode.adjust(msg.id == UP_PRESSED);
+            displayCurrentState();
         }
     }
 }
 
-void HMI::editMonth(bool increase)
+void HMI::displayDate()
 {
-    dateTime.month = increase ? dateTime.month + 1 : dateTime.month - 1;
-    if (dateTime.month > 12)
-        dateTime.month = 1;
-    else if (dateTime.month == 0)
-        dateTime.month = 12;
-    lcd.SetCursor(0, 0);
-    ESP_LOGI("HMI", "Month %d", dateTime.month);
-    lcd.WriteDigit(dateTime.month / 10);
-    lcd.WriteDigit(dateTime.month % 10);
+    // Date Update
+    snprintf(dateString, DateStringSize, "%02d/%02d/%d",
+             (uint8_t)dateSetting.month.value,
+             (uint8_t)dateSetting.dayOfMonth.value,
+             (uint16_t)dateSetting.year.value + 2000);
+    lcd.SetCursor(dateRow, dateCol);
+    lcd.WriteCharacters(dateString, 10);
 }
 
-void HMI::editDayOfMonth(bool increase)
+void HMI::displayTime()
 {
-
-    dateTime.dayofMonth = increase ? dateTime.dayofMonth + 1 : dateTime.dayofMonth - 1;
-    uint8_t maxDaysOfMonth = calculateMaxDayOfMonth(dateTime.month, dateTime.year);
-    if (dateTime.dayofMonth > maxDaysOfMonth)
-        dateTime.dayofMonth = 1;
-    else if (dateTime.dayofMonth == 0)
-        dateTime.dayofMonth = maxDaysOfMonth;
-    lcd.SetCursor(0, 3);
-    ESP_LOGI("HMI", "Day Of Month %d", dateTime.dayofMonth);
-    lcd.WriteDigit(dateTime.dayofMonth / 10);
-    lcd.WriteDigit(dateTime.dayofMonth % 10);
-}
-
-void HMI::editYear(bool increase)
-{
-    dateTime.year = increase ? dateTime.year + 1 : dateTime.year - 1;
-    if (dateTime.year == 0)
-        dateTime.year = 0;
-    lcd.SetCursor(0, 6);
-    ESP_LOGI("HMI", "Year %d", dateTime.year);
-    lcd.WriteDigit(2);
-    lcd.WriteDigit(0);
-    lcd.WriteDigit(dateTime.year / 10);
-    lcd.WriteDigit(dateTime.year % 10);
-}
-
-void HMI::editingDate()
-{
-    COMMAND_MESSAGE msg;
-    if (recieveButtonCommand(&msg))
+    // Time update
+    lcd.SetCursor(timeRow, timeCol);
+    if (hour12_not24)
     {
-        if (entriesToEdit == 3)
-        {
-            if (msg.id == UP_PRESSED)
-            {
-                editMonth(true);
-            }
-            else if (msg.id == DOWN_PRESSED)
-            {
-                editMonth(false);
-            }
-            else if (msg.id == EDIT_MODE_PRESSED)
-            {
-                --entriesToEdit;
-                setMonth(dateTime.month);
-            }
-        }
-        else if (entriesToEdit == 2)
-        {
-            if (msg.id == UP_PRESSED)
-            {
-                editDayOfMonth(true);
-            }
-            else if (msg.id == DOWN_PRESSED)
-            {
-                editDayOfMonth(false);
-            }
-            else if (msg.id == EDIT_MODE_PRESSED)
-            {
-                --entriesToEdit;
-                setDayOfMonth(dateTime.dayofMonth);
-            }
-        }
-        else if (entriesToEdit == 1)
-        {
-            if (msg.id == UP_PRESSED)
-            {
-                editYear(true);
-            }
-            else if (msg.id == DOWN_PRESSED)
-            {
-                editYear(false);
-            }
-            else if (msg.id == EDIT_MODE_PRESSED)
-            {
-                displayState = DISPLAYING;
-                displayCurrentState();
-                setYear(dateTime.year);
-            }
-        }
-    }
-}
-
-void HMI::changeTemp()
-{
-    displayTempF_notC = !displayTempF_notC;
-    ESP_LOGI("HMI", "Changed Tempearture Display Units");
-    displayState = DISPLAYING;
-    lcd.ClearRow(2);
-    std::stringstream ss3;
-    if (displayTempF_notC)
-    {
-        ss3 << std::setprecision(5) << temperatureF << DEGREE_SYMBOL << "F";
+        snprintf(timeString, TimeStringSize, "%02d:%02d:%02d %s",
+                 (uint8_t)timeSetting.hour.value,
+                 (uint8_t)timeSetting.minute.value,
+                 (uint8_t)timeSetting.second.value,
+                 (PM_notAM ? "PM" : "AM"));
+        lcd.WriteCharacters(timeString, 11);
     }
     else
     {
-        ss3 << std::setprecision(5) << temperatureC << DEGREE_SYMBOL << "C";
+        snprintf(timeString, TimeStringSize, "%02d:%02d:%02d",
+                 timeSetting.hour.value,
+                 timeSetting.minute.value,
+                 timeSetting.second.value);
+        lcd.WriteCharacters(timeString, 8);
+    }
+}
+
+void HMI::displayTemperature()
+{
+    static char tempString[TempStringSize];
+    lcd.SetCursor(tempRow, tempCol);
+    if (tempSetting.value)
+    {
+        if (temperatureF > 100)
+            snprintf(tempString, TempStringSize, "%3.2f%cF", temperatureF, DEGREE_SYMBOL);
+        else
+            snprintf(tempString, TempStringSize, "%2.3f%cF", temperatureF, DEGREE_SYMBOL);
+    }
+    else
+    {
+        snprintf(tempString, TempStringSize, "%2.3f%cC", temperatureC, DEGREE_SYMBOL);
     }
 
-    std::string logtemp = ss3.str();
-    lcd.SetCursor(2, 0);
-    lcd.WriteCharacters(logtemp.c_str(), logtemp.length());
+    lcd.WriteCharacters(tempString, 8);
+}
 
+void HMI::displayCurrentState()
+{
+    lcd.SetCursor(setnRow, setnCol);
+    switch (displayState)
+    {
+    case DISPLAYING:
+        lcd.WriteCharacters("DISP ", 5);
+        break;
+    case EDITING:
+        lcd.WriteCharacters("EDIT ", 5);
+        break;
+    }
+    lcd.WriteCharacters("SETN: ", 6);
+    lcd.WriteCharacters(settingNames[settingMode.value], 4);
+}
+
+void HMI::updateDisplay()
+{
+    displayDate();
+    displayTime();
+    displayTemperature();
     displayCurrentState();
 }
 
-void HMI::editing()
+void HMI::displayContrast()
 {
-    switch (settingState)
+    lcd.SetCursor(altSetnRow, altSetnCol);
+    snprintf(contrastString, contrastStringSize, "Contrast: %3d", contrastSetting.value);
+    lcd.WriteCharacters(contrastString, contrastStringSize - 1);
+}
+
+void HMI::displayBacklight()
+{
+    lcd.SetCursor(altSetnRow, altSetnCol);
+    snprintf(backlightString, backlightStringSize, "Backlight: %s", LCD_BCKL_COLORS[backlightSetting.value]);
+    lcd.WriteCharacters(backlightString, backlightStringSize - 1);
+}
+
+void HMI::editMode()
+{
+    switch (settingMode.value)
     {
     case SETTING_DATE:
         editingDate();
@@ -355,81 +329,145 @@ void HMI::editing()
     case SETTING_TEMP:
         changeTemp();
         break;
+    case SETTING_CONTRAST:
+        editContrast();
+        break;
+    case SETTING_BACKLIGHT:
+        editBackLight();
+        break;
     default:
         break;
     }
 }
 
-void HMI::update()
+void HMI::editingDate()
 {
-
-    // Date Update
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(2) << (int)dateTime.month << "/";
-    ss << std::setfill('0') << std::setw(2) << (int)dateTime.dayofMonth << "/";
-    ss << (int)(dateTime.year + 2000);
-    std::string logdate = ss.str();
-    lcd.SetCursor(0, 0);
-    lcd.WriteCharacters(logdate.c_str(), logdate.length());
-
-    // Time update
-    std::stringstream ss2;
-    ss2 << std::setfill('0') << std::setw(2) << (int)dateTime.hour << ":";
-    ss2 << std::setfill('0') << std::setw(2) << (int)dateTime.minute << ":";
-    ss2 << std::setfill('0') << std::setw(2) << (int)dateTime.second;
-    if (dateTime.hour12_not24)
+    COMMAND_MESSAGE msg;
+    if (recieveButtonCommand(&msg))
     {
-        ss2 << " " << (dateTime.PM_notAM ? "PM" : "AM");
+        if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
+        {
+            bool increase = msg.id == UP_PRESSED;
+            if (entriesToEdit == 3)
+            {
+                dateSetting.month.adjust(increase);
+            }
+            else if (entriesToEdit == 2)
+            {
+                dateSetting.dayOfMonth.max_value = calculateMaxDayOfMonth(dateSetting.month.value, dateSetting.year.value);
+                dateSetting.dayOfMonth.adjust(increase);
+            }
+            else if (entriesToEdit == 1)
+            {
+                dateSetting.year.adjust(increase);
+            }
+            displayDate();
+        }
+        else if (msg.id == EDIT_MODE_PRESSED)
+        {
+            entriesToEdit--;
+            if (entriesToEdit == 0)
+            {
+                setDate(dateSetting.dayOfMonth.value, dateSetting.month.value, dateSetting.year.value);
+                displayState = DISPLAYING;
+                displayCurrentState();
+            }
+        }
     }
-    std::string logtime = ss2.str();
-    lcd.SetCursor(1, 0);
-    lcd.WriteCharacters(logtime.c_str(), logtime.length());
+}
 
-    std::stringstream ss3;
-    if (displayTempF_notC)
+void HMI::editingTime()
+{
+    COMMAND_MESSAGE msg;
+    if (recieveButtonCommand(&msg))
     {
-        ss3 << std::setprecision(5) << temperatureF << DEGREE_SYMBOL << "F";
+        if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
+        {
+            bool increase = msg.id == UP_PRESSED;
+            if (entriesToEdit == 3)
+            {
+                timeSetting.hour.adjust(increase);
+            }
+            else if (entriesToEdit == 2)
+            {
+                timeSetting.minute.adjust(increase);
+            }
+            else if (entriesToEdit == 1)
+            {
+                timeSetting.second.adjust(increase);
+            }
+            displayTime();
+        }
+        else if (msg.id == EDIT_MODE_PRESSED)
+        {
+            entriesToEdit--;
+            if (entriesToEdit == 0)
+            {
+                setTime(timeSetting.hour.value, timeSetting.minute.value, timeSetting.second.value);
+                displayState = DISPLAYING;
+                displayCurrentState();
+            }
+        }
     }
-    else
-    {
-        ss3 << std::setprecision(5) << temperatureC << DEGREE_SYMBOL << "C";
-    }
+}
 
-    std::string logtemp = ss3.str();
-    lcd.SetCursor(2, 0);
-    lcd.WriteCharacters(logtemp.c_str(), logtemp.length());
-
+void HMI::changeTemp()
+{
+    tempSetting.adjust(!tempSetting.value);
+    displayState = DISPLAYING;
+    displayTemperature();
     displayCurrentState();
 }
 
-void HMI::process()
+void HMI::editContrast()
 {
-
-    switch (displayState)
+    COMMAND_MESSAGE msg;
+    if (recieveButtonCommand(&msg))
     {
-    case DISPLAYING:
-        display();
-        break;
-    case EDITING:
-        editing();
-        break;
-    default:
-        break;
+        if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
+        {
+            bool increase = msg.id == UP_PRESSED;
+            contrastSetting.adjust(increase);
+            displayContrast();
+        }
+        else if (msg.id == EDIT_MODE_PRESSED)
+        {
+            entriesToEdit--;
+            if (entriesToEdit == 0)
+            {
+                setContrast(contrastSetting.value);
+                displayState = DISPLAYING;
+                lcd.ClearRow(3);
+                displayCurrentState();
+            }
+        }
     }
 }
-
-void HMI::setDisplayTemperature(float temperatureF, float temperatureC)
+void HMI::editBackLight()
 {
-    this->temperatureF = temperatureF;
-    this->temperatureC = temperatureC;
-}
-
-void HMI::setDisplayDateTime(DATE_TIME &dateTime)
-{
-    this->dateTime = dateTime;
-}
-
-HMIState HMI::getCurrentState()
-{
-    return displayState;
+    COMMAND_MESSAGE msg;
+    if (recieveButtonCommand(&msg))
+    {
+        if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
+        {
+            bool increase = msg.id == UP_PRESSED;
+            backlightSetting.adjust(increase);
+            displayBacklight();
+        }
+        else if (msg.id == EDIT_MODE_PRESSED)
+        {
+            entriesToEdit--;
+            if (entriesToEdit == 0)
+            {
+                int index = backlightSetting.value;
+                uint8_t r = backLightValues[index].r;
+                uint8_t g = backLightValues[index].g;
+                uint8_t b = backLightValues[index].b;
+                setBackLight(r, g, b);
+                displayState = DISPLAYING;
+                lcd.ClearRow(3);
+                displayCurrentState();
+            }
+        }
+    }
 }
