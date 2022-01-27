@@ -25,6 +25,7 @@ enum COMMANDS
     LCD_SET_BACKLIGHT,
     LCD_CLEAR_DISPLAY,
     LCD_DISPLAY_UPDATE,
+    LCD_RESET,
     EDIT_SETTING_PRESSED,
     EDIT_MODE_PRESSED,
     DOWN_PRESSED,
@@ -42,6 +43,7 @@ void setContrast(uint8_t contrast);
 void setBackLight(uint8_t r, uint8_t g, uint8_t b);
 void clearDisplay();
 void updateDisplay();
+void resetDisplay();
 
 bool recieveLCDCommand(COMMAND_MESSAGE *msg);
 

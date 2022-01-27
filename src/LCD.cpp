@@ -52,6 +52,12 @@ void LCD::Begin()
     delay(50);
 }
 
+void LCD::Reset()
+{
+    uart.ToggleRTS();
+}
+
+
 void LCD::Clear()
 {
     Command(CLEAR_COMMAND);

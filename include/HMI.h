@@ -120,4 +120,5 @@ public:
     void setDisplayTemperature(float temperatureF, float temperatureC);
     void setDisplayDateTime(DATE_TIME &dateTime);
     HMIState getCurrentState();
+    void Reset();
 };

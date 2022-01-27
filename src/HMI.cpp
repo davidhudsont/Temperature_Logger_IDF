@@ -93,6 +93,12 @@ HMI::HMI()
     backLightValues[5] = {0, 0, 0};
 }
 
+void HMI::Reset()
+{
+    lcd.Reset();
+}
+
+
 void HMI::process()
 {
 
@@ -165,6 +171,9 @@ void HMI::displayMode()
             break;
         case LCD_DISPLAY_UPDATE:
             updateDisplay();
+            break;
+        case LCD_RESET:
+            resetDisplay();
             break;
         }
     }

@@ -273,6 +273,7 @@ static struct
     struct arg_int *contrast;
     struct arg_int *backlight;
     struct arg_lit *clear;
+    struct arg_lit *reset;
     struct arg_end *end;
 } lcd_args;
 
@@ -338,6 +339,11 @@ static int lcd(int argc, char **argv)
         ESP_LOGI("LCD", "Clear Display");
         clearDisplay();
     }
+    else if (lcd_args.reset->count)
+    {
+        ESP_LOGI("LCD", "Reset Display");
+        resetDisplay();
+    }
 
     return 0;
 }
@@ -348,7 +354,8 @@ static void register_lcd_command(void)
     lcd_args.display_toggle = arg_int0("d", NULL, "<bool>", "Turn Display On/Off");
     lcd_args.contrast = arg_int0("c", NULL, "<0-255>", "Set the Contrast");
     lcd_args.backlight = arg_intn("b", NULL, "<0-255>r, <0-255>g, <0-255>b", 0, 3, "Set the backlight rgb");
-    lcd_args.clear = arg_lit0("r", NULL, "Clear the Display");
+    lcd_args.clear = arg_lit0("c", NULL, "Clear the Display");
+    lcd_args.reset = arg_lit0("r", NULL, "Reset the Display");
     lcd_args.end = arg_end(2);
 
     const esp_console_cmd_t cmd = {
