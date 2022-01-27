@@ -68,6 +68,8 @@ private:
 
 public:
     void Begin();
+    // Reset LCD DTR Pin
+    void Reset();
 
     // Clear the screen of characters
     void Clear();

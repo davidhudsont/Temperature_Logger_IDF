@@ -33,7 +33,7 @@ namespace BSP
 
         uart_driver_install(m_port, BUFFER_SIZE, 0, 0, NULL, 0);
         uart_param_config(m_port, &m_config);
-        uart_set_pin(m_port, m_tx_pin, m_rx_pin, UART_RTS, UART_CTS);
+        uart_set_pin(m_port, m_tx_pin, m_rx_pin, GPIO_NUM_33, UART_CTS);
     }
 
     /**
@@ -81,4 +81,12 @@ namespace BSP
     {
         uart_get_buffered_data_len(m_port, len);
     }
+
+    void UART::ToggleRTS()
+    {
+        uart_set_rts(m_port, 0);
+        vTaskDelay(300 / portTICK_PERIOD_MS);
+        uart_set_rts(m_port, 1);
+    }
+
 }

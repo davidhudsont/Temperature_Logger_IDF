@@ -36,6 +36,8 @@ namespace BSP
         void Flush();
 
         void GetBufferedDataLength(size_t *len);
+
+        void ToggleRTS();
     };
 
 }

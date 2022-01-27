@@ -37,6 +37,7 @@ void LCD::EndTransmit()
 void LCD::Begin()
 {
     uart.Setup(9600, UART2_TX_PIN_NUM, UART2_RX_PIN_NUM, UART_NUM_2);
+    uart.ToggleRTS();
 
     delay(20);
 
@@ -50,6 +51,12 @@ void LCD::Begin()
     EndTransmit();
     delay(50);
 }
+
+void LCD::Reset()
+{
+    uart.ToggleRTS();
+}
+
 
 void LCD::Clear()
 {
