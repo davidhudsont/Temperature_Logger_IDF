@@ -14,6 +14,7 @@
 #include "freertos/task.h"
 #include "linenoise/linenoise.h"
 #include "sdkconfig.h"
+#include "esp_timer.h"
 
 // User Headers
 #include "Console.h"
@@ -24,6 +25,7 @@
 #include "LCD.h"
 #include "SystemTasks.h"
 #include "TMP102.h"
+#include "Speaker.h"
 
 static SemaphoreHandle_t alarm_semiphore;
 static SemaphoreHandle_t lcd_semiphore;
@@ -36,6 +38,7 @@ static void tmp102_task(void *pvParameter);
 static void rtc_task(void *pvParameter);
 static void button_task(void *pvParameter);
 static void hmi_task(void *pvParameter);
+static void speaker_task(void *pvParameter);
 
 void CreateSemaphores(void)
 {
@@ -57,11 +60,12 @@ void CreateTasks(void)
 {
     gpio_install_isr_service(0);
     // Larger number equals higher priority
-    xTaskCreate(&rtc_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
-    xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
+    // xTaskCreate(&rtc_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
+    // xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
-    xTaskCreate(&hmi_task, "HMI Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
-    xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
+    // xTaskCreate(&hmi_task, "HMI Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
+    // xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
+    xTaskCreate(&speaker_task, "Speaker_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
 }
 
 void PowerOnTest(RTCDS3234 &rtc)
@@ -326,4 +330,65 @@ static void hmi_task(void *pvParameter)
         }
         hmi.process();
     }
+}
+
+
+static SemaphoreHandle_t speaker_semaphore;
+
+static void periodic_cb(void *param)
+{
+    xSemaphoreGive(speaker_semaphore);
+}
+
+static void speaker_task(void *pvParameter)
+{
+    Button a = Button(GPIO_NUM_5);
+    Button b = Button(GPIO_NUM_15);
+    Speaker s = Speaker(GPIO_NUM_17);
+    speaker_semaphore = xSemaphoreCreateBinary();
+    static int sound_on = false;
+
+    const esp_timer_create_args_t timer_config = {
+        .callback = &periodic_cb,
+        .arg = (void *)0,
+        .dispatch_method = (esp_timer_dispatch_t)0,
+        .name = "Periodic",
+    };
+
+    esp_timer_handle_t periodic_timer;
+    ESP_ERROR_CHECK(esp_timer_create(&timer_config, &periodic_timer));
+
+    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 1000000));
+
+    while (1)
+    {
+        if (xSemaphoreTake(speaker_semaphore, 10))
+        {
+            if (sound_on)
+            {
+                s.PauseSound();
+                ESP_LOGI("SPKR","PAUSE Sound");
+                sound_on = false;
+            }
+            else
+            {
+                s.PlaySound();
+                ESP_LOGI("SPKR","PLAY Sound");
+                sound_on = true;
+            }
+        }
+        if (a)
+        {
+            ESP_LOGI("SPKR", "A button was pressed Turn Speaker On");
+            s.SetPWM(8191/2);
+        }
+        if (b)
+        {
+            ESP_LOGI("SPKR", "B button was pressed Turn Speaker Off");
+            s.SetPWM(0);
+        }
+        /* code */
+        delay(100);
+    }
+    
 }
