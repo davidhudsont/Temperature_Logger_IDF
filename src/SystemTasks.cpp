@@ -29,7 +29,6 @@
 
 static SemaphoreHandle_t alarm_semiphore;
 static SemaphoreHandle_t lcd_semiphore;
-static QueueHandle_t alarm_queue;
 
 static DATE_TIME dateTime;
 static float temperatureF;
@@ -45,13 +44,12 @@ void CreateSemaphores(void)
 {
     alarm_semiphore = xSemaphoreCreateBinary();
     lcd_semiphore = xSemaphoreCreateBinary();
-    alarm_queue = xQueueCreate(5, sizeof(char));
 }
 
 /**
  * @brief Delays a task for the passed
  *        in parameter time_ms in milliseconds
- * @param time_ms 
+ * @param time_ms
  */
 void delay(uint32_t time_ms)
 {
@@ -140,7 +138,7 @@ static void rtc_task(void *pvParameter)
                 std::string logdate = rtc.DateToString();
                 std::string logtime = rtc.TimeToString();
                 ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
-                xQueueSend(alarm_queue, (void*)'S', 10);
+                setAlarm(true);
             }
             if (alarm2_flag)
             {
@@ -335,75 +333,37 @@ static void hmi_task(void *pvParameter)
     }
 }
 
-
-static SemaphoreHandle_t speaker_semaphore;
-
-static void periodic_cb(void *param)
-{
-    xSemaphoreGive(speaker_semaphore);
-}
-
 static void speaker_task(void *pvParameter)
 {
     Button a = Button(GPIO_NUM_5);
     Button b = Button(GPIO_NUM_15);
-    Speaker s = Speaker(GPIO_NUM_17);
-    speaker_semaphore = xSemaphoreCreateBinary();
-    static int sound_on = false;
-
-    const esp_timer_create_args_t timer_config = {
-        .callback = &periodic_cb,
-        .arg = (void *)0,
-        .dispatch_method = (esp_timer_dispatch_t)0,
-        .name = "Periodic",
-    };
-
-    esp_timer_handle_t periodic_timer;
-    ESP_ERROR_CHECK(esp_timer_create(&timer_config, &periodic_timer));
-
-    // ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 1000000));
+    AlarmSpeaker s = AlarmSpeaker(GPIO_NUM_17);
 
     while (1)
     {
-        char msg;
-        if (xQueueReceive(alarm_queue, &msg, 10))
+        COMMAND_MESSAGE cmd_msg;
+        if (recieveAlarmCommand(&cmd_msg))
         {
-            if (msg == 'S')
+            if (cmd_msg.arg1)
             {
-                ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 1000000));
-            }
-            else if (msg == 'D')
-            {
-                ESP_ERROR_CHECK(esp_timer_stop(periodic_timer));
-            }
-        }
-        if (xSemaphoreTake(speaker_semaphore, 10))
-        {
-            if (sound_on)
-            {
-                s.PauseSound();
-                ESP_LOGI("SPKR","PAUSE Sound");
-                sound_on = false;
+                s.StartAlarm();
             }
             else
             {
-                s.PlaySound();
-                ESP_LOGI("SPKR","PLAY Sound");
-                sound_on = true;
+                s.StopAlarm();
             }
         }
+        s.ProcessAlarm();
         if (a)
         {
-            ESP_LOGI("SPKR", "A button was pressed Turn Speaker On");
-            s.SetPWM(8191/2);
+            ESP_LOGI("SPKR", "A button was pressed Turn Speaker Volume at 50");
+            s.SetPWM(8191 / 2);
         }
         if (b)
         {
-            ESP_LOGI("SPKR", "B button was pressed Turn Speaker Off");
+            ESP_LOGI("SPKR", "B button was pressed Turn Speaker Volume at 0");
             s.SetPWM(0);
         }
-        /* code */
         delay(100);
     }
-    
 }
