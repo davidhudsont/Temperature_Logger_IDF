@@ -29,6 +29,7 @@
 
 static SemaphoreHandle_t alarm_semiphore;
 static SemaphoreHandle_t lcd_semiphore;
+static QueueHandle_t alarm_queue;
 
 static DATE_TIME dateTime;
 static float temperatureF;
@@ -44,6 +45,7 @@ void CreateSemaphores(void)
 {
     alarm_semiphore = xSemaphoreCreateBinary();
     lcd_semiphore = xSemaphoreCreateBinary();
+    alarm_queue = xQueueCreate(5, sizeof(char));
 }
 
 /**
@@ -138,6 +140,7 @@ static void rtc_task(void *pvParameter)
                 std::string logdate = rtc.DateToString();
                 std::string logtime = rtc.TimeToString();
                 ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
+                xQueueSend(alarm_queue, (void*)'S', 10);
             }
             if (alarm2_flag)
             {
@@ -358,10 +361,22 @@ static void speaker_task(void *pvParameter)
     esp_timer_handle_t periodic_timer;
     ESP_ERROR_CHECK(esp_timer_create(&timer_config, &periodic_timer));
 
-    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 1000000));
+    // ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 1000000));
 
     while (1)
     {
+        char msg;
+        if (xQueueReceive(alarm_queue, &msg, 10))
+        {
+            if (msg == 'S')
+            {
+                ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 1000000));
+            }
+            else if (msg == 'D')
+            {
+                ESP_ERROR_CHECK(esp_timer_stop(periodic_timer));
+            }
+        }
         if (xSemaphoreTake(speaker_semaphore, 10))
         {
             if (sound_on)
