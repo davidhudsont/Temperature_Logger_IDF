@@ -31,6 +31,7 @@ enum COMMANDS
     DOWN_PRESSED,
     UP_PRESSED,
     ALARM_SET,
+    ALARM_FREQ,
 };
 
 // Temperature Commands
@@ -75,6 +76,6 @@ bool recieveButtonCommand(COMMAND_MESSAGE *msg);
 
 // Alarm Commands
 void setAlarm(bool on_off);
+void setFrequency(uint32_t freq_hz);
 
 bool recieveAlarmCommand(COMMAND_MESSAGE *msg);
-

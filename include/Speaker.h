@@ -12,14 +12,17 @@ private:
     /* data */
     bool is_timer_started;
     esp_timer_handle_t periodic_timer;
+    gpio_num_t pin;
 
 public:
     AlarmSpeaker();
     AlarmSpeaker(gpio_num_t pin);
+    void Init();
     void SetPWM(uint32_t duty);
     void PauseSound();
     void PlaySound();
     void StartAlarm();
     void StopAlarm();
     void ProcessAlarm();
+    void SetFrequency(uint32_t freq_hz);
 };

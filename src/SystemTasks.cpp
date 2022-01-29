@@ -338,19 +338,27 @@ static void speaker_task(void *pvParameter)
     Button a = Button(GPIO_NUM_5);
     Button b = Button(GPIO_NUM_15);
     AlarmSpeaker s = AlarmSpeaker(GPIO_NUM_17);
+    s.Init();
 
     while (1)
     {
         COMMAND_MESSAGE cmd_msg;
         if (recieveAlarmCommand(&cmd_msg))
         {
-            if (cmd_msg.arg1)
+            if (cmd_msg.id == ALARM_SET)
             {
-                s.StartAlarm();
+                if (cmd_msg.arg1)
+                {
+                    s.StartAlarm();
+                }
+                else
+                {
+                    s.StopAlarm();
+                }
             }
-            else
+            else if (cmd_msg.id == ALARM_FREQ)
             {
-                s.StopAlarm();
+                s.SetFrequency((uint32_t)cmd_msg.arg1);
             }
         }
         s.ProcessAlarm();

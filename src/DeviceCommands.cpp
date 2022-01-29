@@ -72,7 +72,6 @@ void resetDisplay()
     lcd_command_queue.Send(msg);
 }
 
-
 bool recieveLCDCommand(COMMAND_MESSAGE *msg)
 {
     return lcd_command_queue.Recieve(msg);
@@ -193,13 +192,20 @@ bool recieveButtonCommand(COMMAND_MESSAGE *msg)
     return button_command_queue.Recieve(msg);
 }
 
-
 // Alarm Commands
 void setAlarm(bool on_off)
 {
     COMMAND_MESSAGE msg;
     msg.id = ALARM_SET;
     msg.arg1 = on_off;
+    alarm_command_queue.Send(msg);
+}
+
+void setFrequency(uint32_t freq_hz)
+{
+    COMMAND_MESSAGE msg;
+    msg.id = ALARM_FREQ;
+    msg.arg1 = freq_hz;
     alarm_command_queue.Send(msg);
 }
 
