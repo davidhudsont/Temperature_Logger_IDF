@@ -30,6 +30,7 @@ enum COMMANDS
     EDIT_MODE_PRESSED,
     DOWN_PRESSED,
     UP_PRESSED,
+    ALARM_SET,
 };
 
 // Temperature Commands
@@ -71,3 +72,9 @@ void readDateTime();
 void buttonPressed(COMMANDS command);
 
 bool recieveButtonCommand(COMMAND_MESSAGE *msg);
+
+// Alarm Commands
+void setAlarm(bool on_off);
+
+bool recieveAlarmCommand(COMMAND_MESSAGE *msg);
+
