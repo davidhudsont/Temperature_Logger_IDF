@@ -374,6 +374,7 @@ static struct
 {
     struct arg_int *alarm_speaker_control;
     struct arg_int *alarm_frequency;
+    struct arg_int *alarm_duty_cycle;
     struct arg_end *end;
 } alarm_speaker_args;
 
@@ -407,6 +408,12 @@ static int alarm_speaker(int argc, char **argv)
         ESP_LOGI("ALARM", "Set Frequency to %dHz", freq_hz);
         setFrequency(freq_hz);
     }
+    if (alarm_speaker_args.alarm_duty_cycle->count)
+    {
+        uint32_t duty_cycle = alarm_speaker_args.alarm_duty_cycle->ival[0];
+        ESP_LOGI("ALARM", "Set Duty Cycle to %d", duty_cycle);
+        setDutyCycle(duty_cycle);
+    }
 
     return 0;
 }
@@ -416,6 +423,7 @@ static void register_alarm_command(void)
 
     alarm_speaker_args.alarm_speaker_control = arg_int0("s", NULL, "<bool>", "Turn alarm On/Off");
     alarm_speaker_args.alarm_frequency = arg_int0("f", NULL, "<int>", "Set Alarm Frequency");
+    alarm_speaker_args.alarm_duty_cycle = arg_int0("d", NULL, "<int>", "Set Alarm Duty Cycle");
     alarm_speaker_args.end = arg_end(2);
 
     const esp_console_cmd_t cmd = {

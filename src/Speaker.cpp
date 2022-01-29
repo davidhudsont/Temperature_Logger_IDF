@@ -68,13 +68,26 @@ void AlarmSpeaker::Init()
     ESP_ERROR_CHECK(esp_timer_create(&timer_config, &periodic_timer));
 }
 
-void AlarmSpeaker::SetPWM(uint32_t duty)
+void AlarmSpeaker::SetDutyCycle(uint32_t duty_cycle)
 {
     // Clamp to the MAXDUTYCYCLE
-    if (duty > MAXDUTYCYCLE)
-        duty = MAXDUTYCYCLE;
+    if (duty_cycle > MAXDUTYCYCLE)
+        duty_cycle = MAXDUTYCYCLE;
     // Set duty cycle
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty));
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty_cycle));
+    // Update duty to apply the new value
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+}
+
+void AlarmSpeaker::SetDutyCyclePercentage(uint32_t duty_cycle_percentage)
+{
+    // Clamp to the MAXDUTYCYCLE
+    if (duty_cycle_percentage > 100)
+        duty_cycle_percentage = 100;
+    float percentage = (float)duty_cycle_percentage / 100.0;
+    // Set duty cycle
+    uint32_t duty_cycle = (uint32_t)((float)MAXDUTYCYCLE * percentage);
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty_cycle));
     // Update duty to apply the new value
     ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
 }

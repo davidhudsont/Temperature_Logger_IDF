@@ -209,6 +209,14 @@ void setFrequency(uint32_t freq_hz)
     alarm_command_queue.Send(msg);
 }
 
+void setDutyCycle(uint32_t duty_cycle)
+{
+    COMMAND_MESSAGE msg;
+    msg.id = ALARM_DUTY_CYCLE;
+    msg.arg1 = duty_cycle;
+    alarm_command_queue.Send(msg);
+}
+
 bool recieveAlarmCommand(COMMAND_MESSAGE *msg)
 {
     return alarm_command_queue.Recieve(msg);

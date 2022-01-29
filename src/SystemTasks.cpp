@@ -360,17 +360,21 @@ static void speaker_task(void *pvParameter)
             {
                 s.SetFrequency((uint32_t)cmd_msg.arg1);
             }
+            else if (cmd_msg.id == ALARM_DUTY_CYCLE)
+            {
+                s.SetDutyCyclePercentage((uint32_t)cmd_msg.arg1);
+            }
         }
         s.ProcessAlarm();
         if (a)
         {
             ESP_LOGI("SPKR", "A button was pressed Turn Speaker Volume at 50");
-            s.SetPWM(65535 / 2);
+            s.SetDutyCycle(65535 / 2);
         }
         if (b)
         {
             ESP_LOGI("SPKR", "B button was pressed Turn Speaker Volume at 0");
-            s.SetPWM(0);
+            s.SetDutyCycle(0);
         }
         delay(100);
     }
