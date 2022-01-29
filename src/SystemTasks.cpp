@@ -335,10 +335,8 @@ static void hmi_task(void *pvParameter)
 
 static void speaker_task(void *pvParameter)
 {
-    Button a = Button(GPIO_NUM_5);
-    Button b = Button(GPIO_NUM_15);
-    AlarmSpeaker s = AlarmSpeaker(GPIO_NUM_17);
-    s.Init();
+    AlarmSpeaker alarm = AlarmSpeaker(GPIO_NUM_17);
+    alarm.Init();
 
     while (1)
     {
@@ -349,33 +347,23 @@ static void speaker_task(void *pvParameter)
             {
                 if (cmd_msg.arg1)
                 {
-                    s.StartAlarm();
+                    alarm.StartAlarm();
                 }
                 else
                 {
-                    s.StopAlarm();
+                    alarm.StopAlarm();
                 }
             }
             else if (cmd_msg.id == ALARM_FREQ)
             {
-                s.SetFrequency((uint32_t)cmd_msg.arg1);
+                alarm.SetFrequency((uint32_t)cmd_msg.arg1);
             }
             else if (cmd_msg.id == ALARM_DUTY_CYCLE)
             {
-                s.SetDutyCyclePercentage((uint32_t)cmd_msg.arg1);
+                alarm.SetDutyCyclePercentage((uint32_t)cmd_msg.arg1);
             }
         }
-        s.ProcessAlarm();
-        if (a)
-        {
-            ESP_LOGI("SPKR", "A button was pressed Turn Speaker Volume at 50");
-            s.SetDutyCycle(65535 / 2);
-        }
-        if (b)
-        {
-            ESP_LOGI("SPKR", "B button was pressed Turn Speaker Volume at 0");
-            s.SetDutyCycle(0);
-        }
+        alarm.ProcessAlarm();
         delay(100);
     }
 }
