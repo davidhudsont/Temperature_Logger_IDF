@@ -7,11 +7,11 @@ constexpr ledc_timer_t LEDC_TIMER = LEDC_TIMER_0;
 constexpr ledc_mode_t LEDC_MODE = LEDC_LOW_SPEED_MODE;
 constexpr gpio_num_t LEDC_OUTPUT_IO = GPIO_NUM_26; // Define the output GPIO
 constexpr ledc_channel_t LEDC_CHANNEL = LEDC_CHANNEL_0;
-constexpr ledc_timer_bit_t LEDC_DUTY_RES = LEDC_TIMER_13_BIT; // Set duty resolution to 13 bits
-constexpr int LEDC_DUTY = 2047;                               // Set duty to 50%. ((2 ** 13) - 1) * 50% = 4095
-constexpr int LEDC_FREQUENCY = 5000;                          // Frequency in Hertz. Set frequency at 5 kHz
+constexpr ledc_timer_bit_t LEDC_DUTY_RES = LEDC_TIMER_16_BIT; // Set duty resolution to 13 bits
+constexpr int LEDC_DUTY = 32768;                              // Set duty to 50%. ((2 ** 13) - 1) * 50% = 4095
+constexpr int LEDC_FREQUENCY = 1000;                          // Frequency in Hertz. Set frequency at 5 kHz
 
-constexpr int MAXDUTYCYCLE = 8191;
+constexpr int MAXDUTYCYCLE = 65535;
 
 static SemaphoreHandle_t speaker_semaphore;
 

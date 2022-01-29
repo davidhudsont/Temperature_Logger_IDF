@@ -365,7 +365,7 @@ static void speaker_task(void *pvParameter)
         if (a)
         {
             ESP_LOGI("SPKR", "A button was pressed Turn Speaker Volume at 50");
-            s.SetPWM(8191 / 2);
+            s.SetPWM(65535 / 2);
         }
         if (b)
         {
