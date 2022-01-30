@@ -98,7 +98,6 @@ void HMI::Reset()
     lcd.Reset();
 }
 
-
 void HMI::process()
 {
 
@@ -207,7 +206,7 @@ void HMI::displayMode()
             }
             displayCurrentState();
         }
-        else if (msg.id == EDIT_SETTING_PRESSED)
+        else if (msg.id == ALT_BTN_PRESSED)
         {
             static bool displayActive = true;
             if (displayActive)

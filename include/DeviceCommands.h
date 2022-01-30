@@ -26,10 +26,13 @@ enum COMMANDS
     LCD_CLEAR_DISPLAY,
     LCD_DISPLAY_UPDATE,
     LCD_RESET,
-    EDIT_SETTING_PRESSED,
+    ALT_BTN_PRESSED,
     EDIT_MODE_PRESSED,
     DOWN_PRESSED,
     UP_PRESSED,
+    ALARM_SET,
+    ALARM_FREQ,
+    ALARM_DUTY_CYCLE,
 };
 
 // Temperature Commands
@@ -71,3 +74,10 @@ void readDateTime();
 void buttonPressed(COMMANDS command);
 
 bool recieveButtonCommand(COMMAND_MESSAGE *msg);
+
+// Alarm Commands
+void setAlarm(bool on_off);
+void setFrequency(uint32_t freq_hz);
+void setDutyCycle(uint32_t duty_cycle);
+
+bool recieveAlarmCommand(COMMAND_MESSAGE *msg);

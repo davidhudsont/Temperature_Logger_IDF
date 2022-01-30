@@ -14,6 +14,7 @@
 #include "freertos/task.h"
 #include "linenoise/linenoise.h"
 #include "sdkconfig.h"
+#include "esp_timer.h"
 
 // User Headers
 #include "Console.h"
@@ -24,6 +25,7 @@
 #include "LCD.h"
 #include "SystemTasks.h"
 #include "TMP102.h"
+#include "Speaker.h"
 
 static SemaphoreHandle_t alarm_semiphore;
 static SemaphoreHandle_t lcd_semiphore;
@@ -36,6 +38,7 @@ static void tmp102_task(void *pvParameter);
 static void rtc_task(void *pvParameter);
 static void button_task(void *pvParameter);
 static void hmi_task(void *pvParameter);
+static void speaker_task(void *pvParameter);
 
 void CreateSemaphores(void)
 {
@@ -46,7 +49,7 @@ void CreateSemaphores(void)
 /**
  * @brief Delays a task for the passed
  *        in parameter time_ms in milliseconds
- * @param time_ms 
+ * @param time_ms
  */
 void delay(uint32_t time_ms)
 {
@@ -57,11 +60,12 @@ void CreateTasks(void)
 {
     gpio_install_isr_service(0);
     // Larger number equals higher priority
-    xTaskCreate(&rtc_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
-    xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
+    // xTaskCreate(&rtc_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
+    // xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
-    xTaskCreate(&hmi_task, "HMI Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
-    xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
+    // xTaskCreate(&hmi_task, "HMI Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
+    // xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
+    xTaskCreate(&speaker_task, "Speaker_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
 }
 
 void PowerOnTest(RTCDS3234 &rtc)
@@ -134,6 +138,7 @@ static void rtc_task(void *pvParameter)
                 std::string logdate = rtc.DateToString();
                 std::string logtime = rtc.TimeToString();
                 ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
+                setAlarm(true);
             }
             if (alarm2_flag)
             {
@@ -279,16 +284,16 @@ static void tmp102_task(void *pvParameter)
 static void button_task(void *pvParameter)
 {
     ESP_LOGI("BTN", "Starting Button Interface");
-    Button editSettingButton(GPIO_NUM_13);
+    Button altButton(GPIO_NUM_13);
     Button editModeButton(GPIO_NUM_12);
     Button downButton(GPIO_NUM_14);
     Button upButton(GPIO_NUM_27);
     while (true)
     {
-        if (editSettingButton)
+        if (altButton)
         {
-            ESP_LOGI("BTN", "Edit Setting Button Pressed");
-            buttonPressed(EDIT_SETTING_PRESSED);
+            ESP_LOGI("BTN", "Alt Button Pressed");
+            buttonPressed(ALT_BTN_PRESSED);
         }
         else if (editModeButton)
         {
@@ -325,5 +330,46 @@ static void hmi_task(void *pvParameter)
             updateDisplay();
         }
         hmi.process();
+    }
+}
+
+static void speaker_task(void *pvParameter)
+{
+    AlarmSpeaker alarm = AlarmSpeaker(GPIO_NUM_17);
+    alarm.Init();
+
+    while (1)
+    {
+        COMMAND_MESSAGE cmd_msg;
+        if (recieveAlarmCommand(&cmd_msg))
+        {
+            if (cmd_msg.id == ALARM_SET)
+            {
+                if (cmd_msg.arg1)
+                {
+                    alarm.StartAlarm();
+                }
+                else
+                {
+                    alarm.StopAlarm();
+                }
+            }
+            else if (cmd_msg.id == ALARM_FREQ)
+            {
+                alarm.SetFrequency((uint32_t)cmd_msg.arg1);
+            }
+            else if (cmd_msg.id == ALARM_DUTY_CYCLE)
+            {
+                alarm.SetDutyCyclePercentage((uint32_t)cmd_msg.arg1);
+            }
+        }
+        if (recieveButtonCommand(&cmd_msg))
+        {
+            if (cmd_msg.id == ALT_BTN_PRESSED)
+            {
+                alarm.StopAlarm();
+            }
+        }
+        delay(100);
     }
 }

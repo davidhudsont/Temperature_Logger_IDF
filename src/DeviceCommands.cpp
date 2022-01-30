@@ -5,6 +5,7 @@ static CommandQueue lcd_command_queue;
 static CommandQueue date_command_queue;
 static CommandQueue time_command_queue;
 static CommandQueue button_command_queue;
+static CommandQueue alarm_command_queue;
 
 void readTemperature(bool FahrenheitOrCelsius)
 {
@@ -70,7 +71,6 @@ void resetDisplay()
     msg.id = LCD_RESET;
     lcd_command_queue.Send(msg);
 }
-
 
 bool recieveLCDCommand(COMMAND_MESSAGE *msg)
 {
@@ -190,4 +190,34 @@ void buttonPressed(COMMANDS command)
 bool recieveButtonCommand(COMMAND_MESSAGE *msg)
 {
     return button_command_queue.Recieve(msg);
+}
+
+// Alarm Commands
+void setAlarm(bool on_off)
+{
+    COMMAND_MESSAGE msg;
+    msg.id = ALARM_SET;
+    msg.arg1 = on_off;
+    alarm_command_queue.Send(msg);
+}
+
+void setFrequency(uint32_t freq_hz)
+{
+    COMMAND_MESSAGE msg;
+    msg.id = ALARM_FREQ;
+    msg.arg1 = freq_hz;
+    alarm_command_queue.Send(msg);
+}
+
+void setDutyCycle(uint32_t duty_cycle)
+{
+    COMMAND_MESSAGE msg;
+    msg.id = ALARM_DUTY_CYCLE;
+    msg.arg1 = duty_cycle;
+    alarm_command_queue.Send(msg);
+}
+
+bool recieveAlarmCommand(COMMAND_MESSAGE *msg)
+{
+    return alarm_command_queue.Recieve(msg);
 }

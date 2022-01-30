@@ -13,13 +13,13 @@ Button::Button(gpio_num_t pin)
       lastButtonState(false)
 {
     gpio_set_direction(pin, GPIO_MODE_INPUT);
-    gpio_set_pull_mode(pin, GPIO_PULLDOWN_ONLY);
+    gpio_set_pull_mode(pin, GPIO_PULLUP_ONLY);
 }
 
 bool Button::Debounce()
 {
     bool ret = false;
-    int reading = gpio_get_level(pin);
+    int reading = !gpio_get_level(pin);
     // If the switch changed, due to noise or pressing:
     if (reading != lastButtonState)
     {
