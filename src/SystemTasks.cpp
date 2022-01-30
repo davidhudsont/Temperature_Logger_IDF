@@ -284,16 +284,16 @@ static void tmp102_task(void *pvParameter)
 static void button_task(void *pvParameter)
 {
     ESP_LOGI("BTN", "Starting Button Interface");
-    Button editSettingButton(GPIO_NUM_13);
+    Button altButton(GPIO_NUM_13);
     Button editModeButton(GPIO_NUM_12);
     Button downButton(GPIO_NUM_14);
     Button upButton(GPIO_NUM_27);
     while (true)
     {
-        if (editSettingButton)
+        if (altButton)
         {
-            ESP_LOGI("BTN", "Edit Setting Button Pressed");
-            buttonPressed(EDIT_SETTING_PRESSED);
+            ESP_LOGI("BTN", "Alt Button Pressed");
+            buttonPressed(ALT_BTN_PRESSED);
         }
         else if (editModeButton)
         {
@@ -361,6 +361,13 @@ static void speaker_task(void *pvParameter)
             else if (cmd_msg.id == ALARM_DUTY_CYCLE)
             {
                 alarm.SetDutyCyclePercentage((uint32_t)cmd_msg.arg1);
+            }
+        }
+        if (recieveButtonCommand(&cmd_msg))
+        {
+            if (cmd_msg.id == ALT_BTN_PRESSED)
+            {
+                alarm.StopAlarm();
             }
         }
         delay(100);
