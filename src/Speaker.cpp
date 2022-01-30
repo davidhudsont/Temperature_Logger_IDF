@@ -15,9 +15,29 @@ constexpr int MAXDUTYCYCLE = 65535;
 
 static SemaphoreHandle_t speaker_semaphore;
 
+static void pause_speaker()
+{
+    ledc_timer_pause(LEDC_MODE, LEDC_TIMER);
+}
+
+static void resume_speaker()
+{
+    ledc_timer_resume(LEDC_MODE, LEDC_TIMER);
+}
+
 static void periodic_cb(void *param)
 {
-    xSemaphoreGive(speaker_semaphore);
+    static bool sound_on = true;
+    if (sound_on)
+    {
+        pause_speaker();
+        sound_on = false;
+    }
+    else
+    {
+        resume_speaker();
+        sound_on = true;
+    }
 }
 
 AlarmSpeaker::AlarmSpeaker()
@@ -66,6 +86,7 @@ void AlarmSpeaker::Init()
     };
 
     ESP_ERROR_CHECK(esp_timer_create(&timer_config, &periodic_timer));
+    pause_speaker();
 }
 
 void AlarmSpeaker::SetDutyCycle(uint32_t duty_cycle)
@@ -92,21 +113,12 @@ void AlarmSpeaker::SetDutyCyclePercentage(uint32_t duty_cycle_percentage)
     ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
 }
 
-void AlarmSpeaker::PauseSound()
-{
-    ledc_timer_pause(LEDC_MODE, LEDC_TIMER);
-}
-
-void AlarmSpeaker::PlaySound()
-{
-    ledc_timer_resume(LEDC_MODE, LEDC_TIMER);
-}
-
 void AlarmSpeaker::StartAlarm()
 {
     if (!is_timer_started)
     {
         ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 1000000));
+        resume_speaker();
         is_timer_started = true;
     }
 }
@@ -116,25 +128,8 @@ void AlarmSpeaker::StopAlarm()
     if (is_timer_started)
     {
         ESP_ERROR_CHECK(esp_timer_stop(periodic_timer));
+        pause_speaker();
         is_timer_started = false;
-    }
-}
-
-void AlarmSpeaker::ProcessAlarm()
-{
-    static int sound_on = false;
-    if (xSemaphoreTake(speaker_semaphore, 10))
-    {
-        if (sound_on)
-        {
-            PauseSound();
-            sound_on = false;
-        }
-        else
-        {
-            PlaySound();
-            sound_on = true;
-        }
     }
 }
 

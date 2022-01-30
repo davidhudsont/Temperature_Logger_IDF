@@ -363,7 +363,6 @@ static void speaker_task(void *pvParameter)
                 alarm.SetDutyCyclePercentage((uint32_t)cmd_msg.arg1);
             }
         }
-        alarm.ProcessAlarm();
         delay(100);
     }
 }

@@ -18,11 +18,8 @@ public:
     AlarmSpeaker();
     AlarmSpeaker(gpio_num_t pin);
     void Init();
-    void PauseSound();
-    void PlaySound();
     void StartAlarm();
     void StopAlarm();
-    void ProcessAlarm();
     void SetFrequency(uint32_t freq_hz);
     void SetDutyCycle(uint32_t duty_cycle);
     void SetDutyCyclePercentage(uint32_t duty_cycle_percentage);
