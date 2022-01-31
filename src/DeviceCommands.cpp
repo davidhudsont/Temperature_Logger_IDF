@@ -7,6 +7,7 @@ static CommandQueue time_command_queue;
 static CommandQueue button_command_queue;
 static CommandQueue alarm_command_queue;
 
+// Temperature Commands
 void readTemperature(bool FahrenheitOrCelsius)
 {
     COMMAND_MESSAGE msg;
@@ -19,6 +20,7 @@ bool recieveTMPCommand(COMMAND_MESSAGE *msg)
     return tmp_command_queue.Recieve(msg);
 }
 
+// LCD Commands
 void displayOff()
 {
     COMMAND_MESSAGE msg;
@@ -77,6 +79,7 @@ bool recieveLCDCommand(COMMAND_MESSAGE *msg)
     return lcd_command_queue.Recieve(msg);
 }
 
+// Date Commands
 void setWeekDay(uint8_t weekday)
 {
     COMMAND_MESSAGE msg;
@@ -124,6 +127,7 @@ bool recieveDateCommand(COMMAND_MESSAGE *msg)
     return date_command_queue.Recieve(msg);
 }
 
+// Time Commands
 void setSeconds(uint8_t second)
 {
     COMMAND_MESSAGE msg;
