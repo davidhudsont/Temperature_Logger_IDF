@@ -3,9 +3,8 @@
 #include "stdint.h"
 #include "CommandQueue.h"
 
-enum COMMANDS
+enum RTC_COMMANDS
 {
-    EMPTY = -1,
     SET_SECONDS = 0,
     SET_MINUTES,
     SET_12HOURS,
@@ -17,8 +16,16 @@ enum COMMANDS
     SET_YEAR,
     SET_DATE,
     GET_DATETIME,
+};
+
+enum TMP_COMMANDS
+{
     GET_TEMPF,
     GET_TEMPC,
+};
+
+enum LCD_COMMANDS
+{
     LCD_DISPLAY_OFF,
     LCD_DISPLAY_ON,
     LCD_SET_CONTRAST,
@@ -26,10 +33,18 @@ enum COMMANDS
     LCD_CLEAR_DISPLAY,
     LCD_DISPLAY_UPDATE,
     LCD_RESET,
+};
+
+enum BTN_COMMANDS
+{
     ALT_BTN_PRESSED,
     EDIT_MODE_PRESSED,
     DOWN_PRESSED,
     UP_PRESSED,
+};
+
+enum ALARM_COMMANDS
+{
     ALARM_SET,
     ALARM_FREQ,
     ALARM_DUTY_CYCLE,
@@ -71,7 +86,7 @@ bool recieveTimeCommand(COMMAND_MESSAGE *msg);
 void readDateTime();
 
 // Button Tasks
-void buttonPressed(COMMANDS command);
+void buttonPressed(BTN_COMMANDS command);
 
 bool recieveButtonCommand(COMMAND_MESSAGE *msg);
 

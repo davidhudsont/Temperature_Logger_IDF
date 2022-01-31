@@ -7,7 +7,7 @@ static CommandQueue time_command_queue;
 static CommandQueue button_command_queue;
 static CommandQueue alarm_command_queue;
 
-static void sendCommand(CommandQueue &queue, COMMANDS id, int arg1 = 0, int arg2 = 0, int arg3 = 0)
+static void sendCommand(CommandQueue &queue, int id, int arg1 = 0, int arg2 = 0, int arg3 = 0)
 {
     COMMAND_MESSAGE msg;
     msg.id = id;
@@ -20,7 +20,7 @@ static void sendCommand(CommandQueue &queue, COMMANDS id, int arg1 = 0, int arg2
 // Temperature Commands
 void readTemperature(bool FahrenheitOrCelsius)
 {
-    COMMANDS id = FahrenheitOrCelsius ? GET_TEMPF : GET_TEMPC;
+    TMP_COMMANDS id = FahrenheitOrCelsius ? GET_TEMPF : GET_TEMPC;
     sendCommand(tmp_command_queue, id);
 }
 
@@ -138,7 +138,7 @@ void readDateTime()
 }
 
 // Button Tasks
-void buttonPressed(COMMANDS command)
+void buttonPressed(BTN_COMMANDS command)
 {
     sendCommand(button_command_queue, command);
 }
