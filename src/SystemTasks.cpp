@@ -60,12 +60,12 @@ void CreateTasks(void)
 {
     gpio_install_isr_service(0);
     // Larger number equals higher priority
-    // xTaskCreate(&rtc_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
-    // xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
+    xTaskCreate(&rtc_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
+    xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
     xTaskCreate(&console_task, "Console_Task", configMINIMAL_STACK_SIZE * 5, NULL, 7, NULL);
-    // xTaskCreate(&hmi_task, "HMI Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
-    // xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
-    xTaskCreate(&speaker_task, "Speaker_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
+    xTaskCreate(&hmi_task, "HMI Task", configMINIMAL_STACK_SIZE * 5, NULL, 3, NULL);
+    xTaskCreate(&button_task, "Button_Task", configMINIMAL_STACK_SIZE * 4, NULL, 8, NULL);
+    xTaskCreate(&speaker_task, "Speaker_Task", configMINIMAL_STACK_SIZE * 4, NULL, 3, NULL);
 }
 
 void PowerOnTest(RTCDS3234 &rtc)
