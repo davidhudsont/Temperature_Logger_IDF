@@ -172,7 +172,7 @@ void HMI::displayMode()
             updateDisplay();
             break;
         case LCD_RESET:
-            resetDisplay();
+            lcd.Reset();
             break;
         }
     }
