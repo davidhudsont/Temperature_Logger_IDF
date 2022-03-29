@@ -354,7 +354,7 @@ static void register_lcd_command(void)
 {
 
     lcd_args.display_toggle = arg_int0("d", NULL, "<bool>", "Turn Display On/Off");
-    lcd_args.contrast = arg_int0("c", NULL, "<0-255>", "Set the Contrast");
+    lcd_args.contrast = arg_int0("l", NULL, "<0-255>", "Set the Contrast");
     lcd_args.backlight = arg_intn("b", NULL, "<0-255>r, <0-255>g, <0-255>b", 0, 3, "Set the backlight rgb");
     lcd_args.clear = arg_lit0("c", NULL, "Clear the Display");
     lcd_args.reset = arg_lit0("r", NULL, "Reset the Display");
