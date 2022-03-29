@@ -335,7 +335,7 @@ static void hmi_task(void *pvParameter)
 
 static void speaker_task(void *pvParameter)
 {
-    AlarmSpeaker alarm = AlarmSpeaker(GPIO_NUM_17);
+    AlarmSpeaker alarm = AlarmSpeaker(GPIO_NUM_10);
     alarm.Init();
 
     while (1)
