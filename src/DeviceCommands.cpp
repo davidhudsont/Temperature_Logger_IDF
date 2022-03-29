@@ -11,9 +11,9 @@ static void sendCommand(CommandQueue &queue, int id, int arg1 = 0, int arg2 = 0,
 {
     COMMAND_MESSAGE msg;
     msg.id = id;
-    msg.arg1 = 0;
-    msg.arg2 = 0;
-    msg.arg3 = 0;
+    msg.arg1 = arg1;
+    msg.arg2 = arg2;
+    msg.arg3 = arg3;
     queue.Send(msg);
 }
 
