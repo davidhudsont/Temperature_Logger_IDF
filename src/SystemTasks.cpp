@@ -234,6 +234,20 @@ static void OneShotTemperatureRead(TMP102 &tmp102)
     }
 }
 
+static void LogTemperature(TMP102 &tmp102, bool celsiusOrFahrenheit)
+{
+    if (celsiusOrFahrenheit)
+    {
+        temperatureC = tmp102.Temperature();
+        ESP_LOGI("TMP", "%2.3fC", temperatureC);
+    }
+    else
+    {
+        temperatureF = tmp102.TemperatureF();
+        ESP_LOGI("TMP", "%3.3fF", temperatureF);
+    }
+}
+
 static void tmp102_task(void *pvParameter)
 {
     TMP102 tmp102;
@@ -255,23 +269,18 @@ static void tmp102_task(void *pvParameter)
         if (xSemaphoreTake(alarm_semiphore, 0))
         {
             OneShotTemperatureRead(tmp102);
-            std::string temperature_readingf = tmp102.TemperatureFToString();
-            ESP_LOGI("TMP", "%sF", temperature_readingf.c_str());
+            LogTemperature(tmp102, false);
         }
-
         if (recieveTMPCommand(&cmd_msg))
         {
+            OneShotTemperatureRead(tmp102);
             switch (cmd_msg.id)
             {
             case GET_TEMPF:
-                OneShotTemperatureRead(tmp102);
-                temperatureF = tmp102.TemperatureF();
-                ESP_LOGI("TMP", "%3.3fF", temperatureF);
+                LogTemperature(tmp102, false);
                 break;
             case GET_TEMPC:
-                OneShotTemperatureRead(tmp102);
-                temperatureC = tmp102.Temperature();
-                ESP_LOGI("TMP", "%2.3fC", temperatureC);
+                LogTemperature(tmp102, true);
                 break;
             default:
                 break;

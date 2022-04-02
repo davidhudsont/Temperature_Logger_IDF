@@ -2,7 +2,6 @@
 
 #include "BSP_I2C.h"
 #include "TMP102Registers.h"
-#include <string>
 
 enum CONVERSION_MODES
 {
@@ -37,23 +36,23 @@ private:
 
     /**
      * @brief Read a register from the TMP102
-     * 
-     * @param address 
-     * @return uint8_t 
+     *
+     * @param address
+     * @return uint8_t
      */
     uint8_t ReadRegister(uint8_t address);
 
     /**
      * @brief Write a value to the TMP102 register
-     * @param address 
-     * @param data 
+     * @param address
+     * @param data
      */
     void WriteRegister(uint8_t address, uint8_t data);
 
 public:
     /**
      * @brief Construct a new TMP102 object
-     * 
+     *
      */
     TMP102();
 
@@ -64,7 +63,7 @@ public:
 
     /**
      * @brief Set the conversion rate of the TMP102
-     * @param mode 
+     * @param mode
      */
     void SetConversionRate(CONVERSION_MODES mode);
 
@@ -75,7 +74,7 @@ public:
 
     /**
      * @brief Wake up the TMP102
-     * 
+     *
      */
     void Wake();
 
@@ -86,7 +85,7 @@ public:
 
     /**
      * @brief Get the current oneshot value.
-     * @return true if one shot has triggered 
+     * @return true if one shot has triggered
      */
     bool GetOneShot();
 
@@ -108,27 +107,13 @@ public:
 
     /**
      * @brief Return the current sampled temperature in degreees Celsius
-     * @return float 
+     * @return float
      */
     float Temperature();
 
     /**
      * @brief Return the current sampled temperature in degrees Fahrenheit
-     * @return float 
+     * @return float
      */
     float TemperatureF();
-
-    /**
-     * @brief Get a string of the temperature in Fahrenheit
-     * 
-     * @return std::string 
-     */
-    std::string TemperatureFToString();
-
-    /**
-     * @brief Get a string of the temperature in Celsius
-     * 
-     * @return std::string 
-     */
-    std::string TemperatureCToString();
 };
