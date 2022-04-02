@@ -266,7 +266,7 @@ static void tmp102_task(void *pvParameter)
             case GET_TEMPF:
                 OneShotTemperatureRead(tmp102);
                 temperatureF = tmp102.TemperatureF();
-                ESP_LOGI("TMP", "%3.3fC", temperatureF);
+                ESP_LOGI("TMP", "%3.3fF", temperatureF);
                 break;
             case GET_TEMPC:
                 OneShotTemperatureRead(tmp102);
