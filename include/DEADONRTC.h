@@ -8,6 +8,7 @@
 
 // Active Low INT_BAR
 #define DEADON_ALERT_PIN_NUM (GPIO_NUM_25) // Interrupt Pin
+constexpr int SPI_CLOCK_SPEED = 4 * 1000 * 1000;
 
 uint8_t calculateMaxDayOfMonth(uint8_t month, uint8_t year);
 
@@ -223,6 +224,7 @@ public:
 private:
     uint8_t raw_time[7];
 
+    BSP::SPI spi;
     bool intr_enable;
     bool alarm1_enable;
     bool alarm2_enable;
@@ -238,8 +240,6 @@ private:
     bool hour12_not24;
     bool PM_notAM;
     bool century;
-
-    BSP::SPI spi;
 
     uint8_t RegisterRead(uint8_t register_address);
     void RegisterWrite(uint8_t register_address, uint8_t data);

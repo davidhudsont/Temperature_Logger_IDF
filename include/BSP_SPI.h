@@ -14,12 +14,10 @@ namespace BSP
     class SPI
     {
     public:
-        /**
-         * @brief Initializes a SPI device
-         *
-         * @param clock_speed - spi_handle data rate
-         */
-        void Setup(int clock_speed);
+        SPI(int clock_speed);
+        ~SPI();
+        SPI(const SPI &) = delete;
+        SPI &operator=(const SPI &) = delete;
 
         /**
          * @brief reads a 8bit register from a spi_handle device with

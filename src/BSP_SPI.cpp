@@ -4,7 +4,7 @@
 
 namespace BSP
 {
-    void SPI::Setup(int clock_speed)
+    SPI::SPI(int clock_speed)
     {
         memset(&m_spi_handle, 0, sizeof(spi_device_handle_t));
         spi_bus_config_t spiBusConfig;
@@ -42,6 +42,13 @@ namespace BSP
         gpio_pad_select_gpio(PIN_NUM_CS);
         gpio_set_direction(PIN_NUM_CS, GPIO_MODE_OUTPUT);
         gpio_set_level(PIN_NUM_CS, 1);
+    }
+
+    SPI::~SPI()
+    {
+        spi_bus_remove_device(m_spi_handle);
+        spi_host_device_t host = VSPI_HOST;
+        spi_bus_free(host);
     }
 
     void SPI::SendTransaction(spi_transaction_t *transaction)
