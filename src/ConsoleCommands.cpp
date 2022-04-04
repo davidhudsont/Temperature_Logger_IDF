@@ -47,26 +47,26 @@ static int set_time(int argc, char **argv)
     {
         uint8_t seconds = time_args.seconds->ival[0];
         ESP_LOGI("RTC", "Set seconds to: %d", time_args.seconds->ival[0]);
-        setSeconds(seconds);
+        SetSeconds(seconds);
     }
     else if (time_args.minutes->count)
     {
         uint8_t minutes = time_args.minutes->ival[0];
         ESP_LOGI("RTC", "Set minutes to: %d", minutes);
-        setMinutes(minutes);
+        SetMinutes(minutes);
     }
     else if (time_args.hours12->count)
     {
         bool PM_notAM = time_args.hours12->ival[1];
         uint8_t hours = time_args.hours12->ival[0];
         ESP_LOGI("RTC", "Set hours to: %d, %s", hours, (PM_notAM ? "PM" : "AM"));
-        setHours12Mode(hours, PM_notAM);
+        SetHours12Mode(hours, PM_notAM);
     }
     else if (time_args.hours24->count)
     {
         uint8_t hours = time_args.hours24->ival[0];
         ESP_LOGI("RTC", "Set hours to: %d", hours);
-        setHours24Mode(hours);
+        SetHours24Mode(hours);
     }
 
     return 0;
@@ -114,25 +114,25 @@ static int set_date(int argc, char **argv)
     {
         int days = date_args.days->ival[0];
         ESP_LOGI("RTC", "Set Days to: %d", date_args.days->ival[0]);
-        setWeekDay(days);
+        SetWeekDay(days);
     }
     else if (date_args.date->count)
     {
         int dayOfMonth = date_args.date->ival[0];
         ESP_LOGI("RTC", "Set Date to: %d", dayOfMonth);
-        setDayOfMonth(dayOfMonth);
+        SetDayOfMonth(dayOfMonth);
     }
     else if (date_args.month->count)
     {
         int month = date_args.month->ival[0];
         ESP_LOGI("RTC", "Set Month to: %d", month);
-        setMonth(month);
+        SetMonth(month);
     }
     else if (date_args.year->count)
     {
         int year = date_args.year->ival[0];
         ESP_LOGI("RTC", "Set Year to: %d", year);
-        setYear(year);
+        SetYear(year);
     }
 
     return 0;
@@ -159,7 +159,7 @@ static void RegisterDateCommand(void)
 
 static int get_datetime(int argc, char **argv)
 {
-    readDateTime();
+    ReadDateTime();
     return 0;
 }
 
@@ -195,11 +195,11 @@ static int get_temperature(int argc, char **argv)
 
     if (temperature_args.tempf->count)
     {
-        readTemperature(true);
+        ReadTemperature(true);
     }
     if (temperature_args.tempc->count)
     {
-        readTemperature(false);
+        ReadTemperature(false);
     }
     return 0;
 }
@@ -295,19 +295,19 @@ static int lcd(int argc, char **argv)
         if (turnDisplayOn)
         {
             ESP_LOGI("LCD", "Turn Display On");
-            displayOn();
+            DisplayOn();
         }
         else
         {
             ESP_LOGI("LCD", "Turn Display Off");
-            displayOff();
+            DisplayOff();
         }
     }
     else if (lcd_args.contrast->count)
     {
         uint8_t contrast = lcd_args.contrast->ival[0];
         ESP_LOGI("LCD", "Set Contrast to %d", contrast);
-        setContrast(contrast);
+        SetContrast(contrast);
     }
     else if (lcd_args.backlight->count)
     {
@@ -316,7 +316,7 @@ static int lcd(int argc, char **argv)
             uint8_t r = lcd_args.backlight->ival[0];
             uint8_t g = 0;
             uint8_t b = 0;
-            setBackLight(r, g, b);
+            SetBackLight(r, g, b);
             ESP_LOGI("LCD", "Set backlight to %d, %d, %d", r, g, b);
         }
         else if (lcd_args.backlight->count == 2)
@@ -325,7 +325,7 @@ static int lcd(int argc, char **argv)
             uint8_t g = lcd_args.backlight->ival[1];
             uint8_t b = 0;
             ESP_LOGI("LCD", "Set backlight to %d, %d, %d", r, g, b);
-            setBackLight(r, g, b);
+            SetBackLight(r, g, b);
         }
         else if (lcd_args.backlight->count == 3)
         {
@@ -333,18 +333,18 @@ static int lcd(int argc, char **argv)
             uint8_t g = lcd_args.backlight->ival[1];
             uint8_t b = lcd_args.backlight->ival[2];
             ESP_LOGI("LCD", "Set backlight to %d, %d, %d", r, g, b);
-            setBackLight(r, g, b);
+            SetBackLight(r, g, b);
         }
     }
     else if (lcd_args.clear->count)
     {
         ESP_LOGI("LCD", "Clear Display");
-        clearDisplay();
+        ClearDisplay();
     }
     else if (lcd_args.reset->count)
     {
         ESP_LOGI("LCD", "Reset Display");
-        resetDisplay();
+        ResetDisplay();
     }
 
     return 0;
@@ -394,25 +394,25 @@ static int alarm_speaker(int argc, char **argv)
         if (turnAlarmOn)
         {
             ESP_LOGI("ALARM", "Turn Alarm On");
-            setAlarm(true);
+            SetAlarm(true);
         }
         else
         {
             ESP_LOGI("ALARM", "Turn Alarm Off");
-            setAlarm(false);
+            SetAlarm(false);
         }
     }
     if (alarm_speaker_args.alarm_frequency->count)
     {
         uint32_t freq_hz = alarm_speaker_args.alarm_frequency->ival[0];
         ESP_LOGI("ALARM", "Set Frequency to %dHz", freq_hz);
-        setFrequency(freq_hz);
+        SetFrequency(freq_hz);
     }
     if (alarm_speaker_args.alarm_duty_cycle->count)
     {
         uint32_t duty_cycle = alarm_speaker_args.alarm_duty_cycle->ival[0];
         ESP_LOGI("ALARM", "Set Duty Cycle to %d", duty_cycle);
-        setDutyCycle(duty_cycle);
+        SetDutyCycle(duty_cycle);
     }
 
     return 0;

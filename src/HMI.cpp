@@ -142,7 +142,7 @@ HMIState HMI::GetCurrentState()
 void HMI::DisplayMode()
 {
     COMMAND_MESSAGE msg;
-    if (recieveLCDCommand(&msg))
+    if (RecieveLCDCommand(&msg))
     {
         switch (msg.id)
         {
@@ -175,7 +175,7 @@ void HMI::DisplayMode()
             break;
         }
     }
-    else if (recieveButtonCommand(&msg))
+    else if (RecieveButtonCommand(&msg))
     {
         if (msg.id == EDIT_MODE_PRESSED)
         {
@@ -220,7 +220,7 @@ void HMI::DisplayMode()
                 uint8_t r = backLightValues[index].r;
                 uint8_t g = backLightValues[index].g;
                 uint8_t b = backLightValues[index].b;
-                setBackLight(r, g, b);
+                SetBackLight(r, g, b);
             }
             displayActive = !displayActive;
         }
@@ -350,7 +350,7 @@ void HMI::EditMode()
 void HMI::EditingDate()
 {
     COMMAND_MESSAGE msg;
-    if (recieveButtonCommand(&msg))
+    if (RecieveButtonCommand(&msg))
     {
         if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {
@@ -375,7 +375,7 @@ void HMI::EditingDate()
             entriesToEdit--;
             if (entriesToEdit == 0)
             {
-                setDate(dateSetting.dayOfMonth.value, dateSetting.month.value, dateSetting.year.value);
+                SetDate(dateSetting.dayOfMonth.value, dateSetting.month.value, dateSetting.year.value);
                 displayState = DISPLAYING;
                 DisplayCurrentState();
             }
@@ -386,7 +386,7 @@ void HMI::EditingDate()
 void HMI::EditingTime()
 {
     COMMAND_MESSAGE msg;
-    if (recieveButtonCommand(&msg))
+    if (RecieveButtonCommand(&msg))
     {
         if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {
@@ -410,7 +410,7 @@ void HMI::EditingTime()
             entriesToEdit--;
             if (entriesToEdit == 0)
             {
-                setTime(timeSetting.hour.value, timeSetting.minute.value, timeSetting.second.value);
+                SetTime(timeSetting.hour.value, timeSetting.minute.value, timeSetting.second.value);
                 displayState = DISPLAYING;
                 DisplayCurrentState();
             }
@@ -429,7 +429,7 @@ void HMI::ChangeTemp()
 void HMI::EditContrast()
 {
     COMMAND_MESSAGE msg;
-    if (recieveButtonCommand(&msg))
+    if (RecieveButtonCommand(&msg))
     {
         if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {
@@ -442,7 +442,7 @@ void HMI::EditContrast()
             entriesToEdit--;
             if (entriesToEdit == 0)
             {
-                setContrast(contrastSetting.value);
+                SetContrast(contrastSetting.value);
                 displayState = DISPLAYING;
                 lcd.ClearRow(3);
                 DisplayCurrentState();
@@ -453,7 +453,7 @@ void HMI::EditContrast()
 void HMI::EditBackLight()
 {
     COMMAND_MESSAGE msg;
-    if (recieveButtonCommand(&msg))
+    if (RecieveButtonCommand(&msg))
     {
         if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {
@@ -470,7 +470,7 @@ void HMI::EditBackLight()
                 uint8_t r = backLightValues[index].r;
                 uint8_t g = backLightValues[index].g;
                 uint8_t b = backLightValues[index].b;
-                setBackLight(r, g, b);
+                SetBackLight(r, g, b);
                 displayState = DISPLAYING;
                 lcd.ClearRow(3);
                 DisplayCurrentState();

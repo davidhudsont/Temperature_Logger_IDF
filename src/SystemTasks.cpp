@@ -138,7 +138,7 @@ static void rtc_task(void *pvParameter)
                 std::string logdate = rtc.DateToString();
                 std::string logtime = rtc.TimeToString();
                 ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
-                setAlarm(true);
+                SetAlarm(true);
             }
             if (alarm2_flag)
             {
@@ -151,7 +151,7 @@ static void rtc_task(void *pvParameter)
         }
 
         // Evaulate Console Commands
-        if (recieveDateCommand(&cmd_msg) || recieveTimeCommand(&cmd_msg))
+        if (RecieveDateCommand(&cmd_msg) || RecieveTimeCommand(&cmd_msg))
         {
             switch (cmd_msg.id)
             {
@@ -271,7 +271,7 @@ static void tmp102_task(void *pvParameter)
             OneShotTemperatureRead(tmp102);
             LogTemperature(tmp102, false);
         }
-        if (recieveTMPCommand(&cmd_msg))
+        if (RecieveTMPCommand(&cmd_msg))
         {
             OneShotTemperatureRead(tmp102);
             switch (cmd_msg.id)
@@ -302,22 +302,22 @@ static void button_task(void *pvParameter)
         if (altButton)
         {
             ESP_LOGI("BTN", "Alt Button Pressed");
-            buttonPressed(ALT_BTN_PRESSED);
+            ButtonPressed(ALT_BTN_PRESSED);
         }
         else if (editModeButton)
         {
             ESP_LOGI("BTN", "Edit Mode Button Pressed");
-            buttonPressed(EDIT_MODE_PRESSED);
+            ButtonPressed(EDIT_MODE_PRESSED);
         }
         else if (downButton)
         {
             ESP_LOGI("BTN", "Down Button Pressed");
-            buttonPressed(DOWN_PRESSED);
+            ButtonPressed(DOWN_PRESSED);
         }
         else if (upButton)
         {
             ESP_LOGI("BTN", "Up Button Pressed");
-            buttonPressed(UP_PRESSED);
+            ButtonPressed(UP_PRESSED);
         }
         delay(10);
     }
@@ -327,7 +327,7 @@ static void hmi_task(void *pvParameter)
 {
     HMI hmi;
 
-    readDateTime();
+    ReadDateTime();
 
     while (1)
     {
@@ -336,7 +336,7 @@ static void hmi_task(void *pvParameter)
         {
             hmi.SetDisplayDateTime(dateTime);
             hmi.SetDisplayTemperature(temperatureF, temperatureC);
-            updateDisplay();
+            UpdateDisplay();
         }
         hmi.Process();
     }
@@ -349,7 +349,7 @@ static void speaker_task(void *pvParameter)
     while (1)
     {
         COMMAND_MESSAGE cmd_msg;
-        if (recieveAlarmCommand(&cmd_msg))
+        if (RecieveAlarmCommand(&cmd_msg))
         {
             if (cmd_msg.id == ALARM_SET)
             {
@@ -371,7 +371,7 @@ static void speaker_task(void *pvParameter)
                 alarm.SetDutyCyclePercentage((uint32_t)cmd_msg.arg1);
             }
         }
-        if (recieveButtonCommand(&cmd_msg))
+        if (RecieveButtonCommand(&cmd_msg))
         {
             if (cmd_msg.id == ALT_BTN_PRESSED)
             {
