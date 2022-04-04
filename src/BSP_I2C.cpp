@@ -8,11 +8,6 @@ namespace BSP
     I2C::I2C()
     {
         memset(&m_config, 0, sizeof(i2c_config_t));
-    }
-
-    void I2C::Setup()
-    {
-        memset(&m_config, 0, sizeof(i2c_config_t));
 
         m_config.mode = I2C_MODE_MASTER;
         m_config.sda_io_num = SDA_PIN_NUM;
@@ -26,6 +21,11 @@ namespace BSP
         ESP_ERROR_CHECK(err);
         err = i2c_driver_install(I2C_MASTER_NUM, I2C_MODE_MASTER, 0, 0, 0);
         ESP_ERROR_CHECK(err);
+    }
+
+    I2C::~I2C()
+    {
+        i2c_driver_delete(I2C_MASTER_NUM);
     }
 
     void I2C::WriteByte(uint8_t dev_address, uint8_t reg_address, uint8_t data)

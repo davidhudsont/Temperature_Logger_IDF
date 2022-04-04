@@ -10,7 +10,6 @@ TMP102::TMP102()
 
 void TMP102::Setup()
 {
-    i2c.Setup();
 }
 
 void TMP102::SetConversionRate(CONVERSION_MODES mode)
