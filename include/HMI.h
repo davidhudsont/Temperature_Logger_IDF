@@ -55,6 +55,18 @@ enum HMISettings
 
 class HMI
 {
+public:
+    HMI();
+    ~HMI() = default;
+    HMI(const HMI &) = delete;
+    HMI &operator=(const HMI &) = delete;
+
+    void Process();
+    void SetDisplayTemperature(float temperatureF, float temperatureC);
+    void SetDisplayDateTime(DATE_TIME &dateTime);
+    HMIState GetCurrentState();
+    void Reset();
+
 private:
     LCD lcd;
 
@@ -97,28 +109,20 @@ private:
     SETTING backlightSetting;
 
     // Display Mode related functions
-    void displayMode();
-    void displayDate();
-    void displayTime();
-    void displayTemperature();
-    void displayCurrentState();
-    void displayContrast();
-    void displayBacklight();
-    void updateDisplay();
+    void DisplayMode();
+    void DisplayDate();
+    void DisplayTime();
+    void DisplayTemperature();
+    void DisplayCurrentState();
+    void DisplayContrast();
+    void DisplayBacklight();
+    void UpdateDisplay();
 
     // Edit Mode related functions
-    void editMode();
-    void editingDate();
-    void editingTime();
-    void changeTemp();
-    void editContrast();
-    void editBackLight();
-
-public:
-    HMI();
-    void process();
-    void setDisplayTemperature(float temperatureF, float temperatureC);
-    void setDisplayDateTime(DATE_TIME &dateTime);
-    HMIState getCurrentState();
-    void Reset();
+    void EditMode();
+    void EditingDate();
+    void EditingTime();
+    void ChangeTemp();
+    void EditContrast();
+    void EditBackLight();
 };

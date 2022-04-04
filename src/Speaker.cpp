@@ -42,17 +42,7 @@ static void periodic_cb(void *param)
 
 AlarmSpeaker::AlarmSpeaker()
     : is_timer_started(false),
-      pin(GPIO_NUM_26)
-{
-}
-
-AlarmSpeaker::AlarmSpeaker(gpio_num_t pin)
-    : is_timer_started(false),
-      pin(pin)
-{
-}
-
-void AlarmSpeaker::Init()
+      pin(PIN_NUM_SPEAKER)
 {
     // Prepare and then apply the LEDC PWM timer configuration
     ledc_timer_config_t ledc_timer;

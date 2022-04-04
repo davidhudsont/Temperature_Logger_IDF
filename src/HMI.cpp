@@ -50,7 +50,6 @@ static uint8_t altSetnCol = 0;
 // Public
 HMI::HMI()
 {
-    lcd.Setup();
     lcd.ResetCursor();
     lcd.DisableSystemMessages();
     lcd.Display();
@@ -98,29 +97,29 @@ void HMI::Reset()
     lcd.Reset();
 }
 
-void HMI::process()
+void HMI::Process()
 {
 
     switch (displayState)
     {
     case DISPLAYING:
-        displayMode();
+        DisplayMode();
         break;
     case EDITING:
-        editMode();
+        EditMode();
         break;
     default:
         break;
     }
 }
 
-void HMI::setDisplayTemperature(float temperatureF, float temperatureC)
+void HMI::SetDisplayTemperature(float temperatureF, float temperatureC)
 {
     this->temperatureF = temperatureF;
     this->temperatureC = temperatureC;
 }
 
-void HMI::setDisplayDateTime(DATE_TIME &dateTime)
+void HMI::SetDisplayDateTime(DATE_TIME &dateTime)
 {
     dateSetting.month.value = dateTime.month;
     dateSetting.dayOfMonth.value = dateTime.dayofMonth;
@@ -134,13 +133,13 @@ void HMI::setDisplayDateTime(DATE_TIME &dateTime)
     PM_notAM = dateTime.PM_notAM;
 }
 
-HMIState HMI::getCurrentState()
+HMIState HMI::GetCurrentState()
 {
     return displayState;
 }
 
 // Private
-void HMI::displayMode()
+void HMI::DisplayMode()
 {
     COMMAND_MESSAGE msg;
     if (recieveLCDCommand(&msg))
@@ -169,7 +168,7 @@ void HMI::displayMode()
             lcd.Clear();
             break;
         case LCD_DISPLAY_UPDATE:
-            updateDisplay();
+            UpdateDisplay();
             break;
         case LCD_RESET:
             lcd.Reset();
@@ -195,16 +194,16 @@ void HMI::displayMode()
                 break;
             case SETTING_CONTRAST:
                 entriesToEdit = 1;
-                displayContrast();
+                DisplayContrast();
                 break;
             case SETTING_BACKLIGHT:
                 entriesToEdit = 1;
-                displayBacklight();
+                DisplayBacklight();
                 break;
             default:
                 break;
             }
-            displayCurrentState();
+            DisplayCurrentState();
         }
         else if (msg.id == ALT_BTN_PRESSED)
         {
@@ -228,12 +227,12 @@ void HMI::displayMode()
         else if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {
             settingMode.adjust(msg.id == UP_PRESSED);
-            displayCurrentState();
+            DisplayCurrentState();
         }
     }
 }
 
-void HMI::displayDate()
+void HMI::DisplayDate()
 {
     // Date Update
     snprintf(dateString, DateStringSize, "%02d/%02d/%d",
@@ -244,7 +243,7 @@ void HMI::displayDate()
     lcd.WriteCharacters(dateString, 10);
 }
 
-void HMI::displayTime()
+void HMI::DisplayTime()
 {
     // Time update
     lcd.SetCursor(timeRow, timeCol);
@@ -267,7 +266,7 @@ void HMI::displayTime()
     }
 }
 
-void HMI::displayTemperature()
+void HMI::DisplayTemperature()
 {
     static char tempString[TempStringSize];
     lcd.SetCursor(tempRow, tempCol);
@@ -286,7 +285,7 @@ void HMI::displayTemperature()
     lcd.WriteCharacters(tempString, 8);
 }
 
-void HMI::displayCurrentState()
+void HMI::DisplayCurrentState()
 {
     lcd.SetCursor(setnRow, setnCol);
     switch (displayState)
@@ -302,53 +301,53 @@ void HMI::displayCurrentState()
     lcd.WriteCharacters(settingNames[settingMode.value], 4);
 }
 
-void HMI::updateDisplay()
+void HMI::UpdateDisplay()
 {
-    displayDate();
-    displayTime();
-    displayTemperature();
-    displayCurrentState();
+    DisplayDate();
+    DisplayTime();
+    DisplayTemperature();
+    DisplayCurrentState();
 }
 
-void HMI::displayContrast()
+void HMI::DisplayContrast()
 {
     lcd.SetCursor(altSetnRow, altSetnCol);
     snprintf(contrastString, contrastStringSize, "Contrast: %3d", contrastSetting.value);
     lcd.WriteCharacters(contrastString, contrastStringSize - 1);
 }
 
-void HMI::displayBacklight()
+void HMI::DisplayBacklight()
 {
     lcd.SetCursor(altSetnRow, altSetnCol);
     snprintf(backlightString, backlightStringSize, "Backlight: %s", LCD_BCKL_COLORS[backlightSetting.value]);
     lcd.WriteCharacters(backlightString, backlightStringSize - 1);
 }
 
-void HMI::editMode()
+void HMI::EditMode()
 {
     switch (settingMode.value)
     {
     case SETTING_DATE:
-        editingDate();
+        EditingDate();
         break;
     case SETTING_TIME:
-        editingTime();
+        EditingTime();
         break;
     case SETTING_TEMP:
-        changeTemp();
+        ChangeTemp();
         break;
     case SETTING_CONTRAST:
-        editContrast();
+        EditContrast();
         break;
     case SETTING_BACKLIGHT:
-        editBackLight();
+        EditBackLight();
         break;
     default:
         break;
     }
 }
 
-void HMI::editingDate()
+void HMI::EditingDate()
 {
     COMMAND_MESSAGE msg;
     if (recieveButtonCommand(&msg))
@@ -369,7 +368,7 @@ void HMI::editingDate()
             {
                 dateSetting.year.adjust(increase);
             }
-            displayDate();
+            DisplayDate();
         }
         else if (msg.id == EDIT_MODE_PRESSED)
         {
@@ -378,13 +377,13 @@ void HMI::editingDate()
             {
                 setDate(dateSetting.dayOfMonth.value, dateSetting.month.value, dateSetting.year.value);
                 displayState = DISPLAYING;
-                displayCurrentState();
+                DisplayCurrentState();
             }
         }
     }
 }
 
-void HMI::editingTime()
+void HMI::EditingTime()
 {
     COMMAND_MESSAGE msg;
     if (recieveButtonCommand(&msg))
@@ -404,7 +403,7 @@ void HMI::editingTime()
             {
                 timeSetting.second.adjust(increase);
             }
-            displayTime();
+            DisplayTime();
         }
         else if (msg.id == EDIT_MODE_PRESSED)
         {
@@ -413,21 +412,21 @@ void HMI::editingTime()
             {
                 setTime(timeSetting.hour.value, timeSetting.minute.value, timeSetting.second.value);
                 displayState = DISPLAYING;
-                displayCurrentState();
+                DisplayCurrentState();
             }
         }
     }
 }
 
-void HMI::changeTemp()
+void HMI::ChangeTemp()
 {
     tempSetting.adjust(!tempSetting.value);
     displayState = DISPLAYING;
-    displayTemperature();
-    displayCurrentState();
+    DisplayTemperature();
+    DisplayCurrentState();
 }
 
-void HMI::editContrast()
+void HMI::EditContrast()
 {
     COMMAND_MESSAGE msg;
     if (recieveButtonCommand(&msg))
@@ -436,7 +435,7 @@ void HMI::editContrast()
         {
             bool increase = msg.id == UP_PRESSED;
             contrastSetting.adjust(increase);
-            displayContrast();
+            DisplayContrast();
         }
         else if (msg.id == EDIT_MODE_PRESSED)
         {
@@ -446,12 +445,12 @@ void HMI::editContrast()
                 setContrast(contrastSetting.value);
                 displayState = DISPLAYING;
                 lcd.ClearRow(3);
-                displayCurrentState();
+                DisplayCurrentState();
             }
         }
     }
 }
-void HMI::editBackLight()
+void HMI::EditBackLight()
 {
     COMMAND_MESSAGE msg;
     if (recieveButtonCommand(&msg))
@@ -460,7 +459,7 @@ void HMI::editBackLight()
         {
             bool increase = msg.id == UP_PRESSED;
             backlightSetting.adjust(increase);
-            displayBacklight();
+            DisplayBacklight();
         }
         else if (msg.id == EDIT_MODE_PRESSED)
         {
@@ -474,7 +473,7 @@ void HMI::editBackLight()
                 setBackLight(r, g, b);
                 displayState = DISPLAYING;
                 lcd.ClearRow(3);
-                displayCurrentState();
+                DisplayCurrentState();
             }
         }
     }

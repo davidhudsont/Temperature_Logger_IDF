@@ -56,7 +56,11 @@ const uint8_t DEGREE_SYMBOL = 223;
 class LCD
 {
 public:
-    void Setup();
+    LCD();
+    ~LCD() = default;
+    LCD(const LCD &) = delete;
+    LCD &operator=(const LCD &) = delete;
+
     // Reset LCD DTR Pin
     void Reset();
 

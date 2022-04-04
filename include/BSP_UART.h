@@ -21,7 +21,10 @@ namespace BSP
     class UART
     {
     public:
-        void Setup(int buadrate, int TX_Pin, int RX_Pin, uart_port_t port);
+        UART(int buadrate, int TX_Pin, int RX_Pin, uart_port_t port);
+        ~UART();
+        UART(const UART &) = delete;
+        UART &operator=(const UART &) = delete;
 
         int BurstRead(uint8_t *data, uint32_t len);
         void WriteBurst(uint8_t *data, uint32_t len);

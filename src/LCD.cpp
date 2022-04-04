@@ -34,9 +34,9 @@ void LCD::EndTransmit()
 }
 
 // -------------------------------------LCD Public Functions-----------------------------------------------------
-void LCD::Setup()
+LCD::LCD()
+    : uart(9600, UART2_TX_PIN_NUM, UART2_RX_PIN_NUM, UART_NUM_2)
 {
-    uart.Setup(9600, UART2_TX_PIN_NUM, UART2_RX_PIN_NUM, UART_NUM_2);
     uart.ToggleRTS();
 
     delay(20);

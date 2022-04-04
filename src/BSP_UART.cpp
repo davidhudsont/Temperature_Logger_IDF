@@ -7,14 +7,14 @@ namespace BSP
 
     /**
      * @brief Start the UART device
-     * 
+     *
      * @param uart_dev - UART device struct to be configured
      * @param buadrate - Buadrate of the device
      * @param TX_Pin   - Transmit Pin
      * @param RX_Pin   - Recieve Pin
      * @param port     - Port number
      */
-    void UART::Setup(int buadrate, int TX_Pin, int RX_Pin, uart_port_t port)
+    UART::UART(int buadrate, int TX_Pin, int RX_Pin, uart_port_t port)
     {
         memset(&m_config, 0, sizeof(uart_config_t));
 
@@ -36,9 +36,14 @@ namespace BSP
         uart_set_pin(m_port, m_tx_pin, m_rx_pin, GPIO_NUM_33, UART_CTS);
     }
 
+    UART::~UART()
+    {
+        uart_driver_delete(m_port);
+    }
+
     /**
      * @brief Read bytes from the UART RX Buffer
-     * 
+     *
      * @param uart_dev - Device Handle
      * @param data - Data buffer
      * @param len  - Number of bytes to read
@@ -52,9 +57,9 @@ namespace BSP
     /**
      * @brief Send bytes across the TX pin
      *        The bytes to be written are not buffered.
-     * @param uart_dev 
-     * @param data 
-     * @param len 
+     * @param uart_dev
+     * @param data
+     * @param len
      */
     void UART::WriteBurst(uint8_t *data, uint32_t len)
     {
@@ -63,8 +68,8 @@ namespace BSP
 
     /**
      * @brief Send a byte across the TX pin
-     * 
-     * @param data 
+     *
+     * @param data
      */
     void UART::Write(uint8_t data)
     {

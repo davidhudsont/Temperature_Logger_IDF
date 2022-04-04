@@ -325,27 +325,26 @@ static void button_task(void *pvParameter)
 
 static void hmi_task(void *pvParameter)
 {
-    HMI hmi = HMI();
+    HMI hmi;
 
     readDateTime();
 
     while (1)
     {
 
-        if (xSemaphoreTake(lcd_semiphore, 0) && hmi.getCurrentState() == DISPLAYING)
+        if (xSemaphoreTake(lcd_semiphore, 0) && hmi.GetCurrentState() == DISPLAYING)
         {
-            hmi.setDisplayDateTime(dateTime);
-            hmi.setDisplayTemperature(temperatureF, temperatureC);
+            hmi.SetDisplayDateTime(dateTime);
+            hmi.SetDisplayTemperature(temperatureF, temperatureC);
             updateDisplay();
         }
-        hmi.process();
+        hmi.Process();
     }
 }
 
 static void speaker_task(void *pvParameter)
 {
-    AlarmSpeaker alarm = AlarmSpeaker(GPIO_NUM_10);
-    alarm.Init();
+    AlarmSpeaker alarm;
 
     while (1)
     {
