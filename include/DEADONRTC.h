@@ -56,65 +56,10 @@ int GetInterruptSemiphore();
 
 class RTCDS3234
 {
-private:
-    uint8_t raw_time[7];
-
-    bool intr_enable;
-    bool alarm1_enable;
-    bool alarm2_enable;
-
-    uint8_t seconds;
-    uint8_t minutes;
-    uint8_t hours;
-    uint8_t day;
-    uint8_t date;
-    uint8_t month;
-    uint8_t year;
-
-    bool hour12_not24;
-    bool PM_notAM;
-    bool century;
-
-    BSP::SPI spi;
-
-    /**
-     * @brief Read a register
-     * 
-     * @param register_address 
-     * @return uint8_t 
-     */
-    uint8_t RegisterRead(uint8_t register_address);
-
-    /**
-     * @brief Write to a register
-     * 
-     * @param register_address 
-     * @param data 
-     */
-    void RegisterWrite(uint8_t register_address, uint8_t data);
-
-    /**
-     * @brief Read multiple bytes from registers
-     * 
-     * @param address 
-     * @param data 
-     * @param len 
-     */
-    void RegisterBurstRead(uint8_t address, uint8_t *data, uint32_t len);
-
-    /**
-     * @brief Write to bytes to registers
-     * 
-     * @param address 
-     * @param data 
-     * @param len 
-     */
-    void RegisterBurstWrite(uint8_t address, uint8_t *data, uint32_t len);
-
 public:
     /**
      * @brief Construct a new RTCDS3234 object
-     * 
+     *
      */
     RTCDS3234();
 
@@ -131,13 +76,13 @@ public:
 
     /**
      * @brief Write the date and time
-     * @param seconds 
-     * @param minutes 
-     * @param hours 
-     * @param day 
-     * @param date 
-     * @param month 
-     * @param year 
+     * @param seconds
+     * @param minutes
+     * @param hours
+     * @param day
+     * @param date
+     * @param month
+     * @param year
      */
     void WriteDateTime(uint8_t seconds, uint8_t minutes, uint8_t hours,
                        uint8_t day, uint8_t date, uint8_t month,
@@ -149,21 +94,21 @@ public:
 
     /**
      * @brief Get the date and time from the build date
-     * 
+     *
      */
     void WriteBuildDateTime();
 
     /**
      * @brief Get Date string
-     * 
-     * @return std::string 
+     *
+     * @return std::string
      */
     std::string DateToString();
 
     /**
      * @brief Get the Time string
-     * 
-     * @return std::string 
+     *
+     * @return std::string
      */
     std::string TimeToString();
 
@@ -189,31 +134,31 @@ public:
     void WriteYear(uint8_t year);
 
     /**
-     * @brief 
-     * 
-     * @param seconds 
-     * @param minutes 
-     * @param hours 
-     * @param date 
-     * @param mode 
+     * @brief
+     *
+     * @param seconds
+     * @param minutes
+     * @param hours
+     * @param date
+     * @param mode
      */
     void WriteAlarm1(uint8_t seconds, uint8_t minutes,
                      uint8_t hours, uint8_t date, ALARM1_MODES mode);
 
     /**
-     * @brief 
-     * 
-     * @param minutes 
-     * @param hours 
-     * @param date 
-     * @param mode 
+     * @brief
+     *
+     * @param minutes
+     * @param hours
+     * @param date
+     * @param mode
      */
     void WriteAlarm2(uint8_t minutes,
                      uint8_t hours, uint8_t date, ALARM2_MODES mode);
 
     /**
-     * @brief 
-    * @return true if flag was set, false otherwise
+     * @brief
+     * @return true if flag was set, false otherwise
      */
     bool ReadAlarm1Flag();
 
@@ -230,7 +175,7 @@ public:
 
     /**
      * @brief Enable the RTC's interrupts
-     * @param bool enable 
+     * @param bool enable
      */
     void EnableInterrupt(bool enable);
 
@@ -245,7 +190,7 @@ public:
      * @brief Read the RTC's SRAM at a specified address
      * @note The size of the memory if 256 bytes
      * @param address range: 0x00 - 0xff
-     * @return uint8_t 
+     * @return uint8_t
      */
     uint8_t SRAMRead(uint8_t address);
 
@@ -253,7 +198,7 @@ public:
      * @brief Write to the RTC's SRAM at a specified address
      * @note The size of the memory if 256 bytes
      * @param address range: 0x00 - 0xff
-     * @param data - The data we want to write 
+     * @param data - The data we want to write
      */
     void SRAMWrite(uint8_t address, uint8_t data);
 
@@ -274,4 +219,30 @@ public:
      * @param len - Number of bytes to write
      */
     void SRAMBurstWrite(uint8_t address, uint8_t *data, uint32_t len);
+
+private:
+    uint8_t raw_time[7];
+
+    bool intr_enable;
+    bool alarm1_enable;
+    bool alarm2_enable;
+
+    uint8_t seconds;
+    uint8_t minutes;
+    uint8_t hours;
+    uint8_t day;
+    uint8_t date;
+    uint8_t month;
+    uint8_t year;
+
+    bool hour12_not24;
+    bool PM_notAM;
+    bool century;
+
+    BSP::SPI spi;
+
+    uint8_t RegisterRead(uint8_t register_address);
+    void RegisterWrite(uint8_t register_address, uint8_t data);
+    void RegisterBurstRead(uint8_t address, uint8_t *data, uint32_t len);
+    void RegisterBurstWrite(uint8_t address, uint8_t *data, uint32_t len);
 };

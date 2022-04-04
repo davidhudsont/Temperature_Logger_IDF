@@ -44,7 +44,7 @@ namespace BSP
         gpio_set_level(PIN_NUM_CS, 1);
     }
 
-    void SPI::sendTransaction(spi_transaction_t *transaction)
+    void SPI::SendTransaction(spi_transaction_t *transaction)
     {
         esp_err_t err;
         gpio_set_level(PIN_NUM_CS, 0);
@@ -53,7 +53,7 @@ namespace BSP
         assert(err == ESP_OK);
     }
 
-    uint8_t SPI::readReg(const uint8_t address)
+    uint8_t SPI::ReadRegister(const uint8_t address)
     {
         spi_transaction_t transaction;
         memset(&transaction, 0, sizeof(transaction));
@@ -62,12 +62,12 @@ namespace BSP
         transaction.length = 8;
         transaction.flags = SPI_TRANS_USE_RXDATA;
 
-        sendTransaction(&transaction);
+        SendTransaction(&transaction);
 
         return transaction.rx_data[0];
     }
 
-    void SPI::writeReg(const uint8_t address, const uint8_t data)
+    void SPI::WriteRegister(const uint8_t address, const uint8_t data)
     {
         spi_transaction_t transaction;
         memset(&transaction, 0, sizeof(transaction));
@@ -77,10 +77,10 @@ namespace BSP
         transaction.tx_data[0] = data;
         transaction.cmd = address;
 
-        sendTransaction(&transaction);
+        SendTransaction(&transaction);
     }
 
-    void SPI::burstRead(const uint8_t address, uint8_t *buf, uint32_t size)
+    void SPI::BurstRead(const uint8_t address, uint8_t *buf, uint32_t size)
     {
         spi_transaction_t transaction;
         memset(&transaction, 0, sizeof(transaction));
@@ -89,10 +89,10 @@ namespace BSP
         transaction.length = size * 8;
         transaction.rx_buffer = buf;
 
-        sendTransaction(&transaction);
+        SendTransaction(&transaction);
     }
 
-    void SPI::burstWrite(const uint8_t address, uint8_t *buf, uint32_t size)
+    void SPI::BurstWrite(const uint8_t address, uint8_t *buf, uint32_t size)
     {
         spi_transaction_t transaction;
         memset(&transaction, 0, sizeof(transaction));
@@ -101,7 +101,7 @@ namespace BSP
         transaction.length = size * 8;
         transaction.tx_buffer = buf;
 
-        sendTransaction(&transaction);
+        SendTransaction(&transaction);
     }
 
 } // namespace BSP

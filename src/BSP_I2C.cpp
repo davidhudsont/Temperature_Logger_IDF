@@ -28,7 +28,7 @@ namespace BSP
         ESP_ERROR_CHECK(err);
     }
 
-    void I2C::writeByte(uint8_t dev_address, uint8_t reg_address, uint8_t data)
+    void I2C::WriteByte(uint8_t dev_address, uint8_t reg_address, uint8_t data)
     {
         esp_err_t err;
 
@@ -46,7 +46,7 @@ namespace BSP
         i2c_cmd_link_delete(cmd);
     }
 
-    uint8_t I2C::readByte(uint8_t dev_address, uint8_t reg_address)
+    uint8_t I2C::ReadByte(uint8_t dev_address, uint8_t reg_address)
     {
         esp_err_t err;
         i2c_cmd_handle_t cmd = i2c_cmd_link_create();
@@ -80,7 +80,7 @@ namespace BSP
         return data;
     }
 
-    void I2C::writeBurst(uint8_t dev_address, uint8_t reg_address, uint8_t *buf, uint32_t len)
+    void I2C::WriteBurst(uint8_t dev_address, uint8_t reg_address, uint8_t *buf, uint32_t len)
     {
         esp_err_t err;
         i2c_cmd_handle_t cmd = i2c_cmd_link_create();
@@ -96,7 +96,7 @@ namespace BSP
         i2c_cmd_link_delete(cmd);
     }
 
-    void I2C::readBurst(uint8_t dev_address, uint8_t reg_address, uint8_t *buf, uint32_t len)
+    void I2C::ReadBurst(uint8_t dev_address, uint8_t reg_address, uint8_t *buf, uint32_t len)
     {
         esp_err_t err;
         i2c_cmd_handle_t cmd = i2c_cmd_link_create();

@@ -20,12 +20,6 @@ namespace BSP
 
     class UART
     {
-    private:
-        uart_config_t m_config;
-        int m_tx_pin;
-        int m_rx_pin;
-        uart_port_t m_port;
-
     public:
         void Setup(int buadrate, int TX_Pin, int RX_Pin, uart_port_t port);
 
@@ -38,6 +32,12 @@ namespace BSP
         void GetBufferedDataLength(size_t *len);
 
         void ToggleRTS();
+
+    private:
+        uart_config_t m_config;
+        int m_tx_pin;
+        int m_rx_pin;
+        uart_port_t m_port;
     };
 
 }

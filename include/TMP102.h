@@ -27,28 +27,6 @@ constexpr int16_t maxPositiveTemp13bit = 0x0FFF;
 
 class TMP102
 {
-private:
-    uint8_t config[2];
-
-    float temperature;
-
-    BSP::I2C i2c;
-
-    /**
-     * @brief Read a register from the TMP102
-     *
-     * @param address
-     * @return uint8_t
-     */
-    uint8_t ReadRegister(uint8_t address);
-
-    /**
-     * @brief Write a value to the TMP102 register
-     * @param address
-     * @param data
-     */
-    void WriteRegister(uint8_t address, uint8_t data);
-
 public:
     /**
      * @brief Construct a new TMP102 object
@@ -59,7 +37,7 @@ public:
     /**
      * @brief Start I2C bus and initialize the device structure.
      */
-    void Begin();
+    void Setup();
 
     /**
      * @brief Set the conversion rate of the TMP102
@@ -90,16 +68,6 @@ public:
     bool GetOneShot();
 
     /**
-     * @brief Write to the configuration register with currently stored config value
-     */
-    void WriteConfig();
-
-    /**
-     * @brief Read the configuration register
-     */
-    void ReadConfig();
-
-    /**
      * @brief Reads a sample from the TMP102
      *        and stores the temperature
      */
@@ -116,4 +84,14 @@ public:
      * @return float
      */
     float TemperatureF();
+
+private:
+    uint8_t config[2];
+    float temperature;
+    BSP::I2C i2c;
+
+    uint8_t ReadRegister(uint8_t address);
+    void WriteRegister(uint8_t address, uint8_t data);
+    void WriteConfig();
+    void ReadConfig();
 };

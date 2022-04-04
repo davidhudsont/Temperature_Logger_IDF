@@ -50,7 +50,7 @@ static uint8_t altSetnCol = 0;
 // Public
 HMI::HMI()
 {
-    lcd.Begin();
+    lcd.Setup();
     lcd.ResetCursor();
     lcd.DisableSystemMessages();
     lcd.Display();

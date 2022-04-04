@@ -254,7 +254,7 @@ static void tmp102_task(void *pvParameter)
     COMMAND_MESSAGE cmd_msg;
 
     ESP_LOGI("TMP", "TMP102 Task Start!");
-    tmp102.Begin();
+    tmp102.Setup();
     tmp102.SetConversionRate(CONVERSION_MODE_1);
     delay(100);
     tmp102.Sleep();

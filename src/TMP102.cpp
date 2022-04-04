@@ -8,7 +8,7 @@ TMP102::TMP102()
     memset(config, 0, sizeof(uint8_t) * 2);
 }
 
-void TMP102::Begin()
+void TMP102::Setup()
 {
     i2c.Setup();
 }
@@ -62,18 +62,18 @@ bool TMP102::GetOneShot()
 
 void TMP102::WriteConfig()
 {
-    i2c.writeBurst(TMP102_DEV_ADDR_A, REG_CONFIG, config, 2);
+    i2c.WriteBurst(TMP102_DEV_ADDR_A, REG_CONFIG, config, 2);
 }
 
 void TMP102::ReadConfig()
 {
-    i2c.readBurst(TMP102_DEV_ADDR_A, REG_CONFIG, config, 2);
+    i2c.ReadBurst(TMP102_DEV_ADDR_A, REG_CONFIG, config, 2);
 }
 
 void TMP102::ReadTemperature()
 {
     uint8_t data[2];
-    i2c.readBurst(TMP102_DEV_ADDR_A, REG_TEMPERATURE, data, 2);
+    i2c.ReadBurst(TMP102_DEV_ADDR_A, REG_TEMPERATURE, data, 2);
 
     int16_t raw_temperature;
     // If the first bit of second byte is set we are in
@@ -115,10 +115,10 @@ float TMP102::TemperatureF()
 
 uint8_t TMP102::ReadRegister(uint8_t address)
 {
-    return i2c.readByte(TMP102_DEV_ADDR_A, address);
+    return i2c.ReadByte(TMP102_DEV_ADDR_A, address);
 }
 
 void TMP102::WriteRegister(uint8_t address, uint8_t data)
 {
-    i2c.writeByte(TMP102_DEV_ADDR_A, address, data);
+    i2c.WriteByte(TMP102_DEV_ADDR_A, address, data);
 }
