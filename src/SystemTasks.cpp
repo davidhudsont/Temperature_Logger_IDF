@@ -110,6 +110,11 @@ void StartAlarms(RTCDS3234 &rtc)
     rtc.ReadAlarm2Flag();
 }
 
+/**
+ * @brief RTC Task
+ *
+ * @param pvParameter
+ */
 static void rtc_task(void *pvParameter)
 {
     ESP_LOGI("RTC", "RTC Task Start!");
