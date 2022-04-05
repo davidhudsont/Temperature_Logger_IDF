@@ -4,24 +4,24 @@
 #include "argtable3/argtable3.h"
 #include "DeviceCommands.h"
 
-static void register_time_command(void);
-static void register_date_command(void);
-static void register_getdatetime_command(void);
-static void register_temperature_command(void);
-static void register_log_level_command(void);
-static void register_lcd_command(void);
-static void register_alarm_command(void);
+static void RegisterTimeCommand(void);
+static void RegisterDateCommand(void);
+static void RegisterGetdatetimeCommand(void);
+static void RegisterTemperatureCommand(void);
+static void RegisterLogLevelCommand(void);
+static void RegisterLcdCommand(void);
+static void RegisterAlarmCommand(void);
 
 // cppcheck-suppress unusedFunction
-void register_console_commands(void)
+void RegisterConsoleCommands(void)
 {
-    register_time_command();
-    register_date_command();
-    register_getdatetime_command();
-    register_temperature_command();
-    register_log_level_command();
-    register_lcd_command();
-    register_alarm_command();
+    RegisterTimeCommand();
+    RegisterDateCommand();
+    RegisterGetdatetimeCommand();
+    RegisterTemperatureCommand();
+    RegisterLogLevelCommand();
+    RegisterLcdCommand();
+    RegisterAlarmCommand();
 }
 
 static struct
@@ -47,32 +47,32 @@ static int set_time(int argc, char **argv)
     {
         uint8_t seconds = time_args.seconds->ival[0];
         ESP_LOGI("RTC", "Set seconds to: %d", time_args.seconds->ival[0]);
-        setSeconds(seconds);
+        SetSeconds(seconds);
     }
     else if (time_args.minutes->count)
     {
         uint8_t minutes = time_args.minutes->ival[0];
         ESP_LOGI("RTC", "Set minutes to: %d", minutes);
-        setMinutes(minutes);
+        SetMinutes(minutes);
     }
     else if (time_args.hours12->count)
     {
         bool PM_notAM = time_args.hours12->ival[1];
         uint8_t hours = time_args.hours12->ival[0];
         ESP_LOGI("RTC", "Set hours to: %d, %s", hours, (PM_notAM ? "PM" : "AM"));
-        setHours12Mode(hours, PM_notAM);
+        SetHours12Mode(hours, PM_notAM);
     }
     else if (time_args.hours24->count)
     {
         uint8_t hours = time_args.hours24->ival[0];
         ESP_LOGI("RTC", "Set hours to: %d", hours);
-        setHours24Mode(hours);
+        SetHours24Mode(hours);
     }
 
     return 0;
 }
 
-static void register_time_command(void)
+static void RegisterTimeCommand(void)
 {
     time_args.seconds = arg_int0("s", "seconds", "<0-59>", "Set seconds!");
     time_args.minutes = arg_int0("m", "minutes", "<0-59>", "Set minutes!");
@@ -114,31 +114,31 @@ static int set_date(int argc, char **argv)
     {
         int days = date_args.days->ival[0];
         ESP_LOGI("RTC", "Set Days to: %d", date_args.days->ival[0]);
-        setWeekDay(days);
+        SetWeekDay(days);
     }
     else if (date_args.date->count)
     {
         int dayOfMonth = date_args.date->ival[0];
         ESP_LOGI("RTC", "Set Date to: %d", dayOfMonth);
-        setDayOfMonth(dayOfMonth);
+        SetDayOfMonth(dayOfMonth);
     }
     else if (date_args.month->count)
     {
         int month = date_args.month->ival[0];
         ESP_LOGI("RTC", "Set Month to: %d", month);
-        setMonth(month);
+        SetMonth(month);
     }
     else if (date_args.year->count)
     {
         int year = date_args.year->ival[0];
         ESP_LOGI("RTC", "Set Year to: %d", year);
-        setYear(year);
+        SetYear(year);
     }
 
     return 0;
 }
 
-static void register_date_command(void)
+static void RegisterDateCommand(void)
 {
     date_args.days = arg_int0("w", NULL, "<1-7>", "Set weekday!");
     date_args.date = arg_int0("d", NULL, "<1-31>", "Set the day of the month!");
@@ -159,11 +159,11 @@ static void register_date_command(void)
 
 static int get_datetime(int argc, char **argv)
 {
-    readDateTime();
+    ReadDateTime();
     return 0;
 }
 
-static void register_getdatetime_command(void)
+static void RegisterGetdatetimeCommand(void)
 {
     const esp_console_cmd_t cmd = {
         .command = "datetime",
@@ -195,16 +195,16 @@ static int get_temperature(int argc, char **argv)
 
     if (temperature_args.tempf->count)
     {
-        readTemperature(true);
+        ReadTemperature(true);
     }
     if (temperature_args.tempc->count)
     {
-        readTemperature(false);
+        ReadTemperature(false);
     }
     return 0;
 }
 
-static void register_temperature_command(void)
+static void RegisterTemperatureCommand(void)
 {
     temperature_args.tempf = arg_lit0("f", NULL, "Get temperature in Fahrenheit!");
     temperature_args.tempc = arg_lit0("c", NULL, "Get temperature in Celsius!");
@@ -253,7 +253,7 @@ static int set_log_level(int argc, char **argv)
     return 0;
 }
 
-static void register_log_level_command(void)
+static void RegisterLogLevelCommand(void)
 {
     level_args.level = arg_int0("l", NULL, "<0-5>", "Set the log level");
     level_args.end = arg_end(2);
@@ -295,19 +295,19 @@ static int lcd(int argc, char **argv)
         if (turnDisplayOn)
         {
             ESP_LOGI("LCD", "Turn Display On");
-            displayOn();
+            DisplayOn();
         }
         else
         {
             ESP_LOGI("LCD", "Turn Display Off");
-            displayOff();
+            DisplayOff();
         }
     }
     else if (lcd_args.contrast->count)
     {
         uint8_t contrast = lcd_args.contrast->ival[0];
         ESP_LOGI("LCD", "Set Contrast to %d", contrast);
-        setContrast(contrast);
+        SetContrast(contrast);
     }
     else if (lcd_args.backlight->count)
     {
@@ -316,7 +316,7 @@ static int lcd(int argc, char **argv)
             uint8_t r = lcd_args.backlight->ival[0];
             uint8_t g = 0;
             uint8_t b = 0;
-            setBackLight(r, g, b);
+            SetBackLight(r, g, b);
             ESP_LOGI("LCD", "Set backlight to %d, %d, %d", r, g, b);
         }
         else if (lcd_args.backlight->count == 2)
@@ -325,7 +325,7 @@ static int lcd(int argc, char **argv)
             uint8_t g = lcd_args.backlight->ival[1];
             uint8_t b = 0;
             ESP_LOGI("LCD", "Set backlight to %d, %d, %d", r, g, b);
-            setBackLight(r, g, b);
+            SetBackLight(r, g, b);
         }
         else if (lcd_args.backlight->count == 3)
         {
@@ -333,28 +333,28 @@ static int lcd(int argc, char **argv)
             uint8_t g = lcd_args.backlight->ival[1];
             uint8_t b = lcd_args.backlight->ival[2];
             ESP_LOGI("LCD", "Set backlight to %d, %d, %d", r, g, b);
-            setBackLight(r, g, b);
+            SetBackLight(r, g, b);
         }
     }
     else if (lcd_args.clear->count)
     {
         ESP_LOGI("LCD", "Clear Display");
-        clearDisplay();
+        ClearDisplay();
     }
     else if (lcd_args.reset->count)
     {
         ESP_LOGI("LCD", "Reset Display");
-        resetDisplay();
+        ResetDisplay();
     }
 
     return 0;
 }
 
-static void register_lcd_command(void)
+static void RegisterLcdCommand(void)
 {
 
     lcd_args.display_toggle = arg_int0("d", NULL, "<bool>", "Turn Display On/Off");
-    lcd_args.contrast = arg_int0("c", NULL, "<0-255>", "Set the Contrast");
+    lcd_args.contrast = arg_int0("l", NULL, "<0-255>", "Set the Contrast");
     lcd_args.backlight = arg_intn("b", NULL, "<0-255>r, <0-255>g, <0-255>b", 0, 3, "Set the backlight rgb");
     lcd_args.clear = arg_lit0("c", NULL, "Clear the Display");
     lcd_args.reset = arg_lit0("r", NULL, "Reset the Display");
@@ -394,31 +394,31 @@ static int alarm_speaker(int argc, char **argv)
         if (turnAlarmOn)
         {
             ESP_LOGI("ALARM", "Turn Alarm On");
-            setAlarm(true);
+            SetAlarm(true);
         }
         else
         {
             ESP_LOGI("ALARM", "Turn Alarm Off");
-            setAlarm(false);
+            SetAlarm(false);
         }
     }
     if (alarm_speaker_args.alarm_frequency->count)
     {
         uint32_t freq_hz = alarm_speaker_args.alarm_frequency->ival[0];
         ESP_LOGI("ALARM", "Set Frequency to %dHz", freq_hz);
-        setFrequency(freq_hz);
+        SetFrequency(freq_hz);
     }
     if (alarm_speaker_args.alarm_duty_cycle->count)
     {
         uint32_t duty_cycle = alarm_speaker_args.alarm_duty_cycle->ival[0];
         ESP_LOGI("ALARM", "Set Duty Cycle to %d", duty_cycle);
-        setDutyCycle(duty_cycle);
+        SetDutyCycle(duty_cycle);
     }
 
     return 0;
 }
 
-static void register_alarm_command(void)
+static void RegisterAlarmCommand(void)
 {
 
     alarm_speaker_args.alarm_speaker_control = arg_int0("s", NULL, "<bool>", "Turn alarm On/Off");

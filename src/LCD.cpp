@@ -34,9 +34,9 @@ void LCD::EndTransmit()
 }
 
 // -------------------------------------LCD Public Functions-----------------------------------------------------
-void LCD::Begin()
+LCD::LCD()
+    : uart(9600, UART2_TX_PIN_NUM, UART2_RX_PIN_NUM, UART_NUM_2)
 {
-    uart.Setup(9600, UART2_TX_PIN_NUM, UART2_RX_PIN_NUM, UART_NUM_2);
     uart.ToggleRTS();
 
     delay(20);
@@ -56,7 +56,6 @@ void LCD::Reset()
 {
     uart.ToggleRTS();
 }
-
 
 void LCD::Clear()
 {
@@ -186,14 +185,14 @@ void LCD::SetBackLight(uint8_t r, uint8_t g, uint8_t b)
 
 void LCD::SetBackLightFast(uint8_t r, uint8_t g, uint8_t b)
 {
-    //send commands to the display to set backlights
+    // send commands to the display to set backlights
     BeginTransmit();        // transmit to device
-    Write(SETTING_COMMAND); //Send special command character
-    Write(SET_RGB_COMMAND); //Send the set RGB character '+' or plus
-    Write(r);               //Send the red value
-    Write(g);               //Send the green value
-    Write(b);               //Send the blue value
-    EndTransmit();          //Stop transmission
+    Write(SETTING_COMMAND); // Send special command character
+    Write(SET_RGB_COMMAND); // Send the set RGB character '+' or plus
+    Write(r);               // Send the red value
+    Write(g);               // Send the green value
+    Write(b);               // Send the blue value
+    EndTransmit();          // Stop transmission
     delay(10);
 }
 
@@ -247,9 +246,9 @@ void LCD::SpecialCommand(uint8_t command, uint8_t count)
 void LCD::DisableSystemMessages()
 {
     BeginTransmit();                       // transmit to device
-    Write(SETTING_COMMAND);                //Send special command character
-    Write(DISABLE_SYSTEM_MESSAGE_DISPLAY); //Send the set '.' character
-    EndTransmit();                         //Stop transmission
+    Write(SETTING_COMMAND);                // Send special command character
+    Write(DISABLE_SYSTEM_MESSAGE_DISPLAY); // Send the set '.' character
+    EndTransmit();                         // Stop transmission
     delay(10);
 }
 

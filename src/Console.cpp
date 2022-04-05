@@ -68,7 +68,7 @@ void StartConsole()
 
     // Register the consoles commands after the console is started
     esp_console_register_help_command();
-    register_console_commands();
+    RegisterConsoleCommands();
 }
 
 void console_task(void *pvParameter)

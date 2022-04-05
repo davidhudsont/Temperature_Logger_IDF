@@ -2,7 +2,6 @@
 
 #include "BSP_I2C.h"
 #include "TMP102Registers.h"
-#include <string>
 
 enum CONVERSION_MODES
 {
@@ -28,43 +27,21 @@ constexpr int16_t maxPositiveTemp13bit = 0x0FFF;
 
 class TMP102
 {
-private:
-    uint8_t config[2];
-
-    float temperature;
-
-    BSP::I2C i2c;
-
-    /**
-     * @brief Read a register from the TMP102
-     * 
-     * @param address 
-     * @return uint8_t 
-     */
-    uint8_t ReadRegister(uint8_t address);
-
-    /**
-     * @brief Write a value to the TMP102 register
-     * @param address 
-     * @param data 
-     */
-    void WriteRegister(uint8_t address, uint8_t data);
-
 public:
     /**
      * @brief Construct a new TMP102 object
-     * 
+     *
      */
     TMP102();
 
     /**
      * @brief Start I2C bus and initialize the device structure.
      */
-    void Begin();
+    void Setup();
 
     /**
      * @brief Set the conversion rate of the TMP102
-     * @param mode 
+     * @param mode
      */
     void SetConversionRate(CONVERSION_MODES mode);
 
@@ -75,7 +52,7 @@ public:
 
     /**
      * @brief Wake up the TMP102
-     * 
+     *
      */
     void Wake();
 
@@ -86,19 +63,9 @@ public:
 
     /**
      * @brief Get the current oneshot value.
-     * @return true if one shot has triggered 
+     * @return true if one shot has triggered
      */
     bool GetOneShot();
-
-    /**
-     * @brief Write to the configuration register with currently stored config value
-     */
-    void WriteConfig();
-
-    /**
-     * @brief Read the configuration register
-     */
-    void ReadConfig();
 
     /**
      * @brief Reads a sample from the TMP102
@@ -108,27 +75,23 @@ public:
 
     /**
      * @brief Return the current sampled temperature in degreees Celsius
-     * @return float 
+     * @return float
      */
     float Temperature();
 
     /**
      * @brief Return the current sampled temperature in degrees Fahrenheit
-     * @return float 
+     * @return float
      */
     float TemperatureF();
 
-    /**
-     * @brief Get a string of the temperature in Fahrenheit
-     * 
-     * @return std::string 
-     */
-    std::string TemperatureFToString();
+private:
+    uint8_t config[2];
+    float temperature;
+    BSP::I2C i2c;
 
-    /**
-     * @brief Get a string of the temperature in Celsius
-     * 
-     * @return std::string 
-     */
-    std::string TemperatureCToString();
+    uint8_t ReadRegister(uint8_t address);
+    void WriteRegister(uint8_t address, uint8_t data);
+    void WriteConfig();
+    void ReadConfig();
 };

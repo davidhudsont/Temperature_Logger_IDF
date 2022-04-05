@@ -9,20 +9,20 @@
 #define MAX_ROWS 4
 #define MAX_COLUMNS 20
 
-//OpenLCD command characters
-#define SPECIAL_COMMAND 254  //Magic number for sending a special command
-#define SETTING_COMMAND 0x7C //124, |, the pipe character: The command to change settings: baud, lines, width, backlight, splash, etc
+// OpenLCD command characters
+#define SPECIAL_COMMAND 254  // Magic number for sending a special command
+#define SETTING_COMMAND 0x7C // 124, |, the pipe character: The command to change settings: baud, lines, width, backlight, splash, etc
 
-//OpenLCD commands
-#define CLEAR_COMMAND 0x2D                  //45, -, the dash character: command to clear and home the display
-#define CONTRAST_COMMAND 0x18               //Command to change the contrast setting
-#define ADDRESS_COMMAND 0x19                //Command to change the i2c address
-#define SET_RGB_COMMAND 0x2B                //43, +, the plus character: command to set backlight RGB value
-#define ENABLE_SYSTEM_MESSAGE_DISPLAY 0x2E  //46, ., command to enable system messages being displayed
-#define DISABLE_SYSTEM_MESSAGE_DISPLAY 0x2F //47, /, command to disable system messages being displayed
-#define ENABLE_SPLASH_DISPLAY 0x30          //48, 0, command to enable splash screen at power on
-#define DISABLE_SPLASH_DISPLAY 0x31         //49, 1, command to disable splash screen at power on
-#define SAVE_CURRENT_DISPLAY_AS_SPLASH 0x0A //10, Ctrl+j, command to save current text on display as splash
+// OpenLCD commands
+#define CLEAR_COMMAND 0x2D                  // 45, -, the dash character: command to clear and home the display
+#define CONTRAST_COMMAND 0x18               // Command to change the contrast setting
+#define ADDRESS_COMMAND 0x19                // Command to change the i2c address
+#define SET_RGB_COMMAND 0x2B                // 43, +, the plus character: command to set backlight RGB value
+#define ENABLE_SYSTEM_MESSAGE_DISPLAY 0x2E  // 46, ., command to enable system messages being displayed
+#define DISABLE_SYSTEM_MESSAGE_DISPLAY 0x2F // 47, /, command to disable system messages being displayed
+#define ENABLE_SPLASH_DISPLAY 0x30          // 48, 0, command to enable splash screen at power on
+#define DISABLE_SPLASH_DISPLAY 0x31         // 49, 1, command to disable splash screen at power on
+#define SAVE_CURRENT_DISPLAY_AS_SPLASH 0x0A // 10, Ctrl+j, command to save current text on display as splash
 
 // special commands
 #define LCD_RETURNHOME 0x02
@@ -55,19 +55,12 @@ const uint8_t DEGREE_SYMBOL = 223;
 
 class LCD
 {
-private:
-    BSP::UART uart;
-
-    void BeginTransmit();
-    void Write(uint8_t data);
-    void WriteBurst(uint8_t *data, uint32_t len);
-    void EndTransmit();
-
-    uint8_t displayControl = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
-    uint8_t displayMode = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
-
 public:
-    void Begin();
+    LCD();
+    ~LCD() = default;
+    LCD(const LCD &) = delete;
+    LCD &operator=(const LCD &) = delete;
+
     // Reset LCD DTR Pin
     void Reset();
 
@@ -135,4 +128,14 @@ public:
 
     void ClearRow(uint8_t row);
     void WriteDigit(char digit);
+
+private:
+    BSP::UART uart;
+    uint8_t displayControl = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
+    uint8_t displayMode = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
+
+    void BeginTransmit();
+    void Write(uint8_t data);
+    void WriteBurst(uint8_t *data, uint32_t len);
+    void EndTransmit();
 };

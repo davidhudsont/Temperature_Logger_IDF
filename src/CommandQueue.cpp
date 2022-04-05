@@ -4,8 +4,15 @@ CommandQueue::CommandQueue()
 {
     commandQueue = xQueueCreate(3, sizeof(COMMAND_MESSAGE));
 }
-void CommandQueue::Send(COMMAND_MESSAGE msg)
+
+void CommandQueue::Send(int id, int arg1, int arg2, int arg3)
 {
+    COMMAND_MESSAGE msg;
+    msg.id = id;
+    msg.arg1 = arg1;
+    msg.arg2 = arg2;
+    msg.arg3 = arg3;
+
     xQueueSend(commandQueue, (void *)&msg, 30);
 }
 

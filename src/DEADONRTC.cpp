@@ -81,9 +81,9 @@ int GetInterruptSemiphore()
 /**
  * @brief Convert a Binary Coded Decimal number
  *        into a decimal number
- * 
- * @param bcd 
- * @return uint8_t 
+ *
+ * @param bcd
+ * @return uint8_t
  */
 static uint8_t BCDtoDEC(uint8_t bcd)
 {
@@ -94,9 +94,9 @@ static uint8_t BCDtoDEC(uint8_t bcd)
 /**
  * @brief Convert a decimal number to
  *        a binary coded decimal number
- * 
- * @param dec 
- * @return uint8_t 
+ *
+ * @param dec
+ * @return uint8_t
  */
 static uint8_t DECtoBCD(uint8_t dec)
 {
@@ -105,7 +105,7 @@ static uint8_t DECtoBCD(uint8_t dec)
 }
 
 RTCDS3234::RTCDS3234()
-    : intr_enable(false), alarm1_enable(false), alarm2_enable(false),
+    : spi(SPI_CLOCK_SPEED), intr_enable(false), alarm1_enable(false), alarm2_enable(false),
       seconds(0), minutes(0), hours(0), day(0), date(0), month(0), year(0),
       hour12_not24(false), PM_notAM(false), century(false)
 {
@@ -114,8 +114,6 @@ RTCDS3234::RTCDS3234()
 
 void RTCDS3234::Begin()
 {
-    volatile int clock_speed = 4 * 1000 * 1000; // Clock speed 4MHz
-    spi.Setup(clock_speed);
 }
 
 void RTCDS3234::ReadDateTime()
@@ -433,8 +431,8 @@ bool RTCDS3234::ReadAlarm2Flag()
 
 /**
  * @brief Alarm ISR Handler
- * 
- * @param arg 
+ *
+ * @param arg
  */
 static void IRAM_ATTR alert_isr_handler(void *arg)
 {
@@ -526,21 +524,21 @@ void RTCDS3234::SRAMBurstWrite(uint8_t address, uint8_t *data, uint32_t len)
 
 uint8_t RTCDS3234::RegisterRead(uint8_t register_address)
 {
-    uint8_t data = spi.readReg(register_address & 0x7F);
+    uint8_t data = spi.ReadRegister(register_address & 0x7F);
     return data;
 }
 
 void RTCDS3234::RegisterWrite(uint8_t register_address, uint8_t data)
 {
-    spi.writeReg(register_address | 0x80, data);
+    spi.WriteRegister(register_address | 0x80, data);
 }
 
 void RTCDS3234::RegisterBurstRead(uint8_t address, uint8_t *data, uint32_t len)
 {
-    spi.burstRead(address & 0x7F, data, len);
+    spi.BurstRead(address & 0x7F, data, len);
 }
 
 void RTCDS3234::RegisterBurstWrite(uint8_t address, uint8_t *data, uint32_t len)
 {
-    spi.burstWrite(address | 0x80, data, len);
+    spi.BurstWrite(address | 0x80, data, len);
 }

@@ -27,7 +27,6 @@
 #include "TMP102.h"
 #include "Speaker.h"
 
-static SemaphoreHandle_t alarm_semiphore;
 static SemaphoreHandle_t lcd_semiphore;
 
 static DATE_TIME dateTime;
@@ -42,7 +41,6 @@ static void speaker_task(void *pvParameter);
 
 void CreateSemaphores(void)
 {
-    alarm_semiphore = xSemaphoreCreateBinary();
     lcd_semiphore = xSemaphoreCreateBinary();
 }
 
@@ -112,6 +110,11 @@ void StartAlarms(RTCDS3234 &rtc)
     rtc.ReadAlarm2Flag();
 }
 
+/**
+ * @brief RTC Task
+ *
+ * @param pvParameter
+ */
 static void rtc_task(void *pvParameter)
 {
     ESP_LOGI("RTC", "RTC Task Start!");
@@ -138,20 +141,20 @@ static void rtc_task(void *pvParameter)
                 std::string logdate = rtc.DateToString();
                 std::string logtime = rtc.TimeToString();
                 ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
-                setAlarm(true);
+                SetAlarm(true);
             }
             if (alarm2_flag)
             {
                 ESP_LOGV("RTC", "ALARM2 Triggered");
                 rtc.ReadDateTime();
                 dateTime = rtc.GetDateTime();
-                xSemaphoreGive(alarm_semiphore);
+                ReadTemperature(false);
                 xSemaphoreGive(lcd_semiphore);
             }
         }
 
         // Evaulate Console Commands
-        if (recieveDateCommand(&cmd_msg) || recieveTimeCommand(&cmd_msg))
+        if (RecieveDateCommand(&cmd_msg) || RecieveTimeCommand(&cmd_msg))
         {
             switch (cmd_msg.id)
             {
@@ -234,13 +237,18 @@ static void OneShotTemperatureRead(TMP102 &tmp102)
     }
 }
 
+/**
+ * @brief Temperature Reading Task
+ *
+ * @param pvParameter
+ */
 static void tmp102_task(void *pvParameter)
 {
     TMP102 tmp102;
     COMMAND_MESSAGE cmd_msg;
 
     ESP_LOGI("TMP", "TMP102 Task Start!");
-    tmp102.Begin();
+    tmp102.Setup();
     tmp102.SetConversionRate(CONVERSION_MODE_1);
     delay(100);
     tmp102.Sleep();
@@ -252,25 +260,17 @@ static void tmp102_task(void *pvParameter)
 
     while (1)
     {
-        if (xSemaphoreTake(alarm_semiphore, 0))
+        if (RecieveTMPCommand(&cmd_msg))
         {
             OneShotTemperatureRead(tmp102);
-            std::string temperature_readingf = tmp102.TemperatureFToString();
-            ESP_LOGI("TMP", "%sF", temperature_readingf.c_str());
-        }
-
-        if (recieveTMPCommand(&cmd_msg))
-        {
+            temperatureC = tmp102.Temperature();
+            temperatureF = tmp102.TemperatureF();
             switch (cmd_msg.id)
             {
             case GET_TEMPF:
-                OneShotTemperatureRead(tmp102);
-                temperatureF = tmp102.TemperatureF();
-                ESP_LOGI("TMP", "%3.3fC", temperatureF);
+                ESP_LOGI("TMP", "%3.3fF", temperatureF);
                 break;
             case GET_TEMPC:
-                OneShotTemperatureRead(tmp102);
-                temperatureC = tmp102.Temperature();
                 ESP_LOGI("TMP", "%2.3fC", temperatureC);
                 break;
             default:
@@ -281,6 +281,11 @@ static void tmp102_task(void *pvParameter)
     }
 }
 
+/**
+ * @brief Button Reading Task
+ *
+ * @param pvParameter
+ */
 static void button_task(void *pvParameter)
 {
     ESP_LOGI("BTN", "Starting Button Interface");
@@ -293,55 +298,64 @@ static void button_task(void *pvParameter)
         if (altButton)
         {
             ESP_LOGI("BTN", "Alt Button Pressed");
-            buttonPressed(ALT_BTN_PRESSED);
+            ButtonPressed(ALT_BTN_PRESSED);
         }
         else if (editModeButton)
         {
             ESP_LOGI("BTN", "Edit Mode Button Pressed");
-            buttonPressed(EDIT_MODE_PRESSED);
+            ButtonPressed(EDIT_MODE_PRESSED);
         }
         else if (downButton)
         {
             ESP_LOGI("BTN", "Down Button Pressed");
-            buttonPressed(DOWN_PRESSED);
+            ButtonPressed(DOWN_PRESSED);
         }
         else if (upButton)
         {
             ESP_LOGI("BTN", "Up Button Pressed");
-            buttonPressed(UP_PRESSED);
+            ButtonPressed(UP_PRESSED);
         }
         delay(10);
     }
 }
 
+/**
+ * @brief HMI Task
+ *
+ * @param pvParameter
+ */
 static void hmi_task(void *pvParameter)
 {
-    HMI hmi = HMI();
+    HMI hmi;
 
-    readDateTime();
+    ReadDateTime();
 
     while (1)
     {
 
-        if (xSemaphoreTake(lcd_semiphore, 0) && hmi.getCurrentState() == DISPLAYING)
+        if (xSemaphoreTake(lcd_semiphore, 0) && hmi.GetCurrentState() == DISPLAYING)
         {
-            hmi.setDisplayDateTime(dateTime);
-            hmi.setDisplayTemperature(temperatureF, temperatureC);
-            updateDisplay();
+            hmi.SetDisplayDateTime(dateTime);
+            hmi.SetDisplayTemperature(temperatureF, temperatureC);
+            UpdateDisplay();
         }
-        hmi.process();
+        hmi.Process();
     }
 }
 
+/**
+ * @brief Speaker Task
+ *
+ * @param pvParameter
+ */
 static void speaker_task(void *pvParameter)
 {
-    AlarmSpeaker alarm = AlarmSpeaker(GPIO_NUM_10);
-    alarm.Init();
+    AlarmSpeaker alarm;
 
     while (1)
     {
         COMMAND_MESSAGE cmd_msg;
-        if (recieveAlarmCommand(&cmd_msg))
+        if (RecieveAlarmCommand(&cmd_msg))
         {
             if (cmd_msg.id == ALARM_SET)
             {
@@ -363,7 +377,7 @@ static void speaker_task(void *pvParameter)
                 alarm.SetDutyCyclePercentage((uint32_t)cmd_msg.arg1);
             }
         }
-        if (recieveButtonCommand(&cmd_msg))
+        if (RecieveButtonCommand(&cmd_msg))
         {
             if (cmd_msg.id == ALT_BTN_PRESSED)
             {

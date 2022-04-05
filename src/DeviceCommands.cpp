@@ -7,217 +7,154 @@ static CommandQueue time_command_queue;
 static CommandQueue button_command_queue;
 static CommandQueue alarm_command_queue;
 
-void readTemperature(bool FahrenheitOrCelsius)
+// Temperature Commands
+void ReadTemperature(bool FahrenheitOrCelsius)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = FahrenheitOrCelsius ? GET_TEMPF : GET_TEMPC;
-    tmp_command_queue.Send(msg);
+    TMP_COMMANDS id = FahrenheitOrCelsius ? GET_TEMPF : GET_TEMPC;
+    tmp_command_queue.Send(id);
 }
 
-bool recieveTMPCommand(COMMAND_MESSAGE *msg)
+bool RecieveTMPCommand(COMMAND_MESSAGE *msg)
 {
     return tmp_command_queue.Recieve(msg);
 }
 
-void displayOff()
+// LCD Commands
+void DisplayOff()
 {
-    COMMAND_MESSAGE msg;
-    msg.id = LCD_DISPLAY_OFF;
-    lcd_command_queue.Send(msg);
+    lcd_command_queue.Send(LCD_DISPLAY_OFF);
 }
 
-void displayOn()
+void DisplayOn()
 {
-    COMMAND_MESSAGE msg;
-    msg.id = LCD_DISPLAY_ON;
-    lcd_command_queue.Send(msg);
+    lcd_command_queue.Send(LCD_DISPLAY_ON);
 }
 
-void setContrast(uint8_t contrast)
+void SetContrast(uint8_t contrast)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = LCD_SET_CONTRAST;
-    msg.arg1 = contrast;
-    lcd_command_queue.Send(msg);
+    lcd_command_queue.Send(LCD_SET_CONTRAST, contrast);
 }
 
-void setBackLight(uint8_t r, uint8_t g, uint8_t b)
+void SetBackLight(uint8_t r, uint8_t g, uint8_t b)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = LCD_SET_BACKLIGHT;
-    msg.arg1 = r;
-    msg.arg2 = g;
-    msg.arg3 = b;
-    lcd_command_queue.Send(msg);
+    lcd_command_queue.Send(LCD_SET_BACKLIGHT, r, g, b);
 }
 
-void clearDisplay()
+void ClearDisplay()
 {
-    COMMAND_MESSAGE msg;
-    msg.id = LCD_CLEAR_DISPLAY;
-    lcd_command_queue.Send(msg);
+    lcd_command_queue.Send(LCD_CLEAR_DISPLAY);
 }
 
-void updateDisplay()
+void UpdateDisplay()
 {
-    COMMAND_MESSAGE msg;
-    msg.id = LCD_DISPLAY_UPDATE;
-    lcd_command_queue.Send(msg);
+    lcd_command_queue.Send(LCD_DISPLAY_UPDATE);
 }
 
-void resetDisplay()
+void ResetDisplay()
 {
-    COMMAND_MESSAGE msg;
-    msg.id = LCD_RESET;
-    lcd_command_queue.Send(msg);
+    lcd_command_queue.Send(LCD_RESET);
 }
 
-bool recieveLCDCommand(COMMAND_MESSAGE *msg)
+bool RecieveLCDCommand(COMMAND_MESSAGE *msg)
 {
     return lcd_command_queue.Recieve(msg);
 }
 
-void setWeekDay(uint8_t weekday)
+// Date Commands
+void SetWeekDay(uint8_t weekday)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = SET_WEEKDAY;
-    msg.arg1 = weekday;
-    date_command_queue.Send(msg);
+    date_command_queue.Send(SET_WEEKDAY, weekday);
 }
 
-void setMonth(uint8_t month)
+void SetMonth(uint8_t month)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = SET_MONTH;
-    msg.arg1 = month;
-    date_command_queue.Send(msg);
+    date_command_queue.Send(SET_MONTH, month);
 }
 
-void setYear(uint8_t year)
+void SetYear(uint8_t year)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = SET_YEAR;
-    msg.arg1 = year;
-    date_command_queue.Send(msg);
+    date_command_queue.Send(SET_YEAR, year);
 }
 
-void setDayOfMonth(uint8_t dayOfMonth)
+void SetDayOfMonth(uint8_t dayOfMonth)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = SET_DAYOFMONTH;
-    msg.arg1 = dayOfMonth;
-    date_command_queue.Send(msg);
+    date_command_queue.Send(SET_DAYOFMONTH, dayOfMonth);
 }
 
-void setDate(uint8_t dayOfMonth, uint8_t month, uint8_t year)
+void SetDate(uint8_t dayOfMonth, uint8_t month, uint8_t year)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = SET_DATE;
-    msg.arg1 = dayOfMonth;
-    msg.arg2 = month;
-    msg.arg3 = year;
-    date_command_queue.Send(msg);
+    date_command_queue.Send(SET_DATE, dayOfMonth, month, year);
 }
 
-bool recieveDateCommand(COMMAND_MESSAGE *msg)
+bool RecieveDateCommand(COMMAND_MESSAGE *msg)
 {
     return date_command_queue.Recieve(msg);
 }
 
-void setSeconds(uint8_t second)
+// Time Commands
+void SetSeconds(uint8_t second)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = SET_SECONDS;
-    msg.arg1 = second;
-    time_command_queue.Send(msg);
+    time_command_queue.Send(SET_SECONDS, second);
 }
 
-void setMinutes(uint8_t minute)
+void SetMinutes(uint8_t minute)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = SET_MINUTES;
-    msg.arg1 = minute;
-    time_command_queue.Send(msg);
+    time_command_queue.Send(SET_MINUTES, minute);
 }
 
-void setHours12Mode(uint8_t hour, bool AMOrPM)
+void SetHours12Mode(uint8_t hour, bool AMOrPM)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = SET_12HOURS;
-    msg.arg1 = hour;
-    msg.arg2 = AMOrPM;
-    time_command_queue.Send(msg);
+    time_command_queue.Send(SET_12HOURS, hour, AMOrPM);
 }
 
-void setHours24Mode(uint8_t hour)
+void SetHours24Mode(uint8_t hour)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = SET_24HOURS;
-    msg.arg1 = hour;
-    time_command_queue.Send(msg);
+    time_command_queue.Send(SET_24HOURS, hour);
 }
 
-void setTime(uint8_t hour, uint8_t minute, uint8_t second)
+void SetTime(uint8_t hour, uint8_t minute, uint8_t second)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = SET_TIME;
-    msg.arg1 = hour;
-    msg.arg2 = minute;
-    msg.arg3 = second;
-    time_command_queue.Send(msg);
+    time_command_queue.Send(SET_TIME, hour, minute, second);
 }
 
-bool recieveTimeCommand(COMMAND_MESSAGE *msg)
+bool RecieveTimeCommand(COMMAND_MESSAGE *msg)
 {
     return time_command_queue.Recieve(msg);
 }
 
-void readDateTime()
+void ReadDateTime()
 {
-    COMMAND_MESSAGE msg;
-    msg.id = GET_DATETIME;
-    time_command_queue.Send(msg);
+    time_command_queue.Send(GET_DATETIME);
 }
 
 // Button Tasks
-void buttonPressed(COMMANDS command)
+void ButtonPressed(BTN_COMMANDS command)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = command;
-    button_command_queue.Send(msg);
+    button_command_queue.Send(command);
 }
 
-bool recieveButtonCommand(COMMAND_MESSAGE *msg)
+bool RecieveButtonCommand(COMMAND_MESSAGE *msg)
 {
     return button_command_queue.Recieve(msg);
 }
 
 // Alarm Commands
-void setAlarm(bool on_off)
+void SetAlarm(bool on_off)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = ALARM_SET;
-    msg.arg1 = on_off;
-    alarm_command_queue.Send(msg);
+    alarm_command_queue.Send(ALARM_SET, on_off);
 }
 
-void setFrequency(uint32_t freq_hz)
+void SetFrequency(uint32_t freq_hz)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = ALARM_FREQ;
-    msg.arg1 = freq_hz;
-    alarm_command_queue.Send(msg);
+    alarm_command_queue.Send(ALARM_FREQ, freq_hz);
 }
 
-void setDutyCycle(uint32_t duty_cycle)
+void SetDutyCycle(uint32_t duty_cycle)
 {
-    COMMAND_MESSAGE msg;
-    msg.id = ALARM_DUTY_CYCLE;
-    msg.arg1 = duty_cycle;
-    alarm_command_queue.Send(msg);
+    alarm_command_queue.Send(ALARM_DUTY_CYCLE, duty_cycle);
 }
 
-bool recieveAlarmCommand(COMMAND_MESSAGE *msg)
+bool RecieveAlarmCommand(COMMAND_MESSAGE *msg)
 {
     return alarm_command_queue.Recieve(msg);
 }
