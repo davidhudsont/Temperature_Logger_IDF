@@ -27,7 +27,6 @@
 #include "TMP102.h"
 #include "Speaker.h"
 
-static SemaphoreHandle_t alarm_semiphore;
 static SemaphoreHandle_t lcd_semiphore;
 
 static DATE_TIME dateTime;
@@ -42,7 +41,6 @@ static void speaker_task(void *pvParameter);
 
 void CreateSemaphores(void)
 {
-    alarm_semiphore = xSemaphoreCreateBinary();
     lcd_semiphore = xSemaphoreCreateBinary();
 }
 
@@ -145,7 +143,7 @@ static void rtc_task(void *pvParameter)
                 ESP_LOGV("RTC", "ALARM2 Triggered");
                 rtc.ReadDateTime();
                 dateTime = rtc.GetDateTime();
-                xSemaphoreGive(alarm_semiphore);
+                ReadTemperature(false);
                 xSemaphoreGive(lcd_semiphore);
             }
         }
@@ -234,20 +232,11 @@ static void OneShotTemperatureRead(TMP102 &tmp102)
     }
 }
 
-static void LogTemperature(TMP102 &tmp102, bool celsiusOrFahrenheit)
-{
-    if (celsiusOrFahrenheit)
-    {
-        temperatureC = tmp102.Temperature();
-        ESP_LOGI("TMP", "%2.3fC", temperatureC);
-    }
-    else
-    {
-        temperatureF = tmp102.TemperatureF();
-        ESP_LOGI("TMP", "%3.3fF", temperatureF);
-    }
-}
-
+/**
+ * @brief Temperature Reading Task
+ *
+ * @param pvParameter
+ */
 static void tmp102_task(void *pvParameter)
 {
     TMP102 tmp102;
@@ -266,21 +255,18 @@ static void tmp102_task(void *pvParameter)
 
     while (1)
     {
-        if (xSemaphoreTake(alarm_semiphore, 0))
-        {
-            OneShotTemperatureRead(tmp102);
-            LogTemperature(tmp102, false);
-        }
         if (RecieveTMPCommand(&cmd_msg))
         {
             OneShotTemperatureRead(tmp102);
+            temperatureC = tmp102.Temperature();
+            temperatureF = tmp102.TemperatureF();
             switch (cmd_msg.id)
             {
             case GET_TEMPF:
-                LogTemperature(tmp102, false);
+                ESP_LOGI("TMP", "%3.3fF", temperatureF);
                 break;
             case GET_TEMPC:
-                LogTemperature(tmp102, true);
+                ESP_LOGI("TMP", "%2.3fC", temperatureC);
                 break;
             default:
                 break;
@@ -290,6 +276,11 @@ static void tmp102_task(void *pvParameter)
     }
 }
 
+/**
+ * @brief Button Reading Task
+ *
+ * @param pvParameter
+ */
 static void button_task(void *pvParameter)
 {
     ESP_LOGI("BTN", "Starting Button Interface");
@@ -323,6 +314,11 @@ static void button_task(void *pvParameter)
     }
 }
 
+/**
+ * @brief HMI Task
+ *
+ * @param pvParameter
+ */
 static void hmi_task(void *pvParameter)
 {
     HMI hmi;
@@ -342,6 +338,11 @@ static void hmi_task(void *pvParameter)
     }
 }
 
+/**
+ * @brief Speaker Task
+ *
+ * @param pvParameter
+ */
 static void speaker_task(void *pvParameter)
 {
     AlarmSpeaker alarm;
