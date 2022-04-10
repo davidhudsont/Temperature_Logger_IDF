@@ -154,6 +154,12 @@ void SetDutyCycle(uint32_t duty_cycle)
     alarm_command_queue.Send(ALARM_DUTY_CYCLE, duty_cycle);
 }
 
+void SetAlarmTime(uint8_t hour, uint8_t minute)
+{
+    // Adjust the time on the RTC.
+    time_command_queue.Send(ALARM_TIME, hour, minute);
+}
+
 bool RecieveAlarmCommand(COMMAND_MESSAGE *msg)
 {
     return alarm_command_queue.Recieve(msg);

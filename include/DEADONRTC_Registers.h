@@ -9,12 +9,12 @@
 #define REG_MONTH 0x05           // [R/W] Month   Register
 #define REG_YEAR 0x06            // [R/W] Year    Register
 #define REG_ALARM1_SECONDS 0x07  // [R/W] Alarm 1 Seconds Register
-#define REG_ALRAM1_MINUTES 0x08  // [R/W] Alarm 1 Minutes Register
-#define REG_ALRAM1_HOURS 0x09    // [R/W] Alarm 1 Hours   Register
-#define REG_ALRAM1_DAYSDATE 0x0A // [R/W] Alarm 1 Days & Date Register
-#define REG_ALRAM2_MINUTES 0x0B  // [R/W] Alarm 2 Minutes Register
-#define REG_ALRAM2_HOURS 0x0C    // [R/W] Alarm 2 Hours   Register
-#define REG_ALRAM2_DAYSDATE 0x0D // [R/W] Alarm 2 Days & Date Register
+#define REG_ALARM1_MINUTES 0x08  // [R/W] Alarm 1 Minutes Register
+#define REG_ALARM1_HOURS 0x09    // [R/W] Alarm 1 Hours   Register
+#define REG_ALARM1_DAYSDATE 0x0A // [R/W] Alarm 1 Days & Date Register
+#define REG_ALARM2_MINUTES 0x0B  // [R/W] Alarm 2 Minutes Register
+#define REG_ALARM2_HOURS 0x0C    // [R/W] Alarm 2 Hours   Register
+#define REG_ALARM2_DAYSDATE 0x0D // [R/W] Alarm 2 Days & Date Register
 #define REG_CONTROL 0x0E         // [R/W] Control Register
 #define REG_CONTROL_STATUS 0x0F  // [R/W] Control/Status Register
 #define REG_AGING_OFFSET 0x10    // [R/W] Aging Offset Register

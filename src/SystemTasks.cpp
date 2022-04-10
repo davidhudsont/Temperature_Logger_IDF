@@ -210,6 +210,9 @@ static void rtc_task(void *pvParameter)
                 dateTime.month = cmd_msg.arg2;
                 dateTime.year = cmd_msg.arg3;
                 break;
+            case ALARM_TIME:
+                rtc.WriteAlarm1(cmd_msg.arg1, cmd_msg.arg2);
+                ESP_LOGI("RTC", "Setting ALARM to %d hour, %d minute", cmd_msg.arg1, cmd_msg.arg2);
             default:
                 break;
             }

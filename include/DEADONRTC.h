@@ -146,6 +146,8 @@ public:
     void WriteAlarm1(uint8_t seconds, uint8_t minutes,
                      uint8_t hours, uint8_t date, ALARM1_MODES mode);
 
+    void WriteAlarm1(uint8_t hour, uint8_t minute);
+
     /**
      * @brief
      *

@@ -368,6 +368,21 @@ void RTCDS3234::WriteAlarm1(uint8_t seconds, uint8_t minutes,
     RegisterBurstWrite(REG_ALARM1_SECONDS, alarm_config, 4);
 }
 
+void RTCDS3234::WriteAlarm1(uint8_t hour, uint8_t minute)
+{
+    uint8_t alarm_config[2] = {0};
+    uint8_t current_config[2] = {0};
+    RegisterBurstRead(REG_ALARM1_MINUTES, current_config, 2);
+    uint8_t mask = 0x80;
+    current_config[0] &= mask;
+    current_config[1] &= mask;
+
+    alarm_config[0] = DECtoBCD(minutes) | current_config[0];
+    alarm_config[1] = DECtoBCD(hours) | current_config[1];
+
+    RegisterBurstWrite(REG_ALARM1_MINUTES, alarm_config, 2);
+}
+
 void RTCDS3234::WriteAlarm2(uint8_t minutes,
                             uint8_t hours, uint8_t date, ALARM2_MODES mode)
 {
@@ -392,7 +407,7 @@ void RTCDS3234::WriteAlarm2(uint8_t minutes,
         break;
     }
 
-    RegisterBurstWrite(REG_ALRAM2_MINUTES, alarm_config, 3);
+    RegisterBurstWrite(REG_ALARM2_MINUTES, alarm_config, 3);
 }
 
 bool RTCDS3234::ReadAlarm1Flag()
