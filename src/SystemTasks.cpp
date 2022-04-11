@@ -104,7 +104,7 @@ void StartAlarms(RTCDS3234 &rtc)
     delay(100);
     rtc.EnableInterrupt(true);
     delay(100);
-    rtc.EnableAlarms(false, true);
+    rtc.EnableAlarms(true, true);
     // Clear the ALARM flags early
     rtc.ReadAlarm1Flag();
     rtc.ReadAlarm2Flag();

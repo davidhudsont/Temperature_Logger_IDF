@@ -207,22 +207,7 @@ void HMI::DisplayMode()
         }
         else if (msg.id == ALT_BTN_PRESSED)
         {
-            static bool displayActive = true;
-            if (displayActive)
-            {
-                lcd.NoDisplay();
-                lcd.SetBackLightFast(0, 0, 0);
-            }
-            else
-            {
-                lcd.Display();
-                int index = backlightSetting.value;
-                uint8_t r = backLightValues[index].r;
-                uint8_t g = backLightValues[index].g;
-                uint8_t b = backLightValues[index].b;
-                SetBackLight(r, g, b);
-            }
-            displayActive = !displayActive;
+            SetAlarm(false);
         }
         else if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
         {

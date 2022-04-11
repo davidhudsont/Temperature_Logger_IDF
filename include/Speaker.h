@@ -6,7 +6,7 @@
 #include "freertos/semphr.h"
 #include "esp_timer.h"
 
-#define PIN_NUM_SPEAKER (GPIO_NUM_10)
+#define PIN_NUM_SPEAKER (GPIO_NUM_26)
 
 class AlarmSpeaker
 {
