@@ -20,3 +20,18 @@ bool CommandQueue::Recieve(COMMAND_MESSAGE *msg)
 {
     return xQueueReceive(commandQueue, msg, 30);
 }
+
+CommandSemaphore::CommandSemaphore()
+{
+    commandSemaphore = xSemaphoreCreateBinary();
+}
+
+void CommandSemaphore::GiveSemaphore()
+{
+    xSemaphoreGive(commandSemaphore);
+}
+
+bool CommandSemaphore::TakeSemaphore()
+{
+    return xSemaphoreTake(commandSemaphore, 2);
+}

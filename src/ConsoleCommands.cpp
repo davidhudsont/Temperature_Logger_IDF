@@ -459,22 +459,22 @@ static int button_presses(int argc, char **argv)
 
     if (button_pressses_args.up_button->count)
     {
-        ButtonPressed(UP_PRESSED);
+        UpButtonGiveSemaphore();
         ESP_LOGI("BTN", "Up Button Pressed");
     }
     if (button_pressses_args.down_button->count)
     {
-        ButtonPressed(DOWN_PRESSED);
+        DownButtonGiveSemaphore();
         ESP_LOGI("BTN", "Down Button Pressed");
     }
     if (button_pressses_args.edit_button->count)
     {
-        ButtonPressed(EDIT_MODE_PRESSED);
+        EditButtonGiveSemaphore();
         ESP_LOGI("BTN", "Edit Mode Button Pressed");
     }
     if (button_pressses_args.alt_button->count)
     {
-        ButtonPressed(ALT_BTN_PRESSED);
+        AltButtonGiveSemaphore();
         ESP_LOGI("BTN", "Alt Button Pressed");
     }
 

@@ -175,45 +175,47 @@ void HMI::DisplayMode()
             break;
         }
     }
-    else if (RecieveButtonCommand(&msg))
+    else if (EditButtonTakeSemaphore())
     {
-        if (msg.id == EDIT_MODE_PRESSED)
+        displayState = EDITING;
+        ESP_LOGI("BTN", "Display Mode State: %d", displayState);
+        switch (settingMode.value)
         {
-            displayState = EDITING;
-            ESP_LOGI("BTN", "Display Mode State: %d", displayState);
-            switch (settingMode.value)
-            {
-            case SETTING_DATE:
-                entriesToEdit = 3;
-                break;
-            case SETTING_TIME:
-                entriesToEdit = 3;
-                break;
-            case SETTING_TEMP:
-                entriesToEdit = 1;
-                break;
-            case SETTING_CONTRAST:
-                entriesToEdit = 1;
-                DisplayContrast();
-                break;
-            case SETTING_BACKLIGHT:
-                entriesToEdit = 1;
-                DisplayBacklight();
-                break;
-            default:
-                break;
-            }
+        case SETTING_DATE:
+            entriesToEdit = 3;
+            break;
+        case SETTING_TIME:
+            entriesToEdit = 3;
+            break;
+        case SETTING_TEMP:
+            entriesToEdit = 1;
+            break;
+        case SETTING_CONTRAST:
+            entriesToEdit = 1;
+            DisplayContrast();
+            break;
+        case SETTING_BACKLIGHT:
+            entriesToEdit = 1;
+            DisplayBacklight();
+            break;
+        default:
+            break;
             DisplayCurrentState();
         }
-        else if (msg.id == ALT_BTN_PRESSED)
-        {
-            SetAlarm(false);
-        }
-        else if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
-        {
-            settingMode.adjust(msg.id == UP_PRESSED);
-            DisplayCurrentState();
-        }
+    }
+    else if (AltButtonTakeSemaphore())
+    {
+        SetAlarm(false);
+    }
+    else if (UpButtonTakeSemaphore())
+    {
+        settingMode.adjust(true);
+        DisplayCurrentState();
+    }
+    else if (DownButtonTakeSemaphore())
+    {
+        settingMode.adjust(true);
+        DisplayCurrentState();
     }
 }
 
@@ -334,71 +336,98 @@ void HMI::EditMode()
 
 void HMI::EditingDate()
 {
-    COMMAND_MESSAGE msg;
-    if (RecieveButtonCommand(&msg))
+    if (UpButtonTakeSemaphore())
     {
-        if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
+        bool increase = false;
+        if (entriesToEdit == 3)
         {
-            bool increase = msg.id == UP_PRESSED;
-            if (entriesToEdit == 3)
-            {
-                dateSetting.month.adjust(increase);
-            }
-            else if (entriesToEdit == 2)
-            {
-                dateSetting.dayOfMonth.max_value = calculateMaxDayOfMonth(dateSetting.month.value, dateSetting.year.value);
-                dateSetting.dayOfMonth.adjust(increase);
-            }
-            else if (entriesToEdit == 1)
-            {
-                dateSetting.year.adjust(increase);
-            }
-            DisplayDate();
+            dateSetting.month.adjust(increase);
         }
-        else if (msg.id == EDIT_MODE_PRESSED)
+        else if (entriesToEdit == 2)
         {
-            entriesToEdit--;
-            if (entriesToEdit == 0)
-            {
-                SetDate(dateSetting.dayOfMonth.value, dateSetting.month.value, dateSetting.year.value);
-                displayState = DISPLAYING;
-                DisplayCurrentState();
-            }
+            dateSetting.dayOfMonth.max_value = calculateMaxDayOfMonth(dateSetting.month.value, dateSetting.year.value);
+            dateSetting.dayOfMonth.adjust(increase);
+        }
+        else if (entriesToEdit == 1)
+        {
+            dateSetting.year.adjust(increase);
+        }
+        DisplayDate();
+    }
+    else if (DownButtonTakeSemaphore())
+    {
+        bool increase = true;
+        if (entriesToEdit == 3)
+        {
+            dateSetting.month.adjust(increase);
+        }
+        else if (entriesToEdit == 2)
+        {
+            dateSetting.dayOfMonth.max_value = calculateMaxDayOfMonth(dateSetting.month.value, dateSetting.year.value);
+            dateSetting.dayOfMonth.adjust(increase);
+        }
+        else if (entriesToEdit == 1)
+        {
+            dateSetting.year.adjust(increase);
+        }
+        DisplayDate();
+    }
+    else if (EditButtonTakeSemaphore())
+    {
+        entriesToEdit--;
+        if (entriesToEdit == 0)
+        {
+            SetDate(dateSetting.dayOfMonth.value, dateSetting.month.value, dateSetting.year.value);
+            displayState = DISPLAYING;
+            DisplayCurrentState();
         }
     }
 }
 
 void HMI::EditingTime()
 {
-    COMMAND_MESSAGE msg;
-    if (RecieveButtonCommand(&msg))
+    if (UpButtonTakeSemaphore())
     {
-        if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
+        bool increase = true;
+        if (entriesToEdit == 3)
         {
-            bool increase = msg.id == UP_PRESSED;
-            if (entriesToEdit == 3)
-            {
-                timeSetting.hour.adjust(increase);
-            }
-            else if (entriesToEdit == 2)
-            {
-                timeSetting.minute.adjust(increase);
-            }
-            else if (entriesToEdit == 1)
-            {
-                timeSetting.second.adjust(increase);
-            }
-            DisplayTime();
+            timeSetting.hour.adjust(increase);
         }
-        else if (msg.id == EDIT_MODE_PRESSED)
+        else if (entriesToEdit == 2)
         {
-            entriesToEdit--;
-            if (entriesToEdit == 0)
-            {
-                SetTime(timeSetting.hour.value, timeSetting.minute.value, timeSetting.second.value);
-                displayState = DISPLAYING;
-                DisplayCurrentState();
-            }
+            timeSetting.minute.adjust(increase);
+        }
+        else if (entriesToEdit == 1)
+        {
+            timeSetting.second.adjust(increase);
+        }
+        DisplayTime();
+    }
+    else if (DownButtonTakeSemaphore())
+    {
+        bool increase = false;
+        if (entriesToEdit == 3)
+        {
+            timeSetting.hour.adjust(increase);
+        }
+        else if (entriesToEdit == 2)
+        {
+            timeSetting.minute.adjust(increase);
+        }
+        else if (entriesToEdit == 1)
+        {
+            timeSetting.second.adjust(increase);
+        }
+        DisplayTime();
+    }
+    else if (EditButtonTakeSemaphore())
+    {
+        entriesToEdit--;
+        if (entriesToEdit == 0)
+        {
+            SetTime(timeSetting.hour.value, timeSetting.minute.value, timeSetting.second.value);
+            displayState = DISPLAYING;
+            DisplayCurrentState();
         }
     }
 }
@@ -413,53 +442,57 @@ void HMI::ChangeTemp()
 
 void HMI::EditContrast()
 {
-    COMMAND_MESSAGE msg;
-    if (RecieveButtonCommand(&msg))
+    if (UpButtonTakeSemaphore())
     {
-        if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
+        bool increase = true;
+        contrastSetting.adjust(increase);
+        DisplayContrast();
+    }
+    else if (DownButtonTakeSemaphore())
+    {
+        bool increase = false;
+        contrastSetting.adjust(increase);
+        DisplayContrast();
+    }
+    else if (EditButtonTakeSemaphore())
+    {
+        entriesToEdit--;
+        if (entriesToEdit == 0)
         {
-            bool increase = msg.id == UP_PRESSED;
-            contrastSetting.adjust(increase);
-            DisplayContrast();
-        }
-        else if (msg.id == EDIT_MODE_PRESSED)
-        {
-            entriesToEdit--;
-            if (entriesToEdit == 0)
-            {
-                SetContrast(contrastSetting.value);
-                displayState = DISPLAYING;
-                lcd.ClearRow(3);
-                DisplayCurrentState();
-            }
+            SetContrast(contrastSetting.value);
+            displayState = DISPLAYING;
+            lcd.ClearRow(3);
+            DisplayCurrentState();
         }
     }
 }
 void HMI::EditBackLight()
 {
-    COMMAND_MESSAGE msg;
-    if (RecieveButtonCommand(&msg))
+    if (UpButtonTakeSemaphore())
     {
-        if (msg.id == UP_PRESSED || msg.id == DOWN_PRESSED)
+        bool increase = true;
+        backlightSetting.adjust(increase);
+        DisplayBacklight();
+    }
+    else if (DownButtonTakeSemaphore())
+    {
+        bool increase = false;
+        backlightSetting.adjust(increase);
+        DisplayBacklight();
+    }
+    else if (EditButtonTakeSemaphore())
+    {
+        entriesToEdit--;
+        if (entriesToEdit == 0)
         {
-            bool increase = msg.id == UP_PRESSED;
-            backlightSetting.adjust(increase);
-            DisplayBacklight();
-        }
-        else if (msg.id == EDIT_MODE_PRESSED)
-        {
-            entriesToEdit--;
-            if (entriesToEdit == 0)
-            {
-                int index = backlightSetting.value;
-                uint8_t r = backLightValues[index].r;
-                uint8_t g = backLightValues[index].g;
-                uint8_t b = backLightValues[index].b;
-                SetBackLight(r, g, b);
-                displayState = DISPLAYING;
-                lcd.ClearRow(3);
-                DisplayCurrentState();
-            }
+            int index = backlightSetting.value;
+            uint8_t r = backLightValues[index].r;
+            uint8_t g = backLightValues[index].g;
+            uint8_t b = backLightValues[index].b;
+            SetBackLight(r, g, b);
+            displayState = DISPLAYING;
+            lcd.ClearRow(3);
+            DisplayCurrentState();
         }
     }
 }

@@ -301,22 +301,22 @@ static void button_task(void *pvParameter)
         if (altButton)
         {
             ESP_LOGI("BTN", "Alt Button Pressed");
-            ButtonPressed(ALT_BTN_PRESSED);
+            AltButtonGiveSemaphore();
         }
         else if (editModeButton)
         {
             ESP_LOGI("BTN", "Edit Mode Button Pressed");
-            ButtonPressed(EDIT_MODE_PRESSED);
+            EditButtonGiveSemaphore();
         }
         else if (downButton)
         {
             ESP_LOGI("BTN", "Down Button Pressed");
-            ButtonPressed(DOWN_PRESSED);
+            DownButtonGiveSemaphore();
         }
         else if (upButton)
         {
             ESP_LOGI("BTN", "Up Button Pressed");
-            ButtonPressed(UP_PRESSED);
+            UpButtonGiveSemaphore();
         }
         delay(10);
     }
@@ -378,13 +378,6 @@ static void speaker_task(void *pvParameter)
             else if (cmd_msg.id == ALARM_DUTY_CYCLE)
             {
                 alarm.SetDutyCyclePercentage((uint32_t)cmd_msg.arg1);
-            }
-        }
-        if (RecieveButtonCommand(&cmd_msg))
-        {
-            if (cmd_msg.id == ALT_BTN_PRESSED)
-            {
-                alarm.StopAlarm();
             }
         }
         delay(100);

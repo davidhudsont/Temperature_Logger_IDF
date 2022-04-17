@@ -36,14 +36,6 @@ enum LCD_COMMANDS
     LCD_RESET,
 };
 
-enum BTN_COMMANDS
-{
-    ALT_BTN_PRESSED,
-    EDIT_MODE_PRESSED,
-    DOWN_PRESSED,
-    UP_PRESSED,
-};
-
 enum ALARM_COMMANDS
 {
     ALARM_SET,
@@ -87,9 +79,15 @@ bool RecieveTimeCommand(COMMAND_MESSAGE *msg);
 void ReadDateTime();
 
 // Button Tasks
-void ButtonPressed(BTN_COMMANDS command);
+void UpButtonGiveSemaphore();
+void DownButtonGiveSemaphore();
+void EditButtonGiveSemaphore();
+void AltButtonGiveSemaphore();
 
-bool RecieveButtonCommand(COMMAND_MESSAGE *msg);
+bool UpButtonTakeSemaphore();
+bool DownButtonTakeSemaphore();
+bool EditButtonTakeSemaphore();
+bool AltButtonTakeSemaphore();
 
 // Alarm Commands
 void SetAlarm(bool on_off);

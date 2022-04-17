@@ -3,6 +3,7 @@
 #include "stdint.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include "freertos/semphr.h"
 
 struct COMMAND_MESSAGE
 {
@@ -21,4 +22,15 @@ public:
 
 private:
     QueueHandle_t commandQueue;
+};
+
+class CommandSemaphore
+{
+public:
+    CommandSemaphore();
+    void GiveSemaphore();
+    bool TakeSemaphore();
+
+private:
+    SemaphoreHandle_t commandSemaphore;
 };

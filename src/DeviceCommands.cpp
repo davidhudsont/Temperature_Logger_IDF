@@ -4,8 +4,12 @@ static CommandQueue tmp_command_queue;
 static CommandQueue lcd_command_queue;
 static CommandQueue date_command_queue;
 static CommandQueue time_command_queue;
-static CommandQueue button_command_queue;
 static CommandQueue alarm_command_queue;
+
+static CommandSemaphore up_button_semaphore;
+static CommandSemaphore down_button_semaphore;
+static CommandSemaphore edit_button_semaphore;
+static CommandSemaphore alt_button_semaphore;
 
 // Temperature Commands
 void ReadTemperature(bool FahrenheitOrCelsius)
@@ -128,14 +132,38 @@ void ReadDateTime()
 }
 
 // Button Tasks
-void ButtonPressed(BTN_COMMANDS command)
+void UpButtonGiveSemaphore()
 {
-    button_command_queue.Send(command);
+    up_button_semaphore.GiveSemaphore();
+}
+void DownButtonGiveSemaphore()
+{
+    down_button_semaphore.GiveSemaphore();
+}
+void EditButtonGiveSemaphore()
+{
+    edit_button_semaphore.GiveSemaphore();
+}
+void AltButtonGiveSemaphore()
+{
+    alt_button_semaphore.GiveSemaphore();
 }
 
-bool RecieveButtonCommand(COMMAND_MESSAGE *msg)
+bool UpButtonTakeSemaphore()
 {
-    return button_command_queue.Recieve(msg);
+    return up_button_semaphore.TakeSemaphore();
+}
+bool DownButtonTakeSemaphore()
+{
+    return down_button_semaphore.TakeSemaphore();
+}
+bool EditButtonTakeSemaphore()
+{
+    return edit_button_semaphore.TakeSemaphore();
+}
+bool AltButtonTakeSemaphore()
+{
+    return alt_button_semaphore.TakeSemaphore();
 }
 
 // Alarm Commands
