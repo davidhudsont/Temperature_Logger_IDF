@@ -361,6 +361,9 @@ void RTCDS3234::WriteAlarm1(uint8_t seconds, uint8_t minutes,
         alarm_config[2] |= A1M3_Bit;
         alarm_config[3] |= A1M4_Bit;
         break;
+    case ALARM1_HR_MIN_SEC_MATCH:
+        alarm_config[3] |= A1M4_Bit;
+        break;
     default:
         break;
     }
@@ -376,9 +379,8 @@ void RTCDS3234::WriteAlarm1(uint8_t hour, uint8_t minute)
     uint8_t mask = 0x80;
     current_config[0] &= mask;
     current_config[1] &= mask;
-
-    alarm_config[0] = DECtoBCD(minutes) | current_config[0];
-    alarm_config[1] = DECtoBCD(hours) | current_config[1];
+    alarm_config[0] = DECtoBCD(minute) | current_config[0];
+    alarm_config[1] = DECtoBCD(hour) | current_config[1];
 
     RegisterBurstWrite(REG_ALARM1_MINUTES, alarm_config, 2);
 }
@@ -556,4 +558,15 @@ void RTCDS3234::RegisterBurstRead(uint8_t address, uint8_t *data, uint32_t len)
 void RTCDS3234::RegisterBurstWrite(uint8_t address, uint8_t *data, uint32_t len)
 {
     spi.BurstWrite(address | 0x80, data, len);
+}
+
+void RTCDS3234::RegisterDump()
+{
+    int size = 0x13;
+    uint8_t registers[size] = {0};
+    RegisterBurstRead(0x00, registers, size);
+    for (int i = 0; i < size; i++)
+    {
+        ESP_LOGI("RTC", "%x = 0x[%x]", i, registers[i]);
+    }
 }

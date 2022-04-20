@@ -99,7 +99,7 @@ void StartAlarms(RTCDS3234 &rtc)
     // Setup the RTC interrupts
     rtc.ISRInitialize();
     delay(1000);
-    rtc.WriteAlarm1(10, 0, 0, 0, ALARM1_SECONDS_MATCH);
+    rtc.WriteAlarm1(0, 0, 0, 0, ALARM1_HR_MIN_SEC_MATCH);
     rtc.WriteAlarm2(0, 0, 0, ALARM2_PER_MIN);
     delay(100);
     rtc.EnableInterrupt(true);
@@ -135,17 +135,12 @@ static void rtc_task(void *pvParameter)
 
             if (alarm1_flag)
             {
-                ESP_LOGV("RTC", "ALARM1 Triggered");
-                rtc.ReadDateTime();
-                dateTime = rtc.GetDateTime();
-                std::string logdate = rtc.DateToString();
-                std::string logtime = rtc.TimeToString();
-                ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
+                ESP_LOGI("RTC", "ALARM1 Triggered");
                 SetAlarm(true);
             }
             if (alarm2_flag)
             {
-                ESP_LOGV("RTC", "ALARM2 Triggered");
+                ESP_LOGI("RTC", "ALARM2 Triggered");
                 rtc.ReadDateTime();
                 dateTime = rtc.GetDateTime();
                 ReadTemperature(false);
@@ -213,6 +208,9 @@ static void rtc_task(void *pvParameter)
             case ALARM_TIME:
                 rtc.WriteAlarm1(cmd_msg.arg1, cmd_msg.arg2);
                 ESP_LOGI("RTC", "Setting ALARM to %d hour, %d minute", cmd_msg.arg1, cmd_msg.arg2);
+                break;
+            case DUMP_RTC_REG:
+                rtc.RegisterDump();
             default:
                 break;
             }

@@ -131,6 +131,11 @@ void ReadDateTime()
     time_command_queue.Send(GET_DATETIME);
 }
 
+void DumpRTCRegisters()
+{
+    time_command_queue.Send(DUMP_RTC_REG);
+}
+
 // Button Tasks
 void UpButtonGiveSemaphore()
 {

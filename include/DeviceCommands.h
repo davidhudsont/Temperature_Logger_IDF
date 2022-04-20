@@ -17,6 +17,7 @@ enum RTC_COMMANDS
     SET_DATE,
     GET_DATETIME,
     ALARM_TIME,
+    DUMP_RTC_REG,
 };
 
 enum TMP_COMMANDS
@@ -77,6 +78,7 @@ void SetTime(uint8_t hour, uint8_t minute, uint8_t second);
 bool RecieveTimeCommand(COMMAND_MESSAGE *msg);
 
 void ReadDateTime();
+void DumpRTCRegisters();
 
 // Button Tasks
 void UpButtonGiveSemaphore();

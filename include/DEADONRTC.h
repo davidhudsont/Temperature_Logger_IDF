@@ -223,6 +223,8 @@ public:
      */
     void SRAMBurstWrite(uint8_t address, uint8_t *data, uint32_t len);
 
+    void RegisterDump();
+
 private:
     uint8_t raw_time[7];
 

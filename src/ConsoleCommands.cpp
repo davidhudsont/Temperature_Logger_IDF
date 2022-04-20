@@ -12,6 +12,7 @@ static void RegisterLogLevelCommand(void);
 static void RegisterLcdCommand(void);
 static void RegisterAlarmCommand(void);
 static void RegisterButtonCommand(void);
+static void RegisterRegDump(void);
 
 // cppcheck-suppress unusedFunction
 void RegisterConsoleCommands(void)
@@ -24,6 +25,7 @@ void RegisterConsoleCommands(void)
     RegisterLcdCommand();
     RegisterAlarmCommand();
     RegisterButtonCommand();
+    RegisterRegDump();
 }
 
 static struct
@@ -496,6 +498,59 @@ static void RegisterButtonCommand(void)
         .hint = NULL,
         .func = &button_presses,
         .argtable = &button_pressses_args};
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+static struct
+{
+    struct arg_lit *rtc;
+    struct arg_lit *tmp;
+    struct arg_lit *lcd;
+    struct arg_end *end;
+} dump_reg_args;
+
+static int dump_registers(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&dump_reg_args);
+
+    if (nerrors != 0)
+    {
+        arg_print_errors(stderr, dump_reg_args.end, argv[0]);
+        return 1;
+    }
+
+    if (dump_reg_args.rtc->count)
+    {
+        ESP_LOGI("RTC", "Dump RTC Registers");
+        DumpRTCRegisters();
+    }
+    if (dump_reg_args.tmp->count)
+    {
+        ESP_LOGI("TMP", "Dump TMP Registers");
+    }
+    if (dump_reg_args.lcd->count)
+    {
+        ESP_LOGI("LCD", "Dump LCD Registers");
+    }
+
+    return 0;
+}
+
+static void RegisterRegDump(void)
+{
+
+    dump_reg_args.rtc = arg_lit0("r", NULL, "Dump RTC Registers");
+    dump_reg_args.tmp = arg_lit0("t", NULL, "Dump TMP Registers");
+    dump_reg_args.lcd = arg_lit0("l", NULL, "Dump LCD Registers");
+    dump_reg_args.end = arg_end(2);
+
+    const esp_console_cmd_t cmd = {
+        .command = "reg",
+        .help = "Dump register contents",
+        .hint = NULL,
+        .func = &dump_registers,
+        .argtable = &dump_reg_args};
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
