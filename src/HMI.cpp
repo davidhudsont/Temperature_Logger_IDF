@@ -19,6 +19,7 @@ static char settingNames[SETTINGS_COUNT][5] = {
     "TEMP",
     "CNTR",
     "BLKT",
+    "ALRM",
 };
 
 static const size_t backlightStringSize = 15;
@@ -26,11 +27,13 @@ static const size_t DateStringSize = 15;
 static const size_t TimeStringSize = 15;
 static const size_t contrastStringSize = 14;
 static const size_t TempStringSize = 15;
+static const size_t alarmStringSize = 15;
 
 static char dateString[DateStringSize];
 static char timeString[TimeStringSize];
 static char backlightString[backlightStringSize];
 static char contrastString[contrastStringSize];
+static char alarmSettingString[alarmStringSize];
 
 static uint8_t timeRow = 0;
 static uint8_t timeCol = 0;
@@ -90,6 +93,11 @@ HMI::HMI()
     backLightValues[3] = {255, 255, 255};
     backLightValues[4] = {128, 128, 128};
     backLightValues[5] = {0, 0, 0};
+
+    alarmSetting.hour.max_value = 24;
+    alarmSetting.hour.min_value = 0;
+    alarmSetting.minute.max_value = 60;
+    alarmSetting.minute.min_value = 0;
 }
 
 void HMI::Reset()
@@ -199,8 +207,9 @@ void HMI::DisplayMode()
             DisplayBacklight();
             break;
         default:
-            break;
+            entriesToEdit = 2;
             DisplayCurrentState();
+            break;
         }
     }
     else if (AltButtonTakeSemaphore())
@@ -214,7 +223,7 @@ void HMI::DisplayMode()
     }
     else if (DownButtonTakeSemaphore())
     {
-        settingMode.adjust(true);
+        settingMode.adjust(false);
         DisplayCurrentState();
     }
 }
@@ -310,6 +319,15 @@ void HMI::DisplayBacklight()
     lcd.WriteCharacters(backlightString, backlightStringSize - 1);
 }
 
+void HMI::DisplayAlarmSetting()
+{
+    lcd.SetCursor(altSetnRow, altSetnCol);
+    uint8_t hour = alarmSetting.hour.value;
+    uint8_t minute = alarmSetting.minute.value;
+    snprintf(alarmSettingString, alarmStringSize, "Alarm: %2d:%2d", hour, minute);
+    lcd.WriteCharacters(alarmSettingString, alarmStringSize - 2);
+}
+
 void HMI::EditMode()
 {
     switch (settingMode.value)
@@ -328,6 +346,9 @@ void HMI::EditMode()
         break;
     case SETTING_BACKLIGHT:
         EditBackLight();
+        break;
+    case SETTING_ALARM:
+        EditAlarmTime();
         break;
     default:
         break;
@@ -490,6 +511,47 @@ void HMI::EditBackLight()
             uint8_t g = backLightValues[index].g;
             uint8_t b = backLightValues[index].b;
             SetBackLight(r, g, b);
+            displayState = DISPLAYING;
+            lcd.ClearRow(3);
+            DisplayCurrentState();
+        }
+    }
+}
+
+void HMI::EditAlarmTime()
+{
+    if (UpButtonTakeSemaphore())
+    {
+        if (entriesToEdit == 2)
+        {
+            alarmSetting.hour.adjust(true);
+        }
+        else if (entriesToEdit == 1)
+        {
+            alarmSetting.minute.adjust(true);
+        }
+        DisplayAlarmSetting();
+    }
+    else if (DownButtonTakeSemaphore())
+    {
+        if (entriesToEdit == 2)
+        {
+            alarmSetting.hour.adjust(false);
+        }
+        else if (entriesToEdit == 1)
+        {
+            alarmSetting.minute.adjust(false);
+        }
+        DisplayAlarmSetting();
+    }
+    else if (EditButtonTakeSemaphore())
+    {
+        entriesToEdit--;
+        if (entriesToEdit == 0)
+        {
+            uint8_t hour = alarmSetting.hour.value;
+            uint8_t minute = alarmSetting.minute.value;
+            SetAlarmTime(hour, minute);
             displayState = DISPLAYING;
             lcd.ClearRow(3);
             DisplayCurrentState();
