@@ -565,8 +565,9 @@ void RTCDS3234::RegisterDump()
     int size = 0x13;
     uint8_t registers[size] = {0};
     RegisterBurstRead(0x00, registers, size);
+    printf("\n");
     for (int i = 0; i < size; i++)
     {
-        ESP_LOGI("RTC", "%x = 0x[%x]", i, registers[i]);
+        ESP_LOGI("RTC", "REG[0x%02x] = [0x%02x]", i, registers[i]);
     }
 }
