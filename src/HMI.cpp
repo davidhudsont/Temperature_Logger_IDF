@@ -38,10 +38,10 @@ static char alarmSettingString[alarmStringSize];
 static uint8_t timeRow = 0;
 static uint8_t timeCol = 0;
 
-static uint8_t dateRow = 1;
-static uint8_t dateCol = 0;
+static uint8_t dateRow = 0;
+static uint8_t dateCol = 10;
 
-static uint8_t tempRow = 0;
+static uint8_t tempRow = 1;
 static uint8_t tempCol = 12;
 
 static uint8_t setnRow = 2;
