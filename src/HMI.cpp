@@ -70,8 +70,6 @@ HMI::HMI()
     timeSetting.hour.min_value = 0;
     timeSetting.minute.max_value = 59;
     timeSetting.minute.min_value = 0;
-    timeSetting.second.max_value = 59;
-    timeSetting.second.min_value = 0;
 
     tempSetting.max_value = 1;
     tempSetting.min_value = 0;
@@ -135,7 +133,6 @@ void HMI::SetDisplayDateTime(DATE_TIME &dateTime)
 
     timeSetting.hour.value = dateTime.hour;
     timeSetting.minute.value = dateTime.minute;
-    timeSetting.second.value = dateTime.second;
 
     hour12_not24 = dateTime.hour12_not24;
     PM_notAM = dateTime.PM_notAM;
@@ -191,24 +188,31 @@ void HMI::DisplayMode()
         {
         case SETTING_DATE:
             entriesToEdit = 3;
+            DisplayCurrentState();
             break;
         case SETTING_TIME:
-            entriesToEdit = 3;
+            entriesToEdit = 2;
+            DisplayCurrentState();
             break;
         case SETTING_TEMP:
             entriesToEdit = 1;
+            DisplayCurrentState();
             break;
         case SETTING_CONTRAST:
             entriesToEdit = 1;
+            DisplayCurrentState();
             DisplayContrast();
             break;
         case SETTING_BACKLIGHT:
             entriesToEdit = 1;
+            DisplayCurrentState();
             DisplayBacklight();
             break;
-        default:
+        case SETTING_ALARM:
             entriesToEdit = 2;
             DisplayCurrentState();
+            DisplayAlarmSetting();
+        default:
             break;
         }
     }
@@ -245,20 +249,18 @@ void HMI::DisplayTime()
     lcd.SetCursor(timeRow, timeCol);
     if (hour12_not24)
     {
-        snprintf(timeString, TimeStringSize, "%02d:%02d:%02d %s",
+        snprintf(timeString, TimeStringSize, "%02d:%02d %s",
                  (uint8_t)timeSetting.hour.value,
                  (uint8_t)timeSetting.minute.value,
-                 (uint8_t)timeSetting.second.value,
                  (PM_notAM ? "PM" : "AM"));
-        lcd.WriteCharacters(timeString, 11);
+        lcd.WriteCharacters(timeString, 8);
     }
     else
     {
-        snprintf(timeString, TimeStringSize, "%02d:%02d:%02d",
+        snprintf(timeString, TimeStringSize, "%02d:%02d",
                  timeSetting.hour.value,
-                 timeSetting.minute.value,
-                 timeSetting.second.value);
-        lcd.WriteCharacters(timeString, 8);
+                 timeSetting.minute.value);
+        lcd.WriteCharacters(timeString, 5);
     }
 }
 
@@ -324,7 +326,7 @@ void HMI::DisplayAlarmSetting()
     lcd.SetCursor(altSetnRow, altSetnCol);
     uint8_t hour = alarmSetting.hour.value;
     uint8_t minute = alarmSetting.minute.value;
-    snprintf(alarmSettingString, alarmStringSize, "Alarm: %2d:%2d", hour, minute);
+    snprintf(alarmSettingString, alarmStringSize, "Alarm: %02d:%02d", hour, minute);
     lcd.WriteCharacters(alarmSettingString, alarmStringSize - 2);
 }
 
@@ -410,34 +412,26 @@ void HMI::EditingTime()
     if (UpButtonTakeSemaphore())
     {
         bool increase = true;
-        if (entriesToEdit == 3)
+        if (entriesToEdit == 2)
         {
             timeSetting.hour.adjust(increase);
         }
-        else if (entriesToEdit == 2)
-        {
-            timeSetting.minute.adjust(increase);
-        }
         else if (entriesToEdit == 1)
         {
-            timeSetting.second.adjust(increase);
+            timeSetting.minute.adjust(increase);
         }
         DisplayTime();
     }
     else if (DownButtonTakeSemaphore())
     {
         bool increase = false;
-        if (entriesToEdit == 3)
+        if (entriesToEdit == 2)
         {
             timeSetting.hour.adjust(increase);
         }
-        else if (entriesToEdit == 2)
-        {
-            timeSetting.minute.adjust(increase);
-        }
         else if (entriesToEdit == 1)
         {
-            timeSetting.second.adjust(increase);
+            timeSetting.minute.adjust(increase);
         }
         DisplayTime();
     }
@@ -446,7 +440,7 @@ void HMI::EditingTime()
         entriesToEdit--;
         if (entriesToEdit == 0)
         {
-            SetTime(timeSetting.hour.value, timeSetting.minute.value, timeSetting.second.value);
+            SetTime(timeSetting.hour.value, timeSetting.minute.value, 0);
             displayState = DISPLAYING;
             DisplayCurrentState();
         }

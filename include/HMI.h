@@ -90,7 +90,6 @@ private:
     {
         SETTING hour;
         SETTING minute;
-        SETTING second;
     };
 
     struct BacklightSetting
