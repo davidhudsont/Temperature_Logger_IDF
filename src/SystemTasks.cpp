@@ -185,7 +185,7 @@ static void rtc_task(void *pvParameter)
                 dateTime.second = cmd_msg.arg3;
                 break;
             case SET_TIME12:
-                rtc.WriteTime12(cmd_msg.arg1, cmd_msg.arg2, 0, (bool)cmd_msg.arg3);
+                rtc.WriteTime12(cmd_msg.arg1, cmd_msg.arg2, 0, cmd_msg.arg3);
                 dateTime.hour = cmd_msg.arg1;
                 dateTime.minute = cmd_msg.arg2;
                 dateTime.PM_notAM = cmd_msg.arg3;
@@ -215,6 +215,10 @@ static void rtc_task(void *pvParameter)
             case ALARM_TIME:
                 rtc.WriteAlarm1(cmd_msg.arg1, cmd_msg.arg2);
                 ESP_LOGI("RTC", "Setting ALARM to %d hour, %d minute", cmd_msg.arg1, cmd_msg.arg2);
+                break;
+            case ALARM_TIME12:
+                rtc.WriteAlarm1(cmd_msg.arg1, cmd_msg.arg2, cmd_msg.arg3);
+                ESP_LOGI("RTC", "Setting ALARM to %02d:%02d %s", cmd_msg.arg1, cmd_msg.arg2, cmd_msg.arg3 ? "PM" : "AM");
                 break;
             case DUMP_RTC_REG:
                 rtc.RegisterDump();

@@ -18,6 +18,7 @@ enum RTC_COMMANDS
     SET_DATE,
     GET_DATETIME,
     ALARM_TIME,
+    ALARM_TIME12,
     DUMP_RTC_REG,
 };
 
@@ -98,5 +99,6 @@ void SetAlarm(bool on_off);
 void SetFrequency(uint32_t freq_hz);
 void SetDutyCycle(uint32_t duty_cycle);
 void SetAlarmTime(uint8_t hour, uint8_t minute);
+void SetAlarmTime12(uint8_t hour, uint8_t minute, bool AMOrPM);
 
 bool RecieveAlarmCommand(COMMAND_MESSAGE *msg);

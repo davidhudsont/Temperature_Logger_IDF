@@ -90,6 +90,7 @@ private:
     {
         SETTING hour;
         SETTING minute;
+        SETTING PM_notAM;
     };
 
     struct BacklightSetting
@@ -103,6 +104,7 @@ private:
     {
         SETTING hour;
         SETTING minute;
+        SETTING PM_notAM;
     };
 
     RGB backLightValues[COLOR_COUNT];

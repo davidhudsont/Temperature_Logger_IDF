@@ -24,10 +24,10 @@ static char settingNames[SETTINGS_COUNT][5] = {
 
 static const size_t backlightStringSize = 15;
 static const size_t DateStringSize = 15;
-static const size_t TimeStringSize = 15;
+static const size_t TimeStringSize = 11;
 static const size_t contrastStringSize = 14;
 static const size_t TempStringSize = 15;
-static const size_t alarmStringSize = 15;
+static const size_t alarmStringSize = 25;
 
 static char dateString[DateStringSize];
 static char timeString[TimeStringSize];
@@ -66,10 +66,12 @@ HMI::HMI()
     dateSetting.year.max_value = 99;
     dateSetting.year.min_value = 0;
 
-    timeSetting.hour.max_value = 23;
-    timeSetting.hour.min_value = 0;
+    timeSetting.hour.max_value = 12;
+    timeSetting.hour.min_value = 1;
     timeSetting.minute.max_value = 59;
     timeSetting.minute.min_value = 0;
+    timeSetting.PM_notAM.max_value = 1;
+    timeSetting.PM_notAM.min_value = 0;
 
     tempSetting.max_value = 1;
     tempSetting.min_value = 0;
@@ -96,6 +98,8 @@ HMI::HMI()
     alarmSetting.hour.min_value = 0;
     alarmSetting.minute.max_value = 60;
     alarmSetting.minute.min_value = 0;
+    alarmSetting.PM_notAM.max_value = 1;
+    alarmSetting.PM_notAM.min_value = 0;
 }
 
 void HMI::Reset()
@@ -191,7 +195,7 @@ void HMI::DisplayMode()
             DisplayCurrentState();
             break;
         case SETTING_TIME:
-            entriesToEdit = 2;
+            entriesToEdit = 3;
             DisplayCurrentState();
             break;
         case SETTING_TEMP:
@@ -209,7 +213,7 @@ void HMI::DisplayMode()
             DisplayBacklight();
             break;
         case SETTING_ALARM:
-            entriesToEdit = 2;
+            entriesToEdit = 3;
             DisplayCurrentState();
             DisplayAlarmSetting();
         default:
@@ -247,21 +251,12 @@ void HMI::DisplayTime()
 {
     // Time update
     lcd.SetCursor(timeRow, timeCol);
-    if (hour12_not24)
-    {
-        snprintf(timeString, TimeStringSize, "%02d:%02d %s",
-                 (uint8_t)timeSetting.hour.value,
-                 (uint8_t)timeSetting.minute.value,
-                 (PM_notAM ? "PM" : "AM"));
-        lcd.WriteCharacters(timeString, 8);
-    }
-    else
-    {
-        snprintf(timeString, TimeStringSize, "%02d:%02d",
-                 timeSetting.hour.value,
-                 timeSetting.minute.value);
-        lcd.WriteCharacters(timeString, 5);
-    }
+
+    snprintf(timeString, TimeStringSize, "%02d:%02d %s",
+             (uint8_t)timeSetting.hour.value,
+             (uint8_t)timeSetting.minute.value,
+             ((bool)timeSetting.PM_notAM.value ? "PM" : "AM"));
+    lcd.WriteCharacters(timeString, 8);
 }
 
 void HMI::DisplayTemperature()
@@ -326,8 +321,9 @@ void HMI::DisplayAlarmSetting()
     lcd.SetCursor(altSetnRow, altSetnCol);
     uint8_t hour = alarmSetting.hour.value;
     uint8_t minute = alarmSetting.minute.value;
-    snprintf(alarmSettingString, alarmStringSize, "Alarm: %02d:%02d", hour, minute);
-    lcd.WriteCharacters(alarmSettingString, alarmStringSize - 2);
+    bool PM_notAM = alarmSetting.PM_notAM.value;
+    snprintf(alarmSettingString, alarmStringSize, "Alarm: %02d:%02d %s", hour, minute, PM_notAM ? "PM" : "AM");
+    lcd.WriteCharacters(alarmSettingString, 15);
 }
 
 void HMI::EditMode()
@@ -412,26 +408,34 @@ void HMI::EditingTime()
     if (UpButtonTakeSemaphore())
     {
         bool increase = true;
-        if (entriesToEdit == 2)
+        if (entriesToEdit == 3)
         {
             timeSetting.hour.adjust(increase);
         }
-        else if (entriesToEdit == 1)
+        else if (entriesToEdit == 2)
         {
             timeSetting.minute.adjust(increase);
+        }
+        else if (entriesToEdit == 1)
+        {
+            timeSetting.PM_notAM.adjust(increase);
         }
         DisplayTime();
     }
     else if (DownButtonTakeSemaphore())
     {
         bool increase = false;
-        if (entriesToEdit == 2)
+        if (entriesToEdit == 3)
         {
             timeSetting.hour.adjust(increase);
         }
-        else if (entriesToEdit == 1)
+        else if (entriesToEdit == 2)
         {
             timeSetting.minute.adjust(increase);
+        }
+        else if (entriesToEdit == 1)
+        {
+            timeSetting.PM_notAM.adjust(increase);
         }
         DisplayTime();
     }
@@ -440,7 +444,7 @@ void HMI::EditingTime()
         entriesToEdit--;
         if (entriesToEdit == 0)
         {
-            SetTime(timeSetting.hour.value, timeSetting.minute.value, 0);
+            SetTime12(timeSetting.hour.value, timeSetting.minute.value, timeSetting.PM_notAM.value);
             displayState = DISPLAYING;
             DisplayCurrentState();
         }
@@ -516,25 +520,34 @@ void HMI::EditAlarmTime()
 {
     if (UpButtonTakeSemaphore())
     {
-        if (entriesToEdit == 2)
+        if (entriesToEdit == 3)
         {
             alarmSetting.hour.adjust(true);
         }
-        else if (entriesToEdit == 1)
+        else if (entriesToEdit == 2)
         {
             alarmSetting.minute.adjust(true);
         }
+        else if (entriesToEdit == 1)
+        {
+            alarmSetting.PM_notAM.adjust(true);
+        }
+
         DisplayAlarmSetting();
     }
     else if (DownButtonTakeSemaphore())
     {
-        if (entriesToEdit == 2)
+        if (entriesToEdit == 3)
         {
             alarmSetting.hour.adjust(false);
         }
-        else if (entriesToEdit == 1)
+        else if (entriesToEdit == 2)
         {
             alarmSetting.minute.adjust(false);
+        }
+        else if (entriesToEdit == 1)
+        {
+            alarmSetting.PM_notAM.adjust(false);
         }
         DisplayAlarmSetting();
     }
@@ -545,7 +558,8 @@ void HMI::EditAlarmTime()
         {
             uint8_t hour = alarmSetting.hour.value;
             uint8_t minute = alarmSetting.minute.value;
-            SetAlarmTime(hour, minute);
+            bool PM_notAM = alarmSetting.PM_notAM.value;
+            SetAlarmTime12(hour, minute, PM_notAM);
             displayState = DISPLAYING;
             lcd.ClearRow(3);
             DisplayCurrentState();

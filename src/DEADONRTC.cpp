@@ -71,6 +71,22 @@ uint8_t calculateMaxDayOfMonth(uint8_t month, uint8_t year)
     return numberOfDays;
 }
 
+void ConvertTo12Hours(uint8_t hour24_in, uint8_t &hours12Out, bool &PM_notAMOut)
+{
+    if (hour24_in >= 12)
+    {
+        hours12Out = hour24_in - 12;
+        PM_notAMOut = true;
+    }
+    else
+    {
+        hours12Out = hour24_in;
+        PM_notAMOut = false;
+    }
+    if (hours12Out == 0)
+        hours12Out = 12;
+}
+
 SemaphoreHandle_t semiphore;
 
 int GetInterruptSemiphore()
@@ -212,6 +228,42 @@ void RTCDS3234::WriteBuildDateTime()
     time_config[0] = DECtoBCD(BUILD_SECOND);
     time_config[1] = DECtoBCD(BUILD_MINUTE);
     time_config[2] = DECtoBCD(BUILD_HOUR);
+    time_config[4] = DECtoBCD(BUILD_DATE);
+    time_config[5] = DECtoBCD(BUILD_MONTH);
+    time_config[6] = DECtoBCD(BUILD_YEAR - 2000);
+
+    // Calculate weekday (from here: http://stackoverflow.com/a/21235587)
+    // Result: 0 = Sunday, 6 = Saturday
+    int d = BUILD_DATE;
+    int m = BUILD_MONTH;
+    int y = BUILD_YEAR;
+    int weekday = (d += m < 3 ? y-- : y - 2, 23 * m / 9 + d + 4 + y / 4 - y / 100 + y / 400) % 7;
+    weekday += 1; // Library defines Sunday=1, Saturday=7
+    time_config[3] = DECtoBCD(weekday);
+
+    RegisterBurstWrite(REG_SECONDS, time_config, 7);
+}
+
+void RTCDS3234::WriteBuildDateTime12()
+{
+    uint8_t time_config[7];
+
+    time_config[0] = DECtoBCD(BUILD_SECOND);
+    time_config[1] = DECtoBCD(BUILD_MINUTE);
+    uint8_t hourOut;
+    bool PM_notAMOut;
+    ConvertTo12Hours(BUILD_HOUR, hourOut, PM_notAMOut);
+    if (PM_notAMOut)
+    {
+        time_config[2] |= HOUR_12_N24;
+        time_config[2] |= PM_NOTAM;
+        time_config[2] |= DECtoBCD(hourOut);
+    }
+    else
+    {
+        time_config[2] |= HOUR_12_N24;
+        time_config[2] |= DECtoBCD(hourOut);
+    }
     time_config[4] = DECtoBCD(BUILD_DATE);
     time_config[5] = DECtoBCD(BUILD_MONTH);
     time_config[6] = DECtoBCD(BUILD_YEAR - 2000);
@@ -412,6 +464,35 @@ void RTCDS3234::WriteAlarm1(uint8_t hour, uint8_t minute)
     RegisterBurstWrite(REG_ALARM1_MINUTES, alarm_config, 2);
 }
 
+void RTCDS3234::WriteAlarm1(uint8_t hour, uint8_t minute, bool PM_NotAM)
+{
+    uint8_t alarm_config[2] = {0};
+    uint8_t current_config[2] = {0};
+    RegisterBurstRead(REG_ALARM1_MINUTES, current_config, 2);
+    uint8_t mask = 0x80;
+    current_config[0] &= mask;
+    current_config[1] &= mask;
+    alarm_config[0] = DECtoBCD(minute) | current_config[0];
+    alarm_config[1] = current_config[1];
+    if (hour > 12)
+        hour = 12;
+    if (hour < 1)
+        hour = 1;
+    if (PM_NotAM)
+    {
+        alarm_config[1] |= HOUR_12_N24;
+        alarm_config[1] |= PM_NOTAM;
+        alarm_config[1] |= DECtoBCD(hour);
+    }
+    else
+    {
+        alarm_config[1] |= HOUR_12_N24;
+        alarm_config[1] |= DECtoBCD(hour);
+    }
+
+    RegisterBurstWrite(REG_ALARM1_MINUTES, alarm_config, 2);
+}
+
 void RTCDS3234::WriteAlarm2(uint8_t minutes,
                             uint8_t hours, uint8_t date, ALARM2_MODES mode)
 {
@@ -592,9 +673,9 @@ void RTCDS3234::RegisterDump()
     int size = 0x13;
     uint8_t registers[size] = {0};
     RegisterBurstRead(0x00, registers, size);
-    printf("\n");
+    ESP_LOGI("RTC", "Dumping registers");
     for (int i = 0; i < size; i++)
     {
-        ESP_LOGI("RTC", "REG[0x%02x] = [0x%02x]", i, registers[i]);
+        printf("REG[0x%02x] = [0x%02x]\n", i, registers[i]);
     }
 }

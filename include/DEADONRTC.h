@@ -100,6 +100,8 @@ public:
      */
     void WriteBuildDateTime();
 
+    void WriteBuildDateTime12();
+
     /**
      * @brief Get Date string
      *
@@ -148,6 +150,7 @@ public:
                      uint8_t hours, uint8_t date, ALARM1_MODES mode);
 
     void WriteAlarm1(uint8_t hour, uint8_t minute);
+    void WriteAlarm1(uint8_t hour, uint8_t minute, bool PM_NotAM);
 
     /**
      * @brief
