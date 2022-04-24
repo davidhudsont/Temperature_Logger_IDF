@@ -50,7 +50,8 @@ enum HMISettings
     SETTING_TEMP,
     SETTING_CONTRAST,
     SETTING_BACKLIGHT,
-    SETTINGS_COUNT
+    SETTING_ALARM,
+    SETTINGS_COUNT,
 };
 
 class HMI
@@ -73,7 +74,6 @@ private:
     float temperatureF;
     float temperatureC;
     bool hour12_not24;
-    bool PM_notAM;
 
     HMIState displayState = DISPLAYING;
     int entriesToEdit;
@@ -89,7 +89,7 @@ private:
     {
         SETTING hour;
         SETTING minute;
-        SETTING second;
+        SETTING PM_notAM;
     };
 
     struct BacklightSetting
@@ -97,6 +97,13 @@ private:
         SETTING r;
         SETTING g;
         SETTING b;
+    };
+
+    struct AlarmSetting
+    {
+        SETTING hour;
+        SETTING minute;
+        SETTING PM_notAM;
     };
 
     RGB backLightValues[COLOR_COUNT];
@@ -107,6 +114,7 @@ private:
     SETTING settingMode;
     SETTING contrastSetting;
     SETTING backlightSetting;
+    AlarmSetting alarmSetting;
 
     // Display Mode related functions
     void DisplayMode();
@@ -116,6 +124,7 @@ private:
     void DisplayCurrentState();
     void DisplayContrast();
     void DisplayBacklight();
+    void DisplayAlarmSetting();
     void UpdateDisplay();
 
     // Edit Mode related functions
@@ -125,4 +134,5 @@ private:
     void ChangeTemp();
     void EditContrast();
     void EditBackLight();
+    void EditAlarmTime();
 };

@@ -11,6 +11,8 @@ static void RegisterTemperatureCommand(void);
 static void RegisterLogLevelCommand(void);
 static void RegisterLcdCommand(void);
 static void RegisterAlarmCommand(void);
+static void RegisterButtonCommand(void);
+static void RegisterRegDump(void);
 
 // cppcheck-suppress unusedFunction
 void RegisterConsoleCommands(void)
@@ -22,6 +24,8 @@ void RegisterConsoleCommands(void)
     RegisterLogLevelCommand();
     RegisterLcdCommand();
     RegisterAlarmCommand();
+    RegisterButtonCommand();
+    RegisterRegDump();
 }
 
 static struct
@@ -432,6 +436,121 @@ static void RegisterAlarmCommand(void)
         .hint = NULL,
         .func = &alarm_speaker,
         .argtable = &alarm_speaker_args};
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+static struct
+{
+    struct arg_lit *up_button;
+    struct arg_lit *down_button;
+    struct arg_lit *edit_button;
+    struct arg_lit *alt_button;
+    struct arg_end *end;
+} button_pressses_args;
+
+static int button_presses(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&button_pressses_args);
+
+    if (nerrors != 0)
+    {
+        arg_print_errors(stderr, button_pressses_args.end, argv[0]);
+        return 1;
+    }
+
+    if (button_pressses_args.up_button->count)
+    {
+        UpButtonGiveSemaphore();
+        ESP_LOGI("BTN", "Up Button Pressed");
+    }
+    if (button_pressses_args.down_button->count)
+    {
+        DownButtonGiveSemaphore();
+        ESP_LOGI("BTN", "Down Button Pressed");
+    }
+    if (button_pressses_args.edit_button->count)
+    {
+        EditButtonGiveSemaphore();
+        ESP_LOGI("BTN", "Edit Mode Button Pressed");
+    }
+    if (button_pressses_args.alt_button->count)
+    {
+        AltButtonGiveSemaphore();
+        ESP_LOGI("BTN", "Alt Button Pressed");
+    }
+
+    return 0;
+}
+
+static void RegisterButtonCommand(void)
+{
+
+    button_pressses_args.up_button = arg_lit0("u", NULL, "Press the up button");
+    button_pressses_args.down_button = arg_lit0("d", NULL, "Press the down button");
+    button_pressses_args.edit_button = arg_lit0("e", NULL, "Press the edit button");
+    button_pressses_args.alt_button = arg_lit0("a", NULL, "Press the alternate button");
+    button_pressses_args.end = arg_end(2);
+
+    const esp_console_cmd_t cmd = {
+        .command = "btn",
+        .help = "Send button presses",
+        .hint = NULL,
+        .func = &button_presses,
+        .argtable = &button_pressses_args};
+
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+static struct
+{
+    struct arg_lit *rtc;
+    struct arg_lit *tmp;
+    struct arg_lit *lcd;
+    struct arg_end *end;
+} dump_reg_args;
+
+static int dump_registers(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&dump_reg_args);
+
+    if (nerrors != 0)
+    {
+        arg_print_errors(stderr, dump_reg_args.end, argv[0]);
+        return 1;
+    }
+
+    if (dump_reg_args.rtc->count)
+    {
+        ESP_LOGI("RTC", "Dump RTC Registers");
+        DumpRTCRegisters();
+    }
+    if (dump_reg_args.tmp->count)
+    {
+        ESP_LOGI("TMP", "Dump TMP Registers");
+    }
+    if (dump_reg_args.lcd->count)
+    {
+        ESP_LOGI("LCD", "Dump LCD Registers");
+    }
+
+    return 0;
+}
+
+static void RegisterRegDump(void)
+{
+
+    dump_reg_args.rtc = arg_lit0("r", NULL, "Dump RTC Registers");
+    dump_reg_args.tmp = arg_lit0("t", NULL, "Dump TMP Registers");
+    dump_reg_args.lcd = arg_lit0("l", NULL, "Dump LCD Registers");
+    dump_reg_args.end = arg_end(2);
+
+    const esp_console_cmd_t cmd = {
+        .command = "reg",
+        .help = "Dump register contents",
+        .hint = NULL,
+        .func = &dump_registers,
+        .argtable = &dump_reg_args};
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }

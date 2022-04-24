@@ -10,12 +10,16 @@ enum RTC_COMMANDS
     SET_12HOURS,
     SET_24HOURS,
     SET_TIME,
+    SET_TIME12,
     SET_WEEKDAY,
     SET_DAYOFMONTH,
     SET_MONTH,
     SET_YEAR,
     SET_DATE,
     GET_DATETIME,
+    ALARM_TIME,
+    ALARM_TIME12,
+    DUMP_RTC_REG,
 };
 
 enum TMP_COMMANDS
@@ -33,14 +37,6 @@ enum LCD_COMMANDS
     LCD_CLEAR_DISPLAY,
     LCD_DISPLAY_UPDATE,
     LCD_RESET,
-};
-
-enum BTN_COMMANDS
-{
-    ALT_BTN_PRESSED,
-    EDIT_MODE_PRESSED,
-    DOWN_PRESSED,
-    UP_PRESSED,
 };
 
 enum ALARM_COMMANDS
@@ -80,19 +76,29 @@ void SetMinutes(uint8_t minute);
 void SetHours12Mode(uint8_t hour, bool AMOrPM);
 void SetHours24Mode(uint8_t hour);
 void SetTime(uint8_t hour, uint8_t minute, uint8_t second);
+void SetTime12(uint8_t hour, uint8_t minute, bool AMOrPM);
 
 bool RecieveTimeCommand(COMMAND_MESSAGE *msg);
 
 void ReadDateTime();
+void DumpRTCRegisters();
 
 // Button Tasks
-void ButtonPressed(BTN_COMMANDS command);
+void UpButtonGiveSemaphore();
+void DownButtonGiveSemaphore();
+void EditButtonGiveSemaphore();
+void AltButtonGiveSemaphore();
 
-bool RecieveButtonCommand(COMMAND_MESSAGE *msg);
+bool UpButtonTakeSemaphore();
+bool DownButtonTakeSemaphore();
+bool EditButtonTakeSemaphore();
+bool AltButtonTakeSemaphore();
 
 // Alarm Commands
 void SetAlarm(bool on_off);
 void SetFrequency(uint32_t freq_hz);
 void SetDutyCycle(uint32_t duty_cycle);
+void SetAlarmTime(uint8_t hour, uint8_t minute);
+void SetAlarmTime12(uint8_t hour, uint8_t minute, bool AMOrPM);
 
 bool RecieveAlarmCommand(COMMAND_MESSAGE *msg);

@@ -4,8 +4,12 @@ static CommandQueue tmp_command_queue;
 static CommandQueue lcd_command_queue;
 static CommandQueue date_command_queue;
 static CommandQueue time_command_queue;
-static CommandQueue button_command_queue;
 static CommandQueue alarm_command_queue;
+
+static CommandSemaphore up_button_semaphore;
+static CommandSemaphore down_button_semaphore;
+static CommandSemaphore edit_button_semaphore;
+static CommandSemaphore alt_button_semaphore;
 
 // Temperature Commands
 void ReadTemperature(bool FahrenheitOrCelsius)
@@ -117,6 +121,11 @@ void SetTime(uint8_t hour, uint8_t minute, uint8_t second)
     time_command_queue.Send(SET_TIME, hour, minute, second);
 }
 
+void SetTime12(uint8_t hour, uint8_t minute, bool AMOrPM)
+{
+    time_command_queue.Send(SET_TIME12, hour, minute, AMOrPM);
+}
+
 bool RecieveTimeCommand(COMMAND_MESSAGE *msg)
 {
     return time_command_queue.Recieve(msg);
@@ -127,15 +136,44 @@ void ReadDateTime()
     time_command_queue.Send(GET_DATETIME);
 }
 
-// Button Tasks
-void ButtonPressed(BTN_COMMANDS command)
+void DumpRTCRegisters()
 {
-    button_command_queue.Send(command);
+    time_command_queue.Send(DUMP_RTC_REG);
 }
 
-bool RecieveButtonCommand(COMMAND_MESSAGE *msg)
+// Button Tasks
+void UpButtonGiveSemaphore()
 {
-    return button_command_queue.Recieve(msg);
+    up_button_semaphore.GiveSemaphore();
+}
+void DownButtonGiveSemaphore()
+{
+    down_button_semaphore.GiveSemaphore();
+}
+void EditButtonGiveSemaphore()
+{
+    edit_button_semaphore.GiveSemaphore();
+}
+void AltButtonGiveSemaphore()
+{
+    alt_button_semaphore.GiveSemaphore();
+}
+
+bool UpButtonTakeSemaphore()
+{
+    return up_button_semaphore.TakeSemaphore();
+}
+bool DownButtonTakeSemaphore()
+{
+    return down_button_semaphore.TakeSemaphore();
+}
+bool EditButtonTakeSemaphore()
+{
+    return edit_button_semaphore.TakeSemaphore();
+}
+bool AltButtonTakeSemaphore()
+{
+    return alt_button_semaphore.TakeSemaphore();
 }
 
 // Alarm Commands
@@ -152,6 +190,18 @@ void SetFrequency(uint32_t freq_hz)
 void SetDutyCycle(uint32_t duty_cycle)
 {
     alarm_command_queue.Send(ALARM_DUTY_CYCLE, duty_cycle);
+}
+
+void SetAlarmTime(uint8_t hour, uint8_t minute)
+{
+    // Adjust the time on the RTC.
+    time_command_queue.Send(ALARM_TIME, hour, minute);
+}
+
+void SetAlarmTime12(uint8_t hour, uint8_t minute, bool AMOrPM)
+{
+    // Adjust the time on the RTC.
+    time_command_queue.Send(ALARM_TIME12, hour, minute, AMOrPM);
 }
 
 bool RecieveAlarmCommand(COMMAND_MESSAGE *msg)

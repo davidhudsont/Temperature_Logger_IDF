@@ -58,17 +58,7 @@ int GetInterruptSemiphore();
 class RTCDS3234
 {
 public:
-    /**
-     * @brief Construct a new RTCDS3234 object
-     *
-     */
     RTCDS3234();
-
-    /**
-     * @brief Initialize the RTC device structure
-     *        and start the SPI bus.
-     */
-    void Begin();
 
     /**
      * @brief Read the current data and time from the RTC.
@@ -92,12 +82,15 @@ public:
     void WriteDate(uint8_t date, uint8_t month, uint8_t year);
 
     void WriteTime(uint8_t hour, uint8_t minute, uint8_t second);
+    void WriteTime12(uint8_t hour, uint8_t minute, uint8_t second, bool ampm);
 
     /**
      * @brief Get the date and time from the build date
      *
      */
     void WriteBuildDateTime();
+
+    void WriteBuildDateTime12();
 
     /**
      * @brief Get Date string
@@ -145,6 +138,9 @@ public:
      */
     void WriteAlarm1(uint8_t seconds, uint8_t minutes,
                      uint8_t hours, uint8_t date, ALARM1_MODES mode);
+
+    void WriteAlarm1(uint8_t hour, uint8_t minute);
+    void WriteAlarm1(uint8_t hour, uint8_t minute, bool PM_NotAM);
 
     /**
      * @brief
@@ -220,6 +216,8 @@ public:
      * @param len - Number of bytes to write
      */
     void SRAMBurstWrite(uint8_t address, uint8_t *data, uint32_t len);
+
+    void RegisterDump();
 
 private:
     uint8_t raw_time[7];

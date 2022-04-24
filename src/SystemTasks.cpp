@@ -39,7 +39,7 @@ static void button_task(void *pvParameter);
 static void hmi_task(void *pvParameter);
 static void speaker_task(void *pvParameter);
 
-void CreateSemaphores(void)
+static void CreateSemaphores(void)
 {
     lcd_semiphore = xSemaphoreCreateBinary();
 }
@@ -57,6 +57,7 @@ void delay(uint32_t time_ms)
 void CreateTasks(void)
 {
     gpio_install_isr_service(0);
+    CreateSemaphores();
     // Larger number equals higher priority
     xTaskCreate(&rtc_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
@@ -86,7 +87,7 @@ void PowerOnTest(RTCDS3234 &rtc)
     {
         ESP_LOGW("RTC", "Lost Power!");
         rtc.SRAMBurstWrite(0x00, code, 6);
-        rtc.WriteBuildDateTime();
+        rtc.WriteBuildDateTime12();
     }
     else
     {
@@ -99,12 +100,12 @@ void StartAlarms(RTCDS3234 &rtc)
     // Setup the RTC interrupts
     rtc.ISRInitialize();
     delay(1000);
-    rtc.WriteAlarm1(10, 0, 0, 0, ALARM1_SECONDS_MATCH);
+    rtc.WriteAlarm1(0, 0, 0, 0, ALARM1_HR_MIN_SEC_MATCH);
     rtc.WriteAlarm2(0, 0, 0, ALARM2_PER_MIN);
     delay(100);
     rtc.EnableInterrupt(true);
     delay(100);
-    rtc.EnableAlarms(false, true);
+    rtc.EnableAlarms(true, true);
     // Clear the ALARM flags early
     rtc.ReadAlarm1Flag();
     rtc.ReadAlarm2Flag();
@@ -120,7 +121,6 @@ static void rtc_task(void *pvParameter)
     ESP_LOGI("RTC", "RTC Task Start!");
     RTCDS3234 rtc;
     COMMAND_MESSAGE cmd_msg;
-    rtc.Begin();
 
     PowerOnTest(rtc);
     StartAlarms(rtc);
@@ -135,17 +135,12 @@ static void rtc_task(void *pvParameter)
 
             if (alarm1_flag)
             {
-                ESP_LOGV("RTC", "ALARM1 Triggered");
-                rtc.ReadDateTime();
-                dateTime = rtc.GetDateTime();
-                std::string logdate = rtc.DateToString();
-                std::string logtime = rtc.TimeToString();
-                ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
+                ESP_LOGI("RTC", "ALARM1 Triggered");
                 SetAlarm(true);
             }
             if (alarm2_flag)
             {
-                ESP_LOGV("RTC", "ALARM2 Triggered");
+                ESP_LOGI("RTC", "ALARM2 Triggered");
                 rtc.ReadDateTime();
                 dateTime = rtc.GetDateTime();
                 ReadTemperature(false);
@@ -189,6 +184,13 @@ static void rtc_task(void *pvParameter)
                 dateTime.minute = cmd_msg.arg2;
                 dateTime.second = cmd_msg.arg3;
                 break;
+            case SET_TIME12:
+                rtc.WriteTime12(cmd_msg.arg1, cmd_msg.arg2, 0, cmd_msg.arg3);
+                dateTime.hour = cmd_msg.arg1;
+                dateTime.minute = cmd_msg.arg2;
+                dateTime.PM_notAM = cmd_msg.arg3;
+                dateTime.second = 0;
+                break;
             case SET_WEEKDAY:
                 rtc.WriteDays((DAYS)cmd_msg.arg1);
                 break;
@@ -209,6 +211,17 @@ static void rtc_task(void *pvParameter)
                 dateTime.dayofMonth = cmd_msg.arg1;
                 dateTime.month = cmd_msg.arg2;
                 dateTime.year = cmd_msg.arg3;
+                break;
+            case ALARM_TIME:
+                rtc.WriteAlarm1(cmd_msg.arg1, cmd_msg.arg2);
+                ESP_LOGI("RTC", "Setting ALARM to %d hour, %d minute", cmd_msg.arg1, cmd_msg.arg2);
+                break;
+            case ALARM_TIME12:
+                rtc.WriteAlarm1(cmd_msg.arg1, cmd_msg.arg2, cmd_msg.arg3);
+                ESP_LOGI("RTC", "Setting ALARM to %02d:%02d %s", cmd_msg.arg1, cmd_msg.arg2, cmd_msg.arg3 ? "PM" : "AM");
+                break;
+            case DUMP_RTC_REG:
+                rtc.RegisterDump();
                 break;
             default:
                 break;
@@ -298,22 +311,22 @@ static void button_task(void *pvParameter)
         if (altButton)
         {
             ESP_LOGI("BTN", "Alt Button Pressed");
-            ButtonPressed(ALT_BTN_PRESSED);
+            AltButtonGiveSemaphore();
         }
         else if (editModeButton)
         {
             ESP_LOGI("BTN", "Edit Mode Button Pressed");
-            ButtonPressed(EDIT_MODE_PRESSED);
+            EditButtonGiveSemaphore();
         }
         else if (downButton)
         {
             ESP_LOGI("BTN", "Down Button Pressed");
-            ButtonPressed(DOWN_PRESSED);
+            DownButtonGiveSemaphore();
         }
         else if (upButton)
         {
             ESP_LOGI("BTN", "Up Button Pressed");
-            ButtonPressed(UP_PRESSED);
+            UpButtonGiveSemaphore();
         }
         delay(10);
     }
@@ -375,13 +388,6 @@ static void speaker_task(void *pvParameter)
             else if (cmd_msg.id == ALARM_DUTY_CYCLE)
             {
                 alarm.SetDutyCyclePercentage((uint32_t)cmd_msg.arg1);
-            }
-        }
-        if (RecieveButtonCommand(&cmd_msg))
-        {
-            if (cmd_msg.id == ALT_BTN_PRESSED)
-            {
-                alarm.StopAlarm();
             }
         }
         delay(100);

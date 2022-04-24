@@ -1,7 +1,7 @@
 /**
  * @author David Hudson
  * @brief Main Application for Clock Display
- * 
+ *
  */
 
 #ifdef NATIVE
@@ -23,7 +23,6 @@ extern "C"
 // cppcheck-suppress unusedFunction
 void app_main()
 {
-    CreateSemaphores();
     CreateTasks();
 }
 
