@@ -169,11 +169,38 @@ void RTCDS3234::WriteDate(uint8_t date, uint8_t month, uint8_t year)
 
 void RTCDS3234::WriteTime(uint8_t hour, uint8_t minute, uint8_t second)
 {
-    uint8_t time_config[3];
+    uint8_t time_config[3] = {0};
 
     time_config[0] = DECtoBCD(second);
     time_config[1] = DECtoBCD(minute);
     time_config[2] = DECtoBCD(hour);
+
+    RegisterBurstWrite(REG_SECONDS, time_config, 3);
+}
+
+void RTCDS3234::WriteTime12(uint8_t hour, uint8_t minute, uint8_t second, bool PM_NotAM)
+{
+    uint8_t time_config[3] = {0};
+
+    time_config[0] = DECtoBCD(second);
+    time_config[1] = DECtoBCD(minute);
+
+    if (hour > 12)
+        hour = 12;
+    else if (hour < 1)
+        hour = 1;
+
+    if (PM_NotAM)
+    {
+        time_config[2] |= HOUR_12_N24;
+        time_config[2] |= PM_NOTAM;
+        time_config[2] |= DECtoBCD(hour);
+    }
+    else
+    {
+        time_config[2] |= HOUR_12_N24;
+        time_config[2] |= DECtoBCD(hour);
+    }
 
     RegisterBurstWrite(REG_SECONDS, time_config, 3);
 }

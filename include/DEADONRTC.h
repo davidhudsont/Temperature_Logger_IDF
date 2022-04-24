@@ -92,6 +92,7 @@ public:
     void WriteDate(uint8_t date, uint8_t month, uint8_t year);
 
     void WriteTime(uint8_t hour, uint8_t minute, uint8_t second);
+    void WriteTime12(uint8_t hour, uint8_t minute, uint8_t second, bool ampm);
 
     /**
      * @brief Get the date and time from the build date

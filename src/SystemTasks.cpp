@@ -184,6 +184,13 @@ static void rtc_task(void *pvParameter)
                 dateTime.minute = cmd_msg.arg2;
                 dateTime.second = cmd_msg.arg3;
                 break;
+            case SET_TIME12:
+                rtc.WriteTime12(cmd_msg.arg1, cmd_msg.arg2, 0, (bool)cmd_msg.arg3);
+                dateTime.hour = cmd_msg.arg1;
+                dateTime.minute = cmd_msg.arg2;
+                dateTime.PM_notAM = cmd_msg.arg3;
+                dateTime.second = 0;
+                break;
             case SET_WEEKDAY:
                 rtc.WriteDays((DAYS)cmd_msg.arg1);
                 break;
@@ -211,6 +218,7 @@ static void rtc_task(void *pvParameter)
                 break;
             case DUMP_RTC_REG:
                 rtc.RegisterDump();
+                break;
             default:
                 break;
             }

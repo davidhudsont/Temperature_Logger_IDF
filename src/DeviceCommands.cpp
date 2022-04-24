@@ -121,6 +121,11 @@ void SetTime(uint8_t hour, uint8_t minute, uint8_t second)
     time_command_queue.Send(SET_TIME, hour, minute, second);
 }
 
+void SetTime12(uint8_t hour, uint8_t minute, bool AMOrPM)
+{
+    time_command_queue.Send(SET_TIME12, hour, minute, AMOrPM);
+}
+
 bool RecieveTimeCommand(COMMAND_MESSAGE *msg)
 {
     return time_command_queue.Recieve(msg);

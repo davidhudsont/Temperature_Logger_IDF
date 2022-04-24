@@ -10,6 +10,7 @@ enum RTC_COMMANDS
     SET_12HOURS,
     SET_24HOURS,
     SET_TIME,
+    SET_TIME12,
     SET_WEEKDAY,
     SET_DAYOFMONTH,
     SET_MONTH,
@@ -74,6 +75,7 @@ void SetMinutes(uint8_t minute);
 void SetHours12Mode(uint8_t hour, bool AMOrPM);
 void SetHours24Mode(uint8_t hour);
 void SetTime(uint8_t hour, uint8_t minute, uint8_t second);
+void SetTime12(uint8_t hour, uint8_t minute, bool AMOrPM);
 
 bool RecieveTimeCommand(COMMAND_MESSAGE *msg);
 
