@@ -128,10 +128,6 @@ RTCDS3234::RTCDS3234()
     memset(&raw_time, 0, sizeof(uint8_t));
 }
 
-void RTCDS3234::Begin()
-{
-}
-
 void RTCDS3234::ReadDateTime()
 {
     RegisterBurstRead(REG_SECONDS, raw_time, 7);

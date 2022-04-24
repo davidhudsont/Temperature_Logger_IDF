@@ -120,7 +120,6 @@ static void rtc_task(void *pvParameter)
     ESP_LOGI("RTC", "RTC Task Start!");
     RTCDS3234 rtc;
     COMMAND_MESSAGE cmd_msg;
-    rtc.Begin();
 
     PowerOnTest(rtc);
     StartAlarms(rtc);

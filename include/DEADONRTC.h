@@ -58,17 +58,7 @@ int GetInterruptSemiphore();
 class RTCDS3234
 {
 public:
-    /**
-     * @brief Construct a new RTCDS3234 object
-     *
-     */
     RTCDS3234();
-
-    /**
-     * @brief Initialize the RTC device structure
-     *        and start the SPI bus.
-     */
-    void Begin();
 
     /**
      * @brief Read the current data and time from the RTC.
