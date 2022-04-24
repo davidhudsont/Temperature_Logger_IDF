@@ -137,9 +137,9 @@ void HMI::SetDisplayDateTime(DATE_TIME &dateTime)
 
     timeSetting.hour.value = dateTime.hour;
     timeSetting.minute.value = dateTime.minute;
+    timeSetting.PM_notAM.value = dateTime.PM_notAM;
 
     hour12_not24 = dateTime.hour12_not24;
-    PM_notAM = dateTime.PM_notAM;
 }
 
 HMIState HMI::GetCurrentState()

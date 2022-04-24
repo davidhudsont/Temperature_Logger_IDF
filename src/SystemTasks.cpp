@@ -86,7 +86,7 @@ void PowerOnTest(RTCDS3234 &rtc)
     {
         ESP_LOGW("RTC", "Lost Power!");
         rtc.SRAMBurstWrite(0x00, code, 6);
-        rtc.WriteBuildDateTime();
+        rtc.WriteBuildDateTime12();
     }
     else
     {

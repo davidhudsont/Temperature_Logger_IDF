@@ -74,7 +74,6 @@ private:
     float temperatureF;
     float temperatureC;
     bool hour12_not24;
-    bool PM_notAM;
 
     HMIState displayState = DISPLAYING;
     int entriesToEdit;
