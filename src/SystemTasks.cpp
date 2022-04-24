@@ -39,7 +39,7 @@ static void button_task(void *pvParameter);
 static void hmi_task(void *pvParameter);
 static void speaker_task(void *pvParameter);
 
-void CreateSemaphores(void)
+static void CreateSemaphores(void)
 {
     lcd_semiphore = xSemaphoreCreateBinary();
 }
@@ -57,6 +57,7 @@ void delay(uint32_t time_ms)
 void CreateTasks(void)
 {
     gpio_install_isr_service(0);
+    CreateSemaphores();
     // Larger number equals higher priority
     xTaskCreate(&rtc_task, "RTC_Task", configMINIMAL_STACK_SIZE * 4, NULL, 4, NULL);
     xTaskCreate(&tmp102_task, "TMP102_Task", configMINIMAL_STACK_SIZE * 7, NULL, 5, NULL);
