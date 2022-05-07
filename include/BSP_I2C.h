@@ -6,13 +6,13 @@
 namespace BSP
 {
 
-#define SDA_PIN_NUM (GPIO_NUM_21) // I2C SDA PIN Number
-#define SCL_PIN_NUM (GPIO_NUM_22) // I2C SCL PIN Number
+    constexpr gpio_num_t SDA_PIN_NUM = GPIO_NUM_21; // I2C SDA PIN Number
+    constexpr gpio_num_t SCL_PIN_NUM = GPIO_NUM_22; // I2C SCL PIN Number
 
-#define I2C_MASTER_FREQ (100000) // 100 KHz
-#define I2C_MASTER_NUM (I2C_NUM_1)
+    constexpr int I2C_MASTER_FREQ = 100000; // 100 KHz
+    constexpr int I2C_MASTER_NUM = I2C_NUM_1;
 
-#define I2C_TIMEOUT (10) // 10ms
+    constexpr int I2C_TIMEOUT = 10; // 10ms
 
     class I2C
     {

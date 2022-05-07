@@ -7,7 +7,7 @@
 #include <string>
 
 // Active Low INT_BAR
-#define DEADON_ALERT_PIN_NUM (GPIO_NUM_25) // Interrupt Pin
+constexpr gpio_num_t DEADON_ALERT_PIN_NUM = GPIO_NUM_25; // Interrupt Pin
 constexpr int SPI_CLOCK_SPEED = 4 * 1000 * 1000;
 
 uint8_t calculateMaxDayOfMonth(uint8_t month, uint8_t year);
