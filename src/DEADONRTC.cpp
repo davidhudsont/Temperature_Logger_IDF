@@ -2,90 +2,8 @@
 #include "DEADONRTC.h"
 #include "DEADONRTC_Registers.h"
 #include <string.h>
-#include <sstream>
-#include <iomanip>
 #include "esp_log.h"
 #include "freertos/semphr.h"
-
-// Credit to SparkFun Library for the Build Dates: https://github.com/sparkfun/SparkFun_DS3234_RTC_Arduino_Library
-// Parse the __DATE__ predefined macro to generate date defaults:
-// __Date__ Format: MMM DD YYYY (First D may be a space if <10)
-// <MONTH>
-#define BUILD_MONTH_JAN ((__DATE__[0] == 'J') && (__DATE__[1] == 'a')) ? 1 : 0
-#define BUILD_MONTH_FEB (__DATE__[0] == 'F') ? 2 : 0
-#define BUILD_MONTH_MAR ((__DATE__[0] == 'M') && (__DATE__[1] == 'a') && (__DATE__[2] == 'r')) ? 3 : 0
-#define BUILD_MONTH_APR ((__DATE__[0] == 'A') && (__DATE__[1] == 'p')) ? 4 : 0
-#define BUILD_MONTH_MAY ((__DATE__[0] == 'M') && (__DATE__[1] == 'a') && (__DATE__[2] == 'y')) ? 5 : 0
-#define BUILD_MONTH_JUN ((__DATE__[0] == 'J') && (__DATE__[1] == 'u') && (__DATE__[2] == 'n')) ? 6 : 0
-#define BUILD_MONTH_JUL ((__DATE__[0] == 'J') && (__DATE__[1] == 'u') && (__DATE__[2] == 'l')) ? 7 : 0
-#define BUILD_MONTH_AUG ((__DATE__[0] == 'A') && (__DATE__[1] == 'u')) ? 8 : 0
-#define BUILD_MONTH_SEP (__DATE__[0] == 'S') ? 9 : 0
-#define BUILD_MONTH_OCT (__DATE__[0] == 'O') ? 10 : 0
-#define BUILD_MONTH_NOV (__DATE__[0] == 'N') ? 11 : 0
-#define BUILD_MONTH_DEC (__DATE__[0] == 'D') ? 12 : 0
-#define BUILD_MONTH BUILD_MONTH_JAN | BUILD_MONTH_FEB | BUILD_MONTH_MAR |     \
-                        BUILD_MONTH_APR | BUILD_MONTH_MAY | BUILD_MONTH_JUN | \
-                        BUILD_MONTH_JUL | BUILD_MONTH_AUG | BUILD_MONTH_SEP | \
-                        BUILD_MONTH_OCT | BUILD_MONTH_NOV | BUILD_MONTH_DEC
-// <DATE>
-#define BUILD_DATE_0 ((__DATE__[4] == ' ') ? 0 : (__DATE__[4] - 0x30))
-#define BUILD_DATE_1 (__DATE__[5] - 0x30)
-#define BUILD_DATE ((BUILD_DATE_0 * 10) + BUILD_DATE_1)
-// <YEAR>
-#define BUILD_YEAR (((__DATE__[7] - 0x30) * 1000) + ((__DATE__[8] - 0x30) * 100) + \
-                    ((__DATE__[9] - 0x30) * 10) + ((__DATE__[10] - 0x30) * 1))
-
-// Parse the __TIME__ predefined macro to generate time defaults:
-// __TIME__ Format: HH:MM:SS (First number of each is padded by 0 if <10)
-// <HOUR>
-#define BUILD_HOUR_0 ((__TIME__[0] == ' ') ? 0 : (__TIME__[0] - 0x30))
-#define BUILD_HOUR_1 (__TIME__[1] - 0x30)
-#define BUILD_HOUR ((BUILD_HOUR_0 * 10) + BUILD_HOUR_1)
-// <MINUTE>
-#define BUILD_MINUTE_0 ((__TIME__[3] == ' ') ? 0 : (__TIME__[3] - 0x30))
-#define BUILD_MINUTE_1 (__TIME__[4] - 0x30)
-#define BUILD_MINUTE ((BUILD_MINUTE_0 * 10) + BUILD_MINUTE_1)
-// <SECOND>
-#define BUILD_SECOND_0 ((__TIME__[6] == ' ') ? 0 : (__TIME__[6] - 0x30))
-#define BUILD_SECOND_1 (__TIME__[7] - 0x30)
-#define BUILD_SECOND ((BUILD_SECOND_0 * 10) + BUILD_SECOND_1)
-
-uint8_t calculateMaxDayOfMonth(uint8_t month, uint8_t year)
-{
-    // Credit to : http://www.codecodex.com/wiki/Calculate_the_number_of_days_in_a_month
-    // This protects against invalid months
-    int numberOfDays;
-    if (month == 4 || month == 6 || month == 9 || month == 11)
-        numberOfDays = 30;
-    else if (month == 2)
-    {
-        bool isLeapYear = (((year % 4) == 0) && ((year % 100) != 0)) || ((year % 400) == 0);
-        if (isLeapYear)
-            numberOfDays = 29;
-        else
-            numberOfDays = 28;
-    }
-    else
-        numberOfDays = 31;
-
-    return numberOfDays;
-}
-
-void ConvertTo12Hours(uint8_t hour24_in, uint8_t &hours12Out, bool &PM_notAMOut)
-{
-    if (hour24_in >= 12)
-    {
-        hours12Out = hour24_in - 12;
-        PM_notAMOut = true;
-    }
-    else
-    {
-        hours12Out = hour24_in;
-        PM_notAMOut = false;
-    }
-    if (hours12Out == 0)
-        hours12Out = 12;
-}
 
 SemaphoreHandle_t semiphore;
 
@@ -152,14 +70,14 @@ void RTCDS3234::ReadDateTime()
     year = BCDtoDEC(raw_time[6]);
 }
 
-void RTCDS3234::WriteDateTime(uint8_t seconds, uint8_t minutes, uint8_t hours,
+void RTCDS3234::WriteDateTime(uint8_t second, uint8_t minute, uint8_t hour,
                               uint8_t day, uint8_t date, uint8_t month, uint8_t year)
 {
     uint8_t time_config[7];
 
-    time_config[0] = DECtoBCD(seconds);
-    time_config[1] = DECtoBCD(minutes);
-    time_config[2] = DECtoBCD(hours);
+    time_config[0] = DECtoBCD(second);
+    time_config[1] = DECtoBCD(minute);
+    time_config[2] = DECtoBCD(hour);
     time_config[3] = DECtoBCD(day);
     time_config[4] = DECtoBCD(date);
     time_config[5] = DECtoBCD(month);
@@ -276,31 +194,6 @@ void RTCDS3234::WriteBuildDateTime12()
     RegisterBurstWrite(REG_SECONDS, time_config, 7);
 }
 
-std::string RTCDS3234::DateToString()
-{
-    std::stringstream ss;
-    // date is day of month
-    ss << std::setfill('0') << std::setw(2) << (int)month << "/";
-    ss << std::setfill('0') << std::setw(2) << (int)date << "/";
-    ss << (int)(year + 2000);
-
-    return ss.str();
-}
-
-std::string RTCDS3234::TimeToString()
-{
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(2) << (int)hours << ":";
-    ss << std::setfill('0') << std::setw(2) << (int)minutes << ":";
-    ss << std::setfill('0') << std::setw(2) << (int)seconds;
-    if (hour12_not24)
-    {
-        ss << " " << (PM_notAM ? "PM" : "AM");
-    }
-
-    return ss.str();
-}
-
 DATE_TIME RTCDS3234::GetDateTime()
 {
     DATE_TIME dateTime;
@@ -316,9 +209,9 @@ DATE_TIME RTCDS3234::GetDateTime()
     return dateTime;
 }
 
-void RTCDS3234::WriteSeconds(uint8_t seconds)
+void RTCDS3234::WriteSeconds(uint8_t second)
 {
-    RegisterWrite(REG_SECONDS, DECtoBCD(seconds));
+    RegisterWrite(REG_SECONDS, DECtoBCD(second));
 }
 
 uint8_t RTCDS3234::ReadSeconds()
@@ -328,9 +221,9 @@ uint8_t RTCDS3234::ReadSeconds()
     return seconds;
 }
 
-void RTCDS3234::WriteMinutes(uint8_t minutes)
+void RTCDS3234::WriteMinutes(uint8_t minute)
 {
-    RegisterWrite(REG_MINUTES, DECtoBCD(minutes));
+    RegisterWrite(REG_MINUTES, DECtoBCD(minute));
 }
 
 uint8_t RTCDS3234::ReadMinutes()
@@ -340,37 +233,37 @@ uint8_t RTCDS3234::ReadMinutes()
     return minutes;
 }
 
-void RTCDS3234::Write12Hours(uint8_t hours, bool PM_NotAM)
+void RTCDS3234::Write12Hours(uint8_t hour, bool PM_NotAM)
 {
     uint8_t reg_data = 0x00;
-    if (hours > 12)
-        hours = 12;
-    if (hours < 1)
-        hours = 1;
+    if (hour > 12)
+        hour = 12;
+    if (hour < 1)
+        hour = 1;
     if (PM_NotAM)
     {
         reg_data |= HOUR_12_N24;
         reg_data |= PM_NOTAM;
-        reg_data |= DECtoBCD(hours);
+        reg_data |= DECtoBCD(hour);
     }
     else
     {
         reg_data |= HOUR_12_N24;
-        reg_data |= DECtoBCD(hours);
+        reg_data |= DECtoBCD(hour);
     }
     RegisterWrite(REG_HOURS, reg_data);
 }
 
-void RTCDS3234::Write24Hours(uint8_t hours)
+void RTCDS3234::Write24Hours(uint8_t hour)
 {
-    if (hours > 23)
-        hours = 23;
-    RegisterWrite(REG_HOURS, DECtoBCD(hours));
+    if (hour > 23)
+        hour = 23;
+    RegisterWrite(REG_HOURS, DECtoBCD(hour));
 }
 
-void RTCDS3234::WriteDays(DAYS days)
+void RTCDS3234::WriteDays(DAYS day)
 {
-    RegisterWrite(REG_DAYS, BCDtoDEC((uint8_t)days));
+    RegisterWrite(REG_DAYS, BCDtoDEC((uint8_t)day));
 }
 
 void RTCDS3234::WriteDate(uint8_t date)
@@ -413,14 +306,14 @@ void RTCDS3234::WriteYear(uint8_t year)
     RegisterWrite(REG_YEAR, DECtoBCD(year));
 }
 
-void RTCDS3234::WriteAlarm1(uint8_t seconds, uint8_t minutes,
-                            uint8_t hours, uint8_t date, ALARM1_MODES mode)
+void RTCDS3234::WriteAlarm1(uint8_t second, uint8_t minute,
+                            uint8_t hour, uint8_t date, ALARM1_MODES mode)
 {
     uint8_t alarm_config[4] = {0};
 
-    alarm_config[0] = DECtoBCD(seconds);
-    alarm_config[1] = DECtoBCD(minutes);
-    alarm_config[2] = DECtoBCD(hours);
+    alarm_config[0] = DECtoBCD(second);
+    alarm_config[1] = DECtoBCD(minute);
+    alarm_config[2] = DECtoBCD(hour);
     alarm_config[3] = DECtoBCD(date);
 
     switch (mode)
@@ -489,13 +382,13 @@ void RTCDS3234::WriteAlarm1(uint8_t hour, uint8_t minute, bool PM_NotAM)
     RegisterBurstWrite(REG_ALARM1_MINUTES, alarm_config, 2);
 }
 
-void RTCDS3234::WriteAlarm2(uint8_t minutes,
-                            uint8_t hours, uint8_t date, ALARM2_MODES mode)
+void RTCDS3234::WriteAlarm2(uint8_t minute,
+                            uint8_t hour, uint8_t date, ALARM2_MODES mode)
 {
     uint8_t alarm_config[3] = {0};
 
-    alarm_config[0] = DECtoBCD(minutes);
-    alarm_config[1] = DECtoBCD(hours);
+    alarm_config[0] = DECtoBCD(minute);
+    alarm_config[1] = DECtoBCD(hour);
     alarm_config[2] = DECtoBCD(date);
 
     switch (mode)

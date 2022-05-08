@@ -1,27 +1,13 @@
-
 #pragma once
 
 #include "DEADONRTC_Registers.h"
 #include "BSP_SPI.h"
 #include "driver/gpio.h"
-#include <string>
+#include "DateTime.h"
 
 // Active Low INT_BAR
 constexpr gpio_num_t DEADON_ALERT_PIN_NUM = GPIO_NUM_25; // Interrupt Pin
 constexpr int SPI_CLOCK_SPEED = 4 * 1000 * 1000;
-
-uint8_t calculateMaxDayOfMonth(uint8_t month, uint8_t year);
-
-enum DAYS
-{
-    SUNDAY = 1,
-    MONDAY,
-    TUESDAY,
-    WEDNESDAY,
-    THURSDAY,
-    FRIDAY,
-    SATURDAY,
-};
 
 enum ALARM1_MODES
 {
@@ -38,19 +24,6 @@ enum ALARM2_MODES
     ALARM2_MIN_MATCH,
     ALARM2_HR_MIN_MATCH,
     ALARM2_DT_HR_MIN_MATCH
-
-};
-
-struct DATE_TIME
-{
-    uint8_t year;
-    uint8_t month;
-    uint8_t dayofMonth;
-    uint8_t hour;
-    uint8_t minute;
-    uint8_t second;
-    bool hour12_not24;
-    bool PM_notAM;
 };
 
 int GetInterruptSemiphore();
@@ -67,15 +40,8 @@ public:
 
     /**
      * @brief Write the date and time
-     * @param seconds
-     * @param minutes
-     * @param hours
-     * @param day
-     * @param date
-     * @param month
-     * @param year
      */
-    void WriteDateTime(uint8_t seconds, uint8_t minutes, uint8_t hours,
+    void WriteDateTime(uint8_t second, uint8_t minute, uint8_t hour,
                        uint8_t day, uint8_t date, uint8_t month,
                        uint8_t year);
 
@@ -92,34 +58,20 @@ public:
 
     void WriteBuildDateTime12();
 
-    /**
-     * @brief Get Date string
-     *
-     * @return std::string
-     */
-    std::string DateToString();
-
-    /**
-     * @brief Get the Time string
-     *
-     * @return std::string
-     */
-    std::string TimeToString();
-
     DATE_TIME GetDateTime();
 
     void WriteSeconds(uint8_t second);
     uint8_t ReadSeconds();
 
-    void WriteMinutes(uint8_t minutes);
+    void WriteMinutes(uint8_t minute);
     uint8_t ReadMinutes();
 
     // @param hours 1-12
-    void Write12Hours(uint8_t hours, bool PM_NotAM);
+    void Write12Hours(uint8_t hour, bool PM_NotAM);
     // @param hours 0-23
-    void Write24Hours(uint8_t hours);
+    void Write24Hours(uint8_t hour);
     // @param days
-    void WriteDays(DAYS days);
+    void WriteDays(DAYS day);
     // @param date 1-31
     void WriteDate(uint8_t date);
     // @param month 1-12
@@ -127,31 +79,14 @@ public:
     // @param year 0-99
     void WriteYear(uint8_t year);
 
-    /**
-     * @brief
-     *
-     * @param seconds
-     * @param minutes
-     * @param hours
-     * @param date
-     * @param mode
-     */
-    void WriteAlarm1(uint8_t seconds, uint8_t minutes,
-                     uint8_t hours, uint8_t date, ALARM1_MODES mode);
+    void WriteAlarm1(uint8_t second, uint8_t minute,
+                     uint8_t hour, uint8_t date, ALARM1_MODES mode);
 
     void WriteAlarm1(uint8_t hour, uint8_t minute);
     void WriteAlarm1(uint8_t hour, uint8_t minute, bool PM_NotAM);
 
-    /**
-     * @brief
-     *
-     * @param minutes
-     * @param hours
-     * @param date
-     * @param mode
-     */
-    void WriteAlarm2(uint8_t minutes,
-                     uint8_t hours, uint8_t date, ALARM2_MODES mode);
+    void WriteAlarm2(uint8_t minute,
+                     uint8_t hour, uint8_t date, ALARM2_MODES mode);
 
     /**
      * @brief

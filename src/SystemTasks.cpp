@@ -156,8 +156,9 @@ static void rtc_task(void *pvParameter)
             case GET_DATETIME:
             {
                 rtc.ReadDateTime();
-                std::string logdate = rtc.DateToString();
-                std::string logtime = rtc.TimeToString();
+                DATE_TIME dt = rtc.GetDateTime();
+                std::string logdate = dt.DateToString();
+                std::string logtime = dt.TimeToString();
                 ESP_LOGI("RTC", "%s, %s", logdate.c_str(), logtime.c_str());
                 dateTime = rtc.GetDateTime();
                 break;

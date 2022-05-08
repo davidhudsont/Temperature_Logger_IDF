@@ -1,4 +1,6 @@
 #include "Speaker.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "driver/ledc.h"
 #include "driver/gpio.h"
 #include <string.h>
