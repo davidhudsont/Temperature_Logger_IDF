@@ -1,7 +1,9 @@
-#include "HMI.h"
 
+// RTOS
 #include "esp_log.h"
 
+// User Headers
+#include "HMI.h"
 #include "DeviceCommands.h"
 
 static char LCD_BCKL_COLORS[COLOR_COUNT][4] = {

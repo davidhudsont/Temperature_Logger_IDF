@@ -1,8 +1,11 @@
 #pragma once
 
+// Standard Libraries
+#include "stdint.h"
+
+// RTOS
 #include "driver/uart.h"
 #include "driver/gpio.h"
-#include "stdint.h"
 
 constexpr gpio_num_t UART_TX_PIN_NUM = GPIO_NUM_1;
 constexpr gpio_num_t UART_RX_PIN_NUM = GPIO_NUM_3;

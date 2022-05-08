@@ -1,8 +1,10 @@
 #pragma once
 
-#include "DEADONRTC_Registers.h"
-#include "BSP_SPI.h"
+// RTOS
 #include "driver/gpio.h"
+
+// User Headers
+#include "BSP_SPI.h"
 #include "DateTime.h"
 
 // Active Low INT_BAR
@@ -66,9 +68,9 @@ public:
     void WriteMinutes(uint8_t minute);
     uint8_t ReadMinutes();
 
-    // @param hours 1-12
+    // @param hour 1-12
     void Write12Hours(uint8_t hour, bool PM_NotAM);
-    // @param hours 0-23
+    // @param hour 0-23
     void Write24Hours(uint8_t hour);
     // @param days
     void WriteDays(DAYS day);

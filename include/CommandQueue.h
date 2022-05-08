@@ -1,6 +1,9 @@
 #pragma once
 
+// Standard Libraries
 #include "stdint.h"
+
+// RTOS
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/semphr.h"

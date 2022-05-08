@@ -1,9 +1,14 @@
-
-#include "DEADONRTC.h"
-#include "DEADONRTC_Registers.h"
+// Standard Libraries
 #include <string.h>
+
+// RTOS
+#include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 #include "freertos/semphr.h"
+
+// User Headers
+#include "DEADONRTC_Registers.h"
+#include "DEADONRTC.h"
 
 SemaphoreHandle_t semiphore;
 

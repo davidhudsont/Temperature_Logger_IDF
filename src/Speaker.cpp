@@ -1,9 +1,14 @@
-#include "Speaker.h"
+// Standard Libraries
+#include <string.h>
+
+// RTOS
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "driver/ledc.h"
 #include "driver/gpio.h"
-#include <string.h>
+
+// User Headers
+#include "Speaker.h"
 
 constexpr ledc_timer_t LEDC_TIMER = LEDC_TIMER_0;
 constexpr ledc_mode_t LEDC_MODE = LEDC_LOW_SPEED_MODE;

@@ -1,6 +1,9 @@
 
-#include "TMP102.h"
+// Standard Libraries
 #include "string.h"
+
+// User Headers
+#include "TMP102.h"
 
 TMP102::TMP102()
     : temperature(0.0f)

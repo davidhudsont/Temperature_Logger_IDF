@@ -1,6 +1,9 @@
 #pragma once
 
+// Standard Libraries
 #include <stdio.h>
+
+// RTOS
 #include "driver/gpio.h"
 #include "esp_timer.h"
 
