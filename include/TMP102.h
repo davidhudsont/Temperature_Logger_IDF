@@ -1,5 +1,6 @@
 #pragma once
 
+// User Headers
 #include "BSP_I2C.h"
 #include "TMP102Registers.h"
 
@@ -33,11 +34,6 @@ public:
      *
      */
     TMP102();
-
-    /**
-     * @brief Start I2C bus and initialize the device structure.
-     */
-    void Setup();
 
     /**
      * @brief Set the conversion rate of the TMP102

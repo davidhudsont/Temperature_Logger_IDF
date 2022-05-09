@@ -1,19 +1,22 @@
 #pragma once
 
-#include "driver/uart.h"
-#include "driver/gpio.h"
+// Standard Libraries
 #include "stdint.h"
 
-#define UART_TX_PIN_NUM (GPIO_NUM_1)
-#define UART_RX_PIN_NUM (GPIO_NUM_3)
+// RTOS
+#include "driver/uart.h"
+#include "driver/gpio.h"
 
-#define UART2_TX_PIN_NUM (GPIO_NUM_17)
-#define UART2_RX_PIN_NUM (GPIO_NUM_16)
+constexpr gpio_num_t UART_TX_PIN_NUM = GPIO_NUM_1;
+constexpr gpio_num_t UART_RX_PIN_NUM = GPIO_NUM_3;
 
-#define UART_RTS (UART_PIN_NO_CHANGE)
-#define UART_CTS (UART_PIN_NO_CHANGE)
+constexpr gpio_num_t UART2_TX_PIN_NUM = GPIO_NUM_17;
+constexpr gpio_num_t UART2_RX_PIN_NUM = GPIO_NUM_16;
 
-#define BUFFER_SIZE (1024)
+constexpr int UART_RTS = UART_PIN_NO_CHANGE;
+constexpr int UART_CTS = UART_PIN_NO_CHANGE;
+
+constexpr int BUFFER_SIZE = 1024;
 
 namespace BSP
 {

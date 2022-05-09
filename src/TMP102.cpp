@@ -1,15 +1,14 @@
 
-#include "TMP102.h"
+// Standard Libraries
 #include "string.h"
+
+// User Headers
+#include "TMP102.h"
 
 TMP102::TMP102()
     : temperature(0.0f)
 {
     memset(config, 0, sizeof(uint8_t) * 2);
-}
-
-void TMP102::Setup()
-{
 }
 
 void TMP102::SetConversionRate(CONVERSION_MODES mode)

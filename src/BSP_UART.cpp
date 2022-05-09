@@ -1,6 +1,8 @@
-
-#include "BSP_UART.h"
+// Standard Libraries
 #include "string.h"
+
+// User Headers
+#include "BSP_UART.h"
 
 namespace BSP
 {

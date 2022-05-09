@@ -1,12 +1,13 @@
 #pragma once
 
+// Standard Libraries
 #include <stdio.h>
+
+// RTOS
 #include "driver/gpio.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
 #include "esp_timer.h"
 
-#define PIN_NUM_SPEAKER (GPIO_NUM_26)
+constexpr gpio_num_t PIN_NUM_SPEAKER = GPIO_NUM_26;
 
 class AlarmSpeaker
 {

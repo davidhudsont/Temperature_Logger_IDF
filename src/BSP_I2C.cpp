@@ -1,6 +1,8 @@
-
-#include "BSP_I2C.h"
+// Standard Libraries
 #include <string.h>
+
+// User Headers
+#include "BSP_I2C.h"
 
 namespace BSP
 {

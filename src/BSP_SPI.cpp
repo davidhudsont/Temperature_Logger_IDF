@@ -1,6 +1,8 @@
-
-#include "BSP_SPI.h"
+// Standard Libraries
 #include <string.h>
+
+// User Headers
+#include "BSP_SPI.h"
 
 namespace BSP
 {

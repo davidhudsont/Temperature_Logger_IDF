@@ -1,15 +1,16 @@
 #pragma once
 
+// RTOS
 #include "driver/spi_common.h"
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
 
 namespace BSP
 {
-#define PIN_NUM_MISO (GPIO_NUM_19)
-#define PIN_NUM_MOSI (GPIO_NUM_23)
-#define PIN_NUM_SCK (GPIO_NUM_18)
-#define PIN_NUM_CS (GPIO_NUM_2)
+    constexpr gpio_num_t PIN_NUM_MISO = GPIO_NUM_19;
+    constexpr gpio_num_t PIN_NUM_MOSI = GPIO_NUM_23;
+    constexpr gpio_num_t PIN_NUM_SCK = GPIO_NUM_18;
+    constexpr gpio_num_t PIN_NUM_CS = GPIO_NUM_2;
 
     class SPI
     {

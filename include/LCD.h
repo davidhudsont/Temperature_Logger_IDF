@@ -2,6 +2,7 @@
 
 // Source https://github.com/sparkfun/SparkFun_SerLCD_Arduino_Library/blob/master/src/SerLCD.h
 
+// User Headers
 #include "BSP_UART.h"
 
 #define DISPLAY_ADDRESS 0x72
