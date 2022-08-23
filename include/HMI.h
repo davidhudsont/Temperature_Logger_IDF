@@ -52,6 +52,7 @@ enum HMISettings
     SETTING_CONTRAST,
     SETTING_BACKLIGHT,
     SETTING_ALARM,
+    SETTING_ALARM_ENABLE,
     SETTINGS_COUNT,
 };
 
@@ -105,6 +106,7 @@ private:
         SETTING hour;
         SETTING minute;
         SETTING PM_notAM;
+        SETTING enable;
     };
 
     RGB backLightValues[COLOR_COUNT];
@@ -126,6 +128,7 @@ private:
     void DisplayContrast();
     void DisplayBacklight();
     void DisplayAlarmSetting();
+    void DisplayAlarmEnable();
     void UpdateDisplay();
 
     // Edit Mode related functions
@@ -136,4 +139,5 @@ private:
     void EditContrast();
     void EditBackLight();
     void EditAlarmTime();
+    void EditAlarmEnable();
 };

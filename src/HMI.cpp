@@ -22,6 +22,7 @@ static char settingNames[SETTINGS_COUNT][5] = {
     "CNTR",
     "BLKT",
     "ALRM",
+    "ALRE",
 };
 
 static const size_t backlightStringSize = 15;
@@ -36,6 +37,7 @@ static char timeString[TimeStringSize];
 static char backlightString[backlightStringSize];
 static char contrastString[contrastStringSize];
 static char alarmSettingString[alarmStringSize];
+static char alarmEnableString[20];
 
 static uint8_t timeRow = 0;
 static uint8_t timeCol = 0;
@@ -102,6 +104,9 @@ HMI::HMI()
     alarmSetting.minute.min_value = 0;
     alarmSetting.PM_notAM.max_value = 1;
     alarmSetting.PM_notAM.min_value = 0;
+    alarmSetting.enable.max_value = 1;
+    alarmSetting.enable.min_value = 0;
+    alarmSetting.enable.value = false;
 }
 
 void HMI::Reset()
@@ -218,6 +223,12 @@ void HMI::DisplayMode()
             entriesToEdit = 3;
             DisplayCurrentState();
             DisplayAlarmSetting();
+            break;
+        case SETTING_ALARM_ENABLE:
+            entriesToEdit = 3;
+            DisplayCurrentState();
+            DisplayAlarmEnable();
+            break;
         default:
             break;
         }
@@ -236,6 +247,23 @@ void HMI::DisplayMode()
         settingMode.adjust(false);
         DisplayCurrentState();
     }
+}
+
+void HMI::DisplayAlarmEnable()
+{
+    bool alarmEnabled = alarmSetting.enable.value;
+    snprintf(alarmEnableString, 10, "ALARM %s", alarmEnabled ? "SET" : "OFF");
+    lcd.SetCursor(3, 0);
+    lcd.WriteCharacters(alarmEnableString, 9);
+}
+
+void HMI::EditAlarmEnable()
+{
+    alarmSetting.enable.adjust(!alarmSetting.enable.value);
+    SetAlarm(alarmSetting.enable.value);
+    displayState = DISPLAYING;
+    DisplayAlarmEnable();
+    DisplayCurrentState();
 }
 
 void HMI::DisplayDate()
@@ -349,6 +377,9 @@ void HMI::EditMode()
         break;
     case SETTING_ALARM:
         EditAlarmTime();
+        break;
+    case SETTING_ALARM_ENABLE:
+        EditAlarmEnable();
         break;
     default:
         break;
