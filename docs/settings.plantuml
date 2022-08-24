@@ -1,0 +1,23 @@
+@startuml settings
+
+struct Setting {
+    setting(int min, int max)
+    void adjust(bool)
+    int get()
+    int value
+    int max
+    int min
+}
+
+class Settings {
+    +void addSetting(std::string name, int value)
+    +int getSetting(std::string name)
+    +void setSetting(std::string name, int value)
+    std::map<std::string, Setting> settings
+}
+
+
+Setting "many" --* Settings
+
+
+@enduml
