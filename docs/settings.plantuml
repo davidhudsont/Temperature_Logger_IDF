@@ -1,19 +1,20 @@
 @startuml settings
 
-struct Setting {
-    setting(int min, int max)
-    void adjust(bool)
-    int get()
-    int value
-    int max
-    int min
+class Setting {
+    +Setting(int min, int max)
+    +void set(int value);
+    +void increment();
+    +void decrement();
+    +int get()
+    -int value
+    -int max
+    -int min
 }
 
 class Settings {
-    +void addSetting(std::string name, int value)
-    +int getSetting(std::string name)
-    +void setSetting(std::string name, int value)
-    std::map<std::string, Setting> settings
+    +void addSetting(std::string name, Setting& setting)
+    +Setting &getSetting(std::string name) const;
+    -std::map<std::string, Setting> settingsMap
 }
 
 
