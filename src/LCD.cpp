@@ -232,7 +232,7 @@ void LCD::SpecialCommand(uint8_t command)
     WriteBurst(commands, 2);
     EndTransmit();
 
-    delay(50);
+    delay(75);
 }
 
 void LCD::SpecialCommand(uint8_t command, uint8_t count)
@@ -246,7 +246,7 @@ void LCD::SpecialCommand(uint8_t command, uint8_t count)
     }
     EndTransmit();
 
-    delay(50);
+    delay(75);
 }
 
 void LCD::DisableSystemMessages()
@@ -255,7 +255,7 @@ void LCD::DisableSystemMessages()
     Write(SETTING_COMMAND);                // Send special command character
     Write(DISABLE_SYSTEM_MESSAGE_DISPLAY); // Send the set '.' character
     EndTransmit();                         // Stop transmission
-    delay(10);
+    delay(20);
 }
 
 void LCD::ResetCursor()
@@ -266,7 +266,7 @@ void LCD::ResetCursor()
     WriteBurst(commands, 2);
     EndTransmit();
 
-    delay(50);
+    delay(75);
 }
 
 void LCD::ClearRow(uint8_t row)
