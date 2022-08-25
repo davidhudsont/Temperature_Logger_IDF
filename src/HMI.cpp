@@ -26,12 +26,10 @@ static char settingNames[SETTINGS_COUNT][5] = {
 };
 
 static const size_t backlightStringSize = 15;
-static const size_t TimeStringSize = 11;
 static const size_t contrastStringSize = 14;
 static const size_t TempStringSize = 15;
 static const size_t alarmStringSize = 25;
 
-static char timeString[TimeStringSize];
 static char backlightString[backlightStringSize];
 static char contrastString[contrastStringSize];
 static char alarmSettingString[alarmStringSize];
@@ -60,13 +58,6 @@ HMI::HMI()
     lcd.Display();
     lcd.SetContrast(0);
     lcd.SetBackLightFast(125, 125, 125);
-
-    timeSetting.hour.max_value = 12;
-    timeSetting.hour.min_value = 1;
-    timeSetting.minute.max_value = 59;
-    timeSetting.minute.min_value = 0;
-    timeSetting.PM_notAM.max_value = 1;
-    timeSetting.PM_notAM.min_value = 0;
 
     tempSetting.max_value = 1;
     tempSetting.min_value = 0;
@@ -132,12 +123,10 @@ void HMI::SetDisplayDateTime(DATE_TIME &dateTime)
     dateSetting.getSetting("month").set(dateTime.month);
     dateSetting.getSetting("dayofMonth").set(dateTime.dayofMonth);
     dateSetting.getSetting("year").set(dateTime.year);
-    ESP_LOGI("HMI", "Date string: %s\n", dateSetting.displayString().c_str());
 
-    timeSetting.hour.value = dateTime.hour;
-    timeSetting.minute.value = dateTime.minute;
-    timeSetting.PM_notAM.value = dateTime.PM_notAM;
-
+    timeSetting.getSetting("hour").set(dateTime.hour);
+    timeSetting.getSetting("minute").set(dateTime.minute);
+    timeSetting.getSetting("amPm").set(dateTime.PM_notAM);
     hour12_not24 = dateTime.hour12_not24;
 }
 
@@ -270,12 +259,8 @@ void HMI::DisplayTime()
 {
     // Time update
     lcd.SetCursor(timeRow, timeCol);
-
-    snprintf(timeString, TimeStringSize, "%02d:%02d %s",
-             (uint8_t)timeSetting.hour.value,
-             (uint8_t)timeSetting.minute.value,
-             ((bool)timeSetting.PM_notAM.value ? "PM" : "AM"));
-    lcd.WriteCharacters(timeString, 8);
+    std::string str = timeSetting.displayString();
+    lcd.WriteString(str);
 }
 
 void HMI::DisplayTemperature()
@@ -436,35 +421,33 @@ void HMI::EditingTime()
 {
     if (UpButtonTakeSemaphore())
     {
-        bool increase = true;
         if (entriesToEdit == 3)
         {
-            timeSetting.hour.adjust(increase);
+            timeSetting.getSetting("hour").increment();
         }
         else if (entriesToEdit == 2)
         {
-            timeSetting.minute.adjust(increase);
+            timeSetting.getSetting("minute").increment();
         }
         else if (entriesToEdit == 1)
         {
-            timeSetting.PM_notAM.adjust(increase);
+            timeSetting.getSetting("amPm").increment();
         }
         DisplayTime();
     }
     else if (DownButtonTakeSemaphore())
     {
-        bool increase = false;
         if (entriesToEdit == 3)
         {
-            timeSetting.hour.adjust(increase);
+            timeSetting.getSetting("hour").decrement();
         }
         else if (entriesToEdit == 2)
         {
-            timeSetting.minute.adjust(increase);
+            timeSetting.getSetting("minute").decrement();
         }
         else if (entriesToEdit == 1)
         {
-            timeSetting.PM_notAM.adjust(increase);
+            timeSetting.getSetting("amPm").decrement();
         }
         DisplayTime();
     }
@@ -473,7 +456,10 @@ void HMI::EditingTime()
         entriesToEdit--;
         if (entriesToEdit == 0)
         {
-            SetTime12(timeSetting.hour.value, timeSetting.minute.value, timeSetting.PM_notAM.value);
+            uint8_t hour = timeSetting.getSetting("hour").get();
+            uint8_t minute = timeSetting.getSetting("minute").get();
+            uint8_t amPm = timeSetting.getSetting("amPm").get();
+            SetTime12(hour, minute, amPm);
             displayState = DISPLAYING;
             DisplayCurrentState();
         }

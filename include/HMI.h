@@ -81,13 +81,6 @@ private:
     HMIState displayState = DISPLAYING;
     int entriesToEdit;
 
-    struct TimeSetting
-    {
-        SETTING hour;
-        SETTING minute;
-        SETTING PM_notAM;
-    };
-
     struct BacklightSetting
     {
         SETTING r;
