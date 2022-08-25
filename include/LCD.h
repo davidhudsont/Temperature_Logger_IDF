@@ -2,6 +2,8 @@
 
 // Source https://github.com/sparkfun/SparkFun_SerLCD_Arduino_Library/blob/master/src/SerLCD.h
 
+#include <string>
+
 // User Headers
 #include "BSP_UART.h"
 
@@ -75,6 +77,8 @@ public:
     // void CreateCustomCharacter(uint8_t location, uint8_t charmap[]);
     // write a custom character to the LCD
     // void WriteCustomCharacter(uint8_t location);
+    // Write a string of characters
+    void WriteString(std::string &str);
     // Write a string of characters
     void WriteCharacters(const char *str, uint32_t len);
     // Write a single character

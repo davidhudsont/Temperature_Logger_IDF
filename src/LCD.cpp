@@ -81,6 +81,11 @@ void LCD::SetCursor(uint8_t row, uint8_t col)
     SpecialCommand(LCD_SETDDRAMADDR | (col + row_offsets[row]));
 }
 
+void LCD::WriteString(std::string &str)
+{
+    WriteCharacters(str.c_str(), (uint32_t)str.size());
+}
+
 void LCD::WriteCharacters(const char *str, uint32_t len)
 {
 
