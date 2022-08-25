@@ -16,6 +16,11 @@ void Setting::set(int new_value)
         value = new_value;
 }
 
+void Setting::set_max(int new_max)
+{
+    max = new_max;
+}
+
 void Setting::increment()
 {
     value = std::min(value + 1, max);

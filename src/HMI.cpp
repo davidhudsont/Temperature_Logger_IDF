@@ -26,13 +26,11 @@ static char settingNames[SETTINGS_COUNT][5] = {
 };
 
 static const size_t backlightStringSize = 15;
-static const size_t DateStringSize = 15;
 static const size_t TimeStringSize = 11;
 static const size_t contrastStringSize = 14;
 static const size_t TempStringSize = 15;
 static const size_t alarmStringSize = 25;
 
-static char dateString[DateStringSize];
 static char timeString[TimeStringSize];
 static char backlightString[backlightStringSize];
 static char contrastString[contrastStringSize];
@@ -384,18 +382,15 @@ void HMI::EditingDate()
     {
         if (entriesToEdit == 3)
         {
-            dateSetting.getSetting("month").increment();
+            dateSetting.getSetting("year").increment();
         }
         else if (entriesToEdit == 2)
         {
-            uint8_t year = dateSetting.getSetting("year").get();
-            uint8_t month = dateSetting.getSetting("month").get();
-            uint8_t max_value = calculateMaxDayOfMonth(month, year);
-            dateSetting.getSetting("dayOfMonth").increment();
+            dateSetting.getSetting("month").increment();
         }
         else if (entriesToEdit == 1)
         {
-            dateSetting.getSetting("year").increment();
+            dateSetting.getSetting("dayOfMonth").increment();
         }
         DisplayDate();
     }
@@ -403,24 +398,28 @@ void HMI::EditingDate()
     {
         if (entriesToEdit == 3)
         {
-            dateSetting.getSetting("month").decrement();
+            dateSetting.getSetting("year").decrement();
         }
         else if (entriesToEdit == 2)
         {
-            uint8_t year = dateSetting.getSetting("year").get();
-            uint8_t month = dateSetting.getSetting("month").get();
-            uint8_t max_value = calculateMaxDayOfMonth(month, year);
-            dateSetting.getSetting("dayOfMonth").decrement();
+            dateSetting.getSetting("month").decrement();
         }
         else if (entriesToEdit == 1)
         {
-            dateSetting.getSetting("year").decrement();
+            dateSetting.getSetting("dayOfMonth").decrement();
         }
         DisplayDate();
     }
     else if (EditButtonTakeSemaphore())
     {
         entriesToEdit--;
+        if (entriesToEdit == 1)
+        {
+            uint8_t year = dateSetting.getSetting("year").get();
+            uint8_t month = dateSetting.getSetting("month").get();
+            uint8_t max_value = calculateMaxDayOfMonth(month, year);
+            dateSetting.getSetting("dayOfMonth").set_max(max_value);
+        }
         if (entriesToEdit == 0)
         {
             uint8_t dayOfMonth = dateSetting.getSetting("dayOfMonth").get();

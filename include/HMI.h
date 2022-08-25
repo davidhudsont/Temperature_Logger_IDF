@@ -81,13 +81,6 @@ private:
     HMIState displayState = DISPLAYING;
     int entriesToEdit;
 
-    // struct DateSetting
-    // {
-    //     SETTING month;
-    //     SETTING dayOfMonth;
-    //     SETTING year;
-    // };
-
     struct TimeSetting
     {
         SETTING hour;

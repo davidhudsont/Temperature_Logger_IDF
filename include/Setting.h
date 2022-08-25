@@ -12,6 +12,7 @@ public:
     void increment();
     void decrement();
     int get();
+    void set_max(int new_max);
 
 private:
     int value;
