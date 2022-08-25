@@ -1,7 +1,12 @@
 #include "Setting.h"
 
 Setting::Setting(int min, int max, int startingValue)
-    : value(value), max(max), min(min)
+    : value(startingValue), max(max), min(min)
+{
+}
+
+Setting::Setting()
+    : value(0), max(0), min(0)
 {
 }
 
@@ -18,7 +23,12 @@ void Setting::increment()
 
 void Setting::decrement()
 {
-    value = std::max(value + 1, min);
+    value = std::max(value - 1, min);
+}
+
+int Setting::get()
+{
+    return value;
 }
 
 void Settings::addSetting(std::string name, Setting &setting)
