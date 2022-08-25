@@ -63,13 +63,6 @@ HMI::HMI()
     lcd.SetContrast(0);
     lcd.SetBackLightFast(125, 125, 125);
 
-    dateSetting.month.max_value = 12;
-    dateSetting.month.min_value = 1;
-    dateSetting.dayOfMonth.max_value = 31;
-    dateSetting.dayOfMonth.min_value = 1;
-    dateSetting.year.max_value = 99;
-    dateSetting.year.min_value = 0;
-
     timeSetting.hour.max_value = 12;
     timeSetting.hour.min_value = 1;
     timeSetting.minute.max_value = 59;
@@ -138,9 +131,10 @@ void HMI::SetDisplayTemperature(float temperatureF, float temperatureC)
 
 void HMI::SetDisplayDateTime(DATE_TIME &dateTime)
 {
-    dateSetting.month.value = dateTime.month;
-    dateSetting.dayOfMonth.value = dateTime.dayofMonth;
-    dateSetting.year.value = dateTime.year;
+    dateSetting.getSetting("month").set(dateTime.month);
+    dateSetting.getSetting("dayofMonth").set(dateTime.dayofMonth);
+    dateSetting.getSetting("year").set(dateTime.year);
+    ESP_LOGI("HMI", "Date string: %s\n", dateSetting.displayString().c_str());
 
     timeSetting.hour.value = dateTime.hour;
     timeSetting.minute.value = dateTime.minute;
@@ -269,12 +263,9 @@ void HMI::EditAlarmEnable()
 void HMI::DisplayDate()
 {
     // Date Update
-    snprintf(dateString, DateStringSize, "%02d/%02d/%d",
-             (uint8_t)dateSetting.month.value,
-             (uint8_t)dateSetting.dayOfMonth.value,
-             (uint16_t)dateSetting.year.value + 2000);
     lcd.SetCursor(dateRow, dateCol);
-    lcd.WriteCharacters(dateString, 10);
+    std::string str = dateSetting.displayString();
+    lcd.WriteString(str);
 }
 
 void HMI::DisplayTime()
@@ -326,8 +317,9 @@ void HMI::DisplayCurrentState()
 
 void HMI::UpdateDisplay()
 {
-    DisplayDate();
+    lcd.Clear();
     DisplayTime();
+    DisplayDate();
     DisplayTemperature();
     DisplayCurrentState();
 }
@@ -390,37 +382,39 @@ void HMI::EditingDate()
 {
     if (UpButtonTakeSemaphore())
     {
-        bool increase = false;
         if (entriesToEdit == 3)
         {
-            dateSetting.month.adjust(increase);
+            dateSetting.getSetting("month").increment();
         }
         else if (entriesToEdit == 2)
         {
-            dateSetting.dayOfMonth.max_value = calculateMaxDayOfMonth(dateSetting.month.value, dateSetting.year.value);
-            dateSetting.dayOfMonth.adjust(increase);
+            uint8_t year = dateSetting.getSetting("year").get();
+            uint8_t month = dateSetting.getSetting("month").get();
+            uint8_t max_value = calculateMaxDayOfMonth(month, year);
+            dateSetting.getSetting("dayOfMonth").increment();
         }
         else if (entriesToEdit == 1)
         {
-            dateSetting.year.adjust(increase);
+            dateSetting.getSetting("year").increment();
         }
         DisplayDate();
     }
     else if (DownButtonTakeSemaphore())
     {
-        bool increase = true;
         if (entriesToEdit == 3)
         {
-            dateSetting.month.adjust(increase);
+            dateSetting.getSetting("month").decrement();
         }
         else if (entriesToEdit == 2)
         {
-            dateSetting.dayOfMonth.max_value = calculateMaxDayOfMonth(dateSetting.month.value, dateSetting.year.value);
-            dateSetting.dayOfMonth.adjust(increase);
+            uint8_t year = dateSetting.getSetting("year").get();
+            uint8_t month = dateSetting.getSetting("month").get();
+            uint8_t max_value = calculateMaxDayOfMonth(month, year);
+            dateSetting.getSetting("dayOfMonth").decrement();
         }
         else if (entriesToEdit == 1)
         {
-            dateSetting.year.adjust(increase);
+            dateSetting.getSetting("year").decrement();
         }
         DisplayDate();
     }
@@ -429,7 +423,10 @@ void HMI::EditingDate()
         entriesToEdit--;
         if (entriesToEdit == 0)
         {
-            SetDate(dateSetting.dayOfMonth.value, dateSetting.month.value, dateSetting.year.value);
+            uint8_t dayOfMonth = dateSetting.getSetting("dayOfMonth").get();
+            uint8_t year = dateSetting.getSetting("year").get();
+            uint8_t month = dateSetting.getSetting("month").get();
+            SetDate(dayOfMonth, month, year);
             displayState = DISPLAYING;
             DisplayCurrentState();
         }

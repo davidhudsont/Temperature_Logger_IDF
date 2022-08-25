@@ -3,6 +3,7 @@
 // User Headers
 #include "LCD.h"
 #include "DateTime.h"
+#include "GlobalSettings.h"
 
 enum HMIState
 {
@@ -80,12 +81,12 @@ private:
     HMIState displayState = DISPLAYING;
     int entriesToEdit;
 
-    struct DateSetting
-    {
-        SETTING month;
-        SETTING dayOfMonth;
-        SETTING year;
-    };
+    // struct DateSetting
+    // {
+    //     SETTING month;
+    //     SETTING dayOfMonth;
+    //     SETTING year;
+    // };
 
     struct TimeSetting
     {
