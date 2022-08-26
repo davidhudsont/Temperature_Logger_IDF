@@ -68,3 +68,26 @@ std::string AlarmEnableSetting::displayString()
     snprintf(alarmEnableString, 10, "ALARM %s", enable ? "SET" : "OFF");
     return std::string(alarmEnableString, 9);
 }
+
+TemperatureSetting::TemperatureSetting()
+{
+    Setting units = Setting(0, 1, 0);
+    addSetting("units", units);
+}
+
+std::string TemperatureSetting::displayString()
+{
+    static const size_t TempStringSize = 3;
+    constexpr uint8_t DEGREE_SYMBOL = 223;
+    static char tempString[TempStringSize];
+    bool degrees = getSetting("units").get();
+    if (degrees)
+    {
+        snprintf(tempString, TempStringSize, "%cF", DEGREE_SYMBOL);
+    }
+    else
+    {
+        snprintf(tempString, TempStringSize, "%cC", DEGREE_SYMBOL);
+    }
+    return std::string(tempString, 2);
+}

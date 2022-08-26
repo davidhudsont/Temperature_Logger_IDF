@@ -92,7 +92,7 @@ private:
 
     DateSetting dateSetting;
     TimeSetting timeSetting;
-    SETTING tempSetting;
+    TemperatureSetting tempSetting;
     SETTING settingMode;
     SETTING contrastSetting;
     SETTING backlightSetting;

@@ -56,9 +56,6 @@ HMI::HMI()
     lcd.SetContrast(0);
     lcd.SetBackLightFast(125, 125, 125);
 
-    tempSetting.max_value = 1;
-    tempSetting.min_value = 0;
-
     settingMode.max_value = (int)SETTINGS_COUNT - 1;
     settingMode.min_value = 0;
 
@@ -237,19 +234,24 @@ void HMI::DisplayTemperature()
 {
     static char tempString[TempStringSize];
     lcd.SetCursor(tempRow, tempCol);
-    if (tempSetting.value)
+    std::string units = tempSetting.displayString();
+    if (tempSetting.getSetting("units").get())
     {
         if (temperatureF > 100)
-            snprintf(tempString, TempStringSize, "%3.2f%cF", temperatureF, DEGREE_SYMBOL);
+            snprintf(tempString, TempStringSize, "%3.2f", temperatureF);
         else
-            snprintf(tempString, TempStringSize, "%2.3f%cF", temperatureF, DEGREE_SYMBOL);
+            snprintf(tempString, TempStringSize, "%2.3f", temperatureF);
+        std::string temperature = std::string(tempString, 5);
+        std::string result = temperature + units;
+        lcd.WriteString(result);
     }
     else
     {
-        snprintf(tempString, TempStringSize, "%2.3f%cC", temperatureC, DEGREE_SYMBOL);
+        snprintf(tempString, TempStringSize, "%2.3f", temperatureC);
+        std::string temperature = std::string(tempString, 5);
+        std::string result = temperature + units;
+        lcd.WriteString(result);
     }
-
-    lcd.WriteCharacters(tempString, 8);
 }
 
 void HMI::DisplayCurrentState()
@@ -435,7 +437,8 @@ void HMI::EditingTime()
 
 void HMI::ChangeTemp()
 {
-    tempSetting.adjust(!tempSetting.value);
+    bool units = static_cast<bool>(tempSetting.getSetting("units").get());
+    tempSetting.getSetting("units").set(!units);
     displayState = DISPLAYING;
     DisplayTemperature();
     DisplayCurrentState();

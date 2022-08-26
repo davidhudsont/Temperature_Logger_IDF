@@ -22,3 +22,10 @@ public:
     AlarmEnableSetting();
     std::string displayString();
 };
+
+class TemperatureSetting : public Settings
+{
+public:
+    TemperatureSetting();
+    std::string displayString();
+};
