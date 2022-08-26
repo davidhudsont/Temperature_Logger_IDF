@@ -28,12 +28,9 @@ static char settingNames[SETTINGS_COUNT][5] = {
 static const size_t backlightStringSize = 15;
 static const size_t contrastStringSize = 14;
 static const size_t TempStringSize = 15;
-static const size_t alarmStringSize = 25;
 
 static char backlightString[backlightStringSize];
 static char contrastString[contrastStringSize];
-static char alarmSettingString[alarmStringSize];
-static char alarmEnableString[20];
 
 static uint8_t timeRow = 0;
 static uint8_t timeCol = 0;
@@ -79,16 +76,6 @@ HMI::HMI()
     backLightValues[3] = {255, 255, 255};
     backLightValues[4] = {128, 128, 128};
     backLightValues[5] = {0, 0, 0};
-
-    alarmSetting.hour.max_value = 24;
-    alarmSetting.hour.min_value = 0;
-    alarmSetting.minute.max_value = 60;
-    alarmSetting.minute.min_value = 0;
-    alarmSetting.PM_notAM.max_value = 1;
-    alarmSetting.PM_notAM.min_value = 0;
-    alarmSetting.enable.max_value = 1;
-    alarmSetting.enable.min_value = 0;
-    alarmSetting.enable.value = false;
 }
 
 void HMI::Reset()
@@ -230,23 +217,6 @@ void HMI::DisplayMode()
     }
 }
 
-void HMI::DisplayAlarmEnable()
-{
-    bool alarmEnabled = alarmSetting.enable.value;
-    snprintf(alarmEnableString, 10, "ALARM %s", alarmEnabled ? "SET" : "OFF");
-    lcd.SetCursor(3, 0);
-    lcd.WriteCharacters(alarmEnableString, 9);
-}
-
-void HMI::EditAlarmEnable()
-{
-    alarmSetting.enable.adjust(!alarmSetting.enable.value);
-    SetAlarm(alarmSetting.enable.value);
-    displayState = DISPLAYING;
-    DisplayAlarmEnable();
-    DisplayCurrentState();
-}
-
 void HMI::DisplayDate()
 {
     // Date Update
@@ -324,11 +294,8 @@ void HMI::DisplayBacklight()
 void HMI::DisplayAlarmSetting()
 {
     lcd.SetCursor(altSetnRow, altSetnCol);
-    uint8_t hour = alarmSetting.hour.value;
-    uint8_t minute = alarmSetting.minute.value;
-    bool PM_notAM = alarmSetting.PM_notAM.value;
-    snprintf(alarmSettingString, alarmStringSize, "Alarm: %02d:%02d %s", hour, minute, PM_notAM ? "PM" : "AM");
-    lcd.WriteCharacters(alarmSettingString, 15);
+    std::string str = alarmSetting.displayString();
+    lcd.WriteString(str);
 }
 
 void HMI::EditMode()
@@ -537,15 +504,15 @@ void HMI::EditAlarmTime()
     {
         if (entriesToEdit == 3)
         {
-            alarmSetting.hour.adjust(true);
+            alarmSetting.getSetting("hour").increment();
         }
         else if (entriesToEdit == 2)
         {
-            alarmSetting.minute.adjust(true);
+            alarmSetting.getSetting("minute").increment();
         }
         else if (entriesToEdit == 1)
         {
-            alarmSetting.PM_notAM.adjust(true);
+            alarmSetting.getSetting("amPm").increment();
         }
 
         DisplayAlarmSetting();
@@ -554,15 +521,15 @@ void HMI::EditAlarmTime()
     {
         if (entriesToEdit == 3)
         {
-            alarmSetting.hour.adjust(false);
+            alarmSetting.getSetting("hour").decrement();
         }
         else if (entriesToEdit == 2)
         {
-            alarmSetting.minute.adjust(false);
+            alarmSetting.getSetting("minute").decrement();
         }
         else if (entriesToEdit == 1)
         {
-            alarmSetting.PM_notAM.adjust(false);
+            alarmSetting.getSetting("amPm").decrement();
         }
         DisplayAlarmSetting();
     }
@@ -571,13 +538,31 @@ void HMI::EditAlarmTime()
         entriesToEdit--;
         if (entriesToEdit == 0)
         {
-            uint8_t hour = alarmSetting.hour.value;
-            uint8_t minute = alarmSetting.minute.value;
-            bool PM_notAM = alarmSetting.PM_notAM.value;
-            SetAlarmTime12(hour, minute, PM_notAM);
+            uint8_t hour = alarmSetting.getSetting("hour").get();
+            uint8_t minute = alarmSetting.getSetting("minute").get();
+            uint8_t amPm = alarmSetting.getSetting("amPm").get();
+            SetAlarmTime12(hour, minute, amPm);
             displayState = DISPLAYING;
             lcd.ClearRow(3);
             DisplayCurrentState();
         }
     }
+}
+
+void HMI::DisplayAlarmEnable()
+{
+    lcd.SetCursor(3, 0);
+    std::string str = alarmEnableSetting.displayString();
+    lcd.WriteString(str);
+}
+
+void HMI::EditAlarmEnable()
+{
+    Setting &enableSetting = alarmEnableSetting.getSetting("enable");
+    bool enable = static_cast<bool>(enableSetting.get());
+    enableSetting.set(!enable);
+    SetAlarm(!enable);
+    displayState = DISPLAYING;
+    DisplayAlarmEnable();
+    DisplayCurrentState();
 }

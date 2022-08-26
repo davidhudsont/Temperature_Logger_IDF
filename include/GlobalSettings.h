@@ -15,3 +15,10 @@ public:
     TimeSetting();
     std::string displayString();
 };
+
+class AlarmEnableSetting : public Settings
+{
+public:
+    AlarmEnableSetting();
+    std::string displayString();
+};

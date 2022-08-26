@@ -88,14 +88,6 @@ private:
         SETTING b;
     };
 
-    struct AlarmSetting
-    {
-        SETTING hour;
-        SETTING minute;
-        SETTING PM_notAM;
-        SETTING enable;
-    };
-
     RGB backLightValues[COLOR_COUNT];
 
     DateSetting dateSetting;
@@ -104,7 +96,8 @@ private:
     SETTING settingMode;
     SETTING contrastSetting;
     SETTING backlightSetting;
-    AlarmSetting alarmSetting;
+    TimeSetting alarmSetting;
+    AlarmEnableSetting alarmEnableSetting;
 
     // Display Mode related functions
     void DisplayMode();

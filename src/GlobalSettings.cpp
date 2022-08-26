@@ -25,7 +25,7 @@ std::string DateSetting::displayString()
              dayOfMonth,
              year + 2000);
 
-    return std::string(dateString, 11);
+    return std::string(dateString, 10);
 }
 
 TimeSetting::TimeSetting()
@@ -52,5 +52,19 @@ std::string TimeSetting::displayString()
              hour,
              minute,
              amPm ? "PM" : "AM");
-    return std::string(timeString, 9);
+    return std::string(timeString, 8);
+}
+
+AlarmEnableSetting::AlarmEnableSetting()
+{
+    Setting enable = Setting(0, 1, 0);
+    addSetting("enable", enable);
+}
+
+std::string AlarmEnableSetting::displayString()
+{
+    static char alarmEnableString[10];
+    bool enable = getSetting("enable").get();
+    snprintf(alarmEnableString, 10, "ALARM %s", enable ? "SET" : "OFF");
+    return std::string(alarmEnableString, 9);
 }
