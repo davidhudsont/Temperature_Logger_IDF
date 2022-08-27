@@ -95,7 +95,7 @@ private:
     TemperatureSetting tempSetting;
     SETTING settingMode;
     SETTING contrastSetting;
-    SETTING backlightSetting;
+    SETTING backlightSettings;
     TimeSetting alarmSetting;
     AlarmEnableSetting alarmEnableSetting;
 

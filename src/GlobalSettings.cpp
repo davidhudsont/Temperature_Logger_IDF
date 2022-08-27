@@ -91,3 +91,25 @@ std::string TemperatureSetting::displayString()
     }
     return std::string(tempString, 2);
 }
+
+BacklightSetting::BacklightSetting()
+{
+    Setting red = Setting(0, 255, 0);
+    Setting green = Setting(0, 255, 0);
+    Setting blue = Setting(0, 255, 0);
+
+    addSetting("red", red);
+    addSetting("green", green);
+    addSetting("blue", blue);
+}
+
+std::string BacklightSetting::displayString()
+{
+    static const size_t BackLightStringSize = 19;
+    static char backlightString[BackLightStringSize];
+    const int r = getSetting("red").get();
+    const int g = getSetting("green").get();
+    const int b = getSetting("blue").get();
+    snprintf(backlightString, BackLightStringSize, "R %3d G %3d B %3d", r, g, b);
+    return std::string(backlightString, BackLightStringSize - 1);
+}

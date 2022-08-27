@@ -29,3 +29,10 @@ public:
     TemperatureSetting();
     std::string displayString();
 };
+
+class BacklightSetting : public Settings
+{
+public:
+    BacklightSetting();
+    std::string displayString();
+};

@@ -63,9 +63,9 @@ HMI::HMI()
     contrastSetting.min_value = 0;
     contrastSetting.value = 0;
 
-    backlightSetting.max_value = (int)COLOR_COUNT - 1;
-    backlightSetting.min_value = 0;
-    backlightSetting.value = 0;
+    backlightSettings.max_value = (int)COLOR_COUNT - 1;
+    backlightSettings.min_value = 0;
+    backlightSettings.value = 0;
 
     backLightValues[0] = {255, 0, 0};
     backLightValues[1] = {0, 255, 0};
@@ -289,7 +289,7 @@ void HMI::DisplayContrast()
 void HMI::DisplayBacklight()
 {
     lcd.SetCursor(altSetnRow, altSetnCol);
-    snprintf(backlightString, backlightStringSize, "Backlight: %s", LCD_BCKL_COLORS[backlightSetting.value]);
+    snprintf(backlightString, backlightStringSize, "Backlight: %s", LCD_BCKL_COLORS[backlightSettings.value]);
     lcd.WriteCharacters(backlightString, backlightStringSize - 1);
 }
 
@@ -475,13 +475,13 @@ void HMI::EditBackLight()
     if (UpButtonTakeSemaphore())
     {
         bool increase = true;
-        backlightSetting.adjust(increase);
+        backlightSettings.adjust(increase);
         DisplayBacklight();
     }
     else if (DownButtonTakeSemaphore())
     {
         bool increase = false;
-        backlightSetting.adjust(increase);
+        backlightSettings.adjust(increase);
         DisplayBacklight();
     }
     else if (EditButtonTakeSemaphore())
@@ -489,7 +489,7 @@ void HMI::EditBackLight()
         entriesToEdit--;
         if (entriesToEdit == 0)
         {
-            int index = backlightSetting.value;
+            int index = backlightSettings.value;
             uint8_t r = backLightValues[index].r;
             uint8_t g = backLightValues[index].g;
             uint8_t b = backLightValues[index].b;
