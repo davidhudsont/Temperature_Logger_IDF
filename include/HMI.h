@@ -101,6 +101,7 @@ private:
 
     // Display Mode related functions
     void DisplayMode();
+    void DisplaySetting();
     void DisplayDate();
     void DisplayTime();
     void DisplayTemperature();

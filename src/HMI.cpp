@@ -159,44 +159,7 @@ void HMI::DisplayMode()
     else if (EditButtonTakeSemaphore())
     {
         displayState = EDITING;
-        ESP_LOGI("BTN", "Display Mode State: %d", displayState);
-        switch (settingMode.value)
-        {
-        case SETTING_DATE:
-            entriesToEdit = 3;
-            DisplayCurrentState();
-            break;
-        case SETTING_TIME:
-            entriesToEdit = 3;
-            DisplayCurrentState();
-            break;
-        case SETTING_TEMP:
-            entriesToEdit = 1;
-            DisplayCurrentState();
-            break;
-        case SETTING_CONTRAST:
-            entriesToEdit = 1;
-            DisplayCurrentState();
-            DisplayContrast();
-            break;
-        case SETTING_BACKLIGHT:
-            entriesToEdit = 1;
-            DisplayCurrentState();
-            DisplayBacklight();
-            break;
-        case SETTING_ALARM:
-            entriesToEdit = 3;
-            DisplayCurrentState();
-            DisplayAlarmSetting();
-            break;
-        case SETTING_ALARM_ENABLE:
-            entriesToEdit = 3;
-            DisplayCurrentState();
-            DisplayAlarmEnable();
-            break;
-        default:
-            break;
-        }
+        DisplaySetting();
     }
     else if (AltButtonTakeSemaphore())
     {
@@ -205,12 +168,59 @@ void HMI::DisplayMode()
     else if (UpButtonTakeSemaphore())
     {
         settingMode.adjust(true);
-        DisplayCurrentState();
+        lcd.ClearRow(altSetnRow);
+        DisplaySetting();
     }
     else if (DownButtonTakeSemaphore())
     {
         settingMode.adjust(false);
+        lcd.ClearRow(altSetnRow);
+        DisplaySetting();
+    }
+}
+
+void HMI::DisplaySetting()
+{
+    ESP_LOGI("BTN", "Display Mode State: %d", displayState);
+    switch (settingMode.value)
+    {
+    case SETTING_DATE:
+        entriesToEdit = 3;
         DisplayCurrentState();
+        lcd.ClearRow(altSetnRow);
+        break;
+    case SETTING_TIME:
+        entriesToEdit = 3;
+        DisplayCurrentState();
+        lcd.ClearRow(altSetnRow);
+        break;
+    case SETTING_TEMP:
+        entriesToEdit = 1;
+        DisplayCurrentState();
+        lcd.ClearRow(altSetnRow);
+        break;
+    case SETTING_CONTRAST:
+        entriesToEdit = 1;
+        DisplayCurrentState();
+        DisplayContrast();
+        break;
+    case SETTING_BACKLIGHT:
+        entriesToEdit = 1;
+        DisplayCurrentState();
+        DisplayBacklight();
+        break;
+    case SETTING_ALARM:
+        entriesToEdit = 3;
+        DisplayCurrentState();
+        DisplayAlarmSetting();
+        break;
+    case SETTING_ALARM_ENABLE:
+        entriesToEdit = 3;
+        DisplayCurrentState();
+        DisplayAlarmEnable();
+        break;
+    default:
+        break;
     }
 }
 
