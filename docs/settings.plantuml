@@ -9,12 +9,21 @@ class Setting {
     -int value
     -int max
     -int min
+    -std::string name
+}
+
+enum Input {
+    UP
+    DOWN
+    ENTER
+    BACK
 }
 
 class Settings {
-    +void addSetting(std::string name, Setting& setting)
-    +Setting &getSetting(std::string name) const;
-    -std::map<std::string, Setting> settingsMap
+    +void get_input(const Input& input)
+    +std::string displayString();
+    -void addSetting(std::string name, Setting& setting)
+    -std::vector<Setting> settingsList
 }
 
 
