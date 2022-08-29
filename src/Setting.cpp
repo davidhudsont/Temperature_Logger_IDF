@@ -1,12 +1,12 @@
 #include "Setting.h"
 
-Setting::Setting(int min, int max, int startingValue)
-    : value(startingValue), max(max), min(min)
+Setting::Setting(std::string name, int min, int max, int startingValue)
+    : name(name), min(min), max(max), value(startingValue)
 {
 }
 
 Setting::Setting()
-    : value(0), max(0), min(0)
+    : name(""), min(0), max(0), value(0)
 {
 }
 
@@ -36,12 +36,30 @@ int Setting::get()
     return value;
 }
 
-void Settings::addSetting(std::string name, Setting &setting)
+void Settings::addSetting(Setting &setting)
 {
-    settingsMap[name] = setting;
+    settingsList.push_back(setting);
 }
 
-Setting &Settings::getSetting(std::string name)
+void Settings::setSetting(std::string name, int value)
 {
-    return settingsMap[name];
+    for (auto &setting : settingsList)
+    {
+        if (name == setting.getName())
+        {
+            setting.set(value);
+        }
+    }
+}
+
+int Settings::getSetting(std::string name)
+{
+    for (auto &setting : settingsList)
+    {
+        if (name == setting.getName())
+        {
+            return setting.get();
+        }
+    }
+    return -1;
 }

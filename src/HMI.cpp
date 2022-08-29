@@ -104,13 +104,13 @@ void HMI::SetDisplayTemperature(float temperatureF, float temperatureC)
 
 void HMI::SetDisplayDateTime(DATE_TIME &dateTime)
 {
-    dateSetting.getSetting("month").set(dateTime.month);
-    dateSetting.getSetting("dayofMonth").set(dateTime.dayofMonth);
-    dateSetting.getSetting("year").set(dateTime.year);
+    dateSetting.setSetting("month", dateTime.month);
+    dateSetting.setSetting("dayOfMonth", dateTime.dayofMonth);
+    dateSetting.setSetting("year", dateTime.year);
 
-    timeSetting.getSetting("hour").set(dateTime.hour);
-    timeSetting.getSetting("minute").set(dateTime.minute);
-    timeSetting.getSetting("amPm").set(dateTime.PM_notAM);
+    timeSetting.setSetting("hour", dateTime.hour);
+    timeSetting.setSetting("minute", dateTime.minute);
+    timeSetting.setSetting("amPm", dateTime.PM_notAM);
     hour12_not24 = dateTime.hour12_not24;
 }
 
@@ -245,7 +245,7 @@ void HMI::DisplayTemperature()
     static char tempString[TempStringSize];
     lcd.SetCursor(tempRow, tempCol);
     std::string units = tempSetting.displayString();
-    if (tempSetting.getSetting("units").get())
+    if (tempSetting.getSetting("units"))
     {
         if (temperatureF > 100)
             snprintf(tempString, TempStringSize, "%3.2f", temperatureF);
@@ -282,7 +282,7 @@ void HMI::DisplayCurrentState()
 
 void HMI::UpdateDisplay()
 {
-    lcd.Clear();
+    // lcd.Clear();
     DisplayTime();
     DisplayDate();
     DisplayTemperature();
@@ -344,52 +344,21 @@ void HMI::EditingDate()
 {
     if (UpButtonTakeSemaphore())
     {
-        if (entriesToEdit == 3)
-        {
-            dateSetting.getSetting("year").increment();
-        }
-        else if (entriesToEdit == 2)
-        {
-            dateSetting.getSetting("month").increment();
-        }
-        else if (entriesToEdit == 1)
-        {
-            dateSetting.getSetting("dayOfMonth").increment();
-        }
+        const Input input = Input::UP;
+        dateSetting.getInput(input);
         DisplayDate();
     }
     else if (DownButtonTakeSemaphore())
     {
-        if (entriesToEdit == 3)
-        {
-            dateSetting.getSetting("year").decrement();
-        }
-        else if (entriesToEdit == 2)
-        {
-            dateSetting.getSetting("month").decrement();
-        }
-        else if (entriesToEdit == 1)
-        {
-            dateSetting.getSetting("dayOfMonth").decrement();
-        }
+        const Input input = Input::DOWN;
+        dateSetting.getInput(input);
         DisplayDate();
     }
     else if (EditButtonTakeSemaphore())
     {
-        entriesToEdit--;
-        if (entriesToEdit == 1)
+        const Input input = Input::ENTER;
+        if (dateSetting.getInput(input))
         {
-            uint8_t year = dateSetting.getSetting("year").get();
-            uint8_t month = dateSetting.getSetting("month").get();
-            uint8_t max_value = calculateMaxDayOfMonth(month, year);
-            dateSetting.getSetting("dayOfMonth").set_max(max_value);
-        }
-        if (entriesToEdit == 0)
-        {
-            uint8_t dayOfMonth = dateSetting.getSetting("dayOfMonth").get();
-            uint8_t year = dateSetting.getSetting("year").get();
-            uint8_t month = dateSetting.getSetting("month").get();
-            SetDate(dayOfMonth, month, year);
             displayState = DISPLAYING;
             DisplayCurrentState();
         }
@@ -400,45 +369,21 @@ void HMI::EditingTime()
 {
     if (UpButtonTakeSemaphore())
     {
-        if (entriesToEdit == 3)
-        {
-            timeSetting.getSetting("hour").increment();
-        }
-        else if (entriesToEdit == 2)
-        {
-            timeSetting.getSetting("minute").increment();
-        }
-        else if (entriesToEdit == 1)
-        {
-            timeSetting.getSetting("amPm").increment();
-        }
+        const Input input = Input::UP;
+        timeSetting.getInput(input);
         DisplayTime();
     }
     else if (DownButtonTakeSemaphore())
     {
-        if (entriesToEdit == 3)
-        {
-            timeSetting.getSetting("hour").decrement();
-        }
-        else if (entriesToEdit == 2)
-        {
-            timeSetting.getSetting("minute").decrement();
-        }
-        else if (entriesToEdit == 1)
-        {
-            timeSetting.getSetting("amPm").decrement();
-        }
+        const Input input = Input::DOWN;
+        timeSetting.getInput(input);
         DisplayTime();
     }
     else if (EditButtonTakeSemaphore())
     {
-        entriesToEdit--;
-        if (entriesToEdit == 0)
+        const Input input = Input::ENTER;
+        if (timeSetting.getInput(input))
         {
-            uint8_t hour = timeSetting.getSetting("hour").get();
-            uint8_t minute = timeSetting.getSetting("minute").get();
-            uint8_t amPm = timeSetting.getSetting("amPm").get();
-            SetTime12(hour, minute, amPm);
             displayState = DISPLAYING;
             DisplayCurrentState();
         }
@@ -447,8 +392,8 @@ void HMI::EditingTime()
 
 void HMI::ChangeTemp()
 {
-    bool units = static_cast<bool>(tempSetting.getSetting("units").get());
-    tempSetting.getSetting("units").set(!units);
+    Input input = Input::ENTER;
+    tempSetting.getInput(input);
     displayState = DISPLAYING;
     DisplayTemperature();
     DisplayCurrentState();
@@ -515,46 +460,21 @@ void HMI::EditAlarmTime()
 {
     if (UpButtonTakeSemaphore())
     {
-        if (entriesToEdit == 3)
-        {
-            alarmSetting.getSetting("hour").increment();
-        }
-        else if (entriesToEdit == 2)
-        {
-            alarmSetting.getSetting("minute").increment();
-        }
-        else if (entriesToEdit == 1)
-        {
-            alarmSetting.getSetting("amPm").increment();
-        }
-
+        Input input = Input::UP;
+        alarmSetting.getInput(input);
         DisplayAlarmSetting();
     }
     else if (DownButtonTakeSemaphore())
     {
-        if (entriesToEdit == 3)
-        {
-            alarmSetting.getSetting("hour").decrement();
-        }
-        else if (entriesToEdit == 2)
-        {
-            alarmSetting.getSetting("minute").decrement();
-        }
-        else if (entriesToEdit == 1)
-        {
-            alarmSetting.getSetting("amPm").decrement();
-        }
+        Input input = Input::DOWN;
+        alarmSetting.getInput(input);
         DisplayAlarmSetting();
     }
     else if (EditButtonTakeSemaphore())
     {
-        entriesToEdit--;
-        if (entriesToEdit == 0)
+        Input input = Input::ENTER;
+        if (alarmSetting.getInput(input))
         {
-            uint8_t hour = alarmSetting.getSetting("hour").get();
-            uint8_t minute = alarmSetting.getSetting("minute").get();
-            uint8_t amPm = alarmSetting.getSetting("amPm").get();
-            SetAlarmTime12(hour, minute, amPm);
             displayState = DISPLAYING;
             lcd.ClearRow(3);
             DisplayCurrentState();
@@ -571,10 +491,8 @@ void HMI::DisplayAlarmEnable()
 
 void HMI::EditAlarmEnable()
 {
-    Setting &enableSetting = alarmEnableSetting.getSetting("enable");
-    bool enable = static_cast<bool>(enableSetting.get());
-    enableSetting.set(!enable);
-    SetAlarm(!enable);
+    Input input = Input::ENTER;
+    alarmEnableSetting.getInput(input);
     displayState = DISPLAYING;
     DisplayAlarmEnable();
     DisplayCurrentState();
