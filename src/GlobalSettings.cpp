@@ -317,3 +317,50 @@ bool BacklightSetting::getInput(const Input &input)
 {
     return false;
 }
+
+ConstrastSetting::ConstrastSetting()
+{
+    Setting contrast = Setting("constrast", 0, 255, 0);
+
+    addSetting(contrast);
+}
+
+std::string ConstrastSetting::displayString()
+{
+    static const size_t ConstrastStringSize = 14;
+    static char constrastString[ConstrastStringSize];
+    const int contrast = settingsList[0].get();
+    snprintf(constrastString, ConstrastStringSize, "Contrast: %3d", contrast);
+    return std::string(constrastString, ConstrastStringSize - 1);
+}
+
+bool ConstrastSetting::getInput(const Input &input)
+{
+    static int entriesToEdit = 1;
+    if (input == Input::UP)
+    {
+        if (entriesToEdit == 1)
+        {
+            settingsList[2].increment();
+        }
+    }
+    else if (input == Input::DOWN)
+    {
+        if (entriesToEdit == 1)
+        {
+            settingsList[2].decrement();
+        }
+    }
+    else if (input == Input::ENTER)
+    {
+        entriesToEdit--;
+        if (entriesToEdit == 0)
+        {
+            uint8_t contrast = settingsList[0].get();
+            SetContrast(contrast);
+            entriesToEdit = 1;
+            return true;
+        }
+    }
+    return false;
+}

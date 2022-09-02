@@ -48,3 +48,11 @@ public:
     std::string displayString();
     bool getInput(const Input &input);
 };
+
+class ConstrastSetting : public Settings
+{
+public:
+    ConstrastSetting();
+    std::string displayString();
+    bool getInput(const Input &input);
+};
