@@ -2,6 +2,7 @@
 
 #include "DeviceCommands.h"
 #include "DateTime.h"
+#include <cmath>
 
 DateSetting::DateSetting()
 {
@@ -361,6 +362,57 @@ bool ConstrastSetting::getInput(const Input &input)
             entriesToEdit = 1;
             return true;
         }
+    }
+    return false;
+}
+
+BacklightColorsSetting::BacklightColorsSetting()
+{
+    auto rgbToInt = [](int r, int g, int b)
+    {
+        int color = 0;
+        color = (r << 16) | (g << 8) | b;
+        return color;
+    };
+
+    Setting red = Setting("RED", 0, 0x00FFFFFF, rgbToInt(255, 0, 0));
+    Setting green = Setting("GRN", 0, 0x00FFFFFF, rgbToInt(0, 255, 0));
+    Setting blue = Setting("BLU", 0, 0x00FFFFFF, rgbToInt(0, 0, 255));
+
+    addSetting(red);
+    addSetting(green);
+    addSetting(blue);
+}
+
+std::string BacklightColorsSetting::displayString()
+{
+    static const size_t BacklightStringSize = 11;
+    static char backlightString[BacklightStringSize];
+    std::string color = settingsList[currentEntry].getName();
+    snprintf(backlightString, BacklightStringSize, "Color: %s", color.c_str());
+    return std::string(backlightString, BacklightStringSize - 1);
+}
+
+bool BacklightColorsSetting::getInput(const Input &input)
+{
+    if (input == Input::UP)
+    {
+        currentEntry = std::min(currentEntry + 1, (int)settingsList.size() - 1);
+    }
+    else if (input == Input::DOWN)
+    {
+        currentEntry = std::max(currentEntry - 1, 0);
+    }
+    else if (input == Input::ENTER)
+    {
+        int rgb = settingsList[currentEntry].get();
+        // convert from hex triplet to byte values
+        uint8_t r = (rgb >> 16) & 0x0000FF;
+        uint8_t g = (rgb >> 8) & 0x0000FF;
+        uint8_t b = rgb & 0x0000FF;
+
+        SetBackLight(r, g, b);
+        return true;
     }
     return false;
 }

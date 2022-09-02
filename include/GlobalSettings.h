@@ -56,3 +56,14 @@ public:
     std::string displayString();
     bool getInput(const Input &input);
 };
+
+class BacklightColorsSetting : public Settings
+{
+public:
+    BacklightColorsSetting();
+    std::string displayString();
+    bool getInput(const Input &input);
+
+private:
+    int currentEntry = 0;
+};
