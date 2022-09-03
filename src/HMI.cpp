@@ -33,15 +33,13 @@ static uint8_t altSetnCol = 0;
 
 // Public
 HMI::HMI()
+    : settingMode("settings", 0, (int)SETTINGS_COUNT - 1, 0)
 {
     lcd.ResetCursor();
     lcd.DisableSystemMessages();
     lcd.Display();
     lcd.SetContrast(0);
     lcd.SetBackLightFast(125, 125, 125);
-
-    settingMode.max_value = (int)SETTINGS_COUNT - 1;
-    settingMode.min_value = 0;
 }
 
 void HMI::Reset()
@@ -136,13 +134,13 @@ void HMI::DisplayMode()
     }
     else if (UpButtonTakeSemaphore())
     {
-        settingMode.adjust(true);
+        settingMode.increment();
         lcd.ClearRow(altSetnRow);
         DisplaySetting();
     }
     else if (DownButtonTakeSemaphore())
     {
-        settingMode.adjust(false);
+        settingMode.decrement();
         lcd.ClearRow(altSetnRow);
         DisplaySetting();
     }
@@ -151,7 +149,7 @@ void HMI::DisplayMode()
 void HMI::DisplaySetting()
 {
     ESP_LOGI("BTN", "Display Mode State: %d", displayState);
-    switch (settingMode.value)
+    switch (settingMode.get())
     {
     case SETTING_DATE:
         DisplayCurrentState();
@@ -240,7 +238,7 @@ void HMI::DisplayCurrentState()
         break;
     }
     lcd.WriteCharacters("SETN: ", 6);
-    lcd.WriteCharacters(settingNames[settingMode.value], 4);
+    lcd.WriteCharacters(settingNames[settingMode.get()], 4);
 }
 
 void HMI::UpdateDisplay()
@@ -275,7 +273,7 @@ void HMI::DisplayAlarmSetting()
 
 void HMI::EditMode()
 {
-    switch (settingMode.value)
+    switch (settingMode.get())
     {
     case SETTING_DATE:
         EditingDate();

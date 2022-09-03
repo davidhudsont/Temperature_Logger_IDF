@@ -11,33 +11,6 @@ enum HMIState
     EDITING
 };
 
-struct SETTING
-{
-    int max_value = 0;
-    int min_value = 0;
-    int value = 0;
-
-    void adjust(bool increase)
-    {
-        value = increase ? value + 1 : value - 1;
-        if (value > max_value)
-            value = min_value;
-        else if (value < min_value)
-            value = max_value;
-    }
-};
-
-enum BACKLIGHTCOLORS
-{
-    RED,
-    GREEN,
-    BLUE,
-    LOW_BRIGHT,
-    MED_BRIGHT,
-    FULL_BRIGHT,
-    COLOR_COUNT,
-};
-
 enum HMISettings
 {
     SETTING_DATE,
@@ -76,7 +49,7 @@ private:
     DateSetting dateSetting;
     TimeSetting timeSetting;
     TemperatureSetting tempSetting;
-    SETTING settingMode;
+    Setting settingMode;
     ConstrastSetting contrastSetting;
     BacklightColorsSetting backlightSettings;
     TimeSetting alarmSetting;
