@@ -23,12 +23,26 @@ void Setting::set_max(int new_max)
 
 void Setting::increment()
 {
-    value = std::min(value + 1, max);
+    if (value == max)
+    {
+        value = min;
+    }
+    else
+    {
+        value++;
+    }
 }
 
 void Setting::decrement()
 {
-    value = std::max(value - 1, min);
+    if (value == min)
+    {
+        value = max;
+    }
+    else
+    {
+        value--;
+    }
 }
 
 int Setting::get()

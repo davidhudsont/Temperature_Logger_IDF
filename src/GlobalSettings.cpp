@@ -397,11 +397,25 @@ bool BacklightColorsSetting::getInput(const Input &input)
 {
     if (input == Input::UP)
     {
-        currentEntry = std::min(currentEntry + 1, (int)settingsList.size() - 1);
+        if (currentEntry == settingsList.size() - 1)
+        {
+            currentEntry = 0;
+        }
+        else
+        {
+            currentEntry++;
+        }
     }
     else if (input == Input::DOWN)
     {
-        currentEntry = std::max(currentEntry - 1, 0);
+        if (currentEntry == 0)
+        {
+            currentEntry = settingsList.size() - 1;
+        }
+        else
+        {
+            currentEntry--;
+        }
     }
     else if (input == Input::ENTER)
     {
