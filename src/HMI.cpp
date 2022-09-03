@@ -6,15 +6,6 @@
 #include "HMI.h"
 #include "DeviceCommands.h"
 
-static char LCD_BCKL_COLORS[COLOR_COUNT][4] = {
-    "RED",
-    "GRN",
-    "BLU",
-    "FUL",
-    "MED",
-    "LOW",
-};
-
 static char settingNames[SETTINGS_COUNT][5] = {
     "DATE",
     "TIME",
@@ -24,13 +15,6 @@ static char settingNames[SETTINGS_COUNT][5] = {
     "ALRM",
     "ALRE",
 };
-
-static const size_t backlightStringSize = 15;
-static const size_t contrastStringSize = 14;
-static const size_t TempStringSize = 15;
-
-static char backlightString[backlightStringSize];
-static char contrastString[contrastStringSize];
 
 static uint8_t timeRow = 0;
 static uint8_t timeCol = 0;
@@ -58,21 +42,6 @@ HMI::HMI()
 
     settingMode.max_value = (int)SETTINGS_COUNT - 1;
     settingMode.min_value = 0;
-
-    contrastSetting.max_value = 255;
-    contrastSetting.min_value = 0;
-    contrastSetting.value = 0;
-
-    backlightSettings.max_value = (int)COLOR_COUNT - 1;
-    backlightSettings.min_value = 0;
-    backlightSettings.value = 0;
-
-    backLightValues[0] = {255, 0, 0};
-    backLightValues[1] = {0, 255, 0};
-    backLightValues[2] = {0, 0, 255};
-    backLightValues[3] = {255, 255, 255};
-    backLightValues[4] = {128, 128, 128};
-    backLightValues[5] = {0, 0, 0};
 }
 
 void HMI::Reset()
@@ -185,37 +154,30 @@ void HMI::DisplaySetting()
     switch (settingMode.value)
     {
     case SETTING_DATE:
-        entriesToEdit = 3;
         DisplayCurrentState();
         lcd.ClearRow(altSetnRow);
         break;
     case SETTING_TIME:
-        entriesToEdit = 3;
         DisplayCurrentState();
         lcd.ClearRow(altSetnRow);
         break;
     case SETTING_TEMP:
-        entriesToEdit = 1;
         DisplayCurrentState();
         lcd.ClearRow(altSetnRow);
         break;
     case SETTING_CONTRAST:
-        entriesToEdit = 1;
         DisplayCurrentState();
         DisplayContrast();
         break;
     case SETTING_BACKLIGHT:
-        entriesToEdit = 1;
         DisplayCurrentState();
         DisplayBacklight();
         break;
     case SETTING_ALARM:
-        entriesToEdit = 3;
         DisplayCurrentState();
         DisplayAlarmSetting();
         break;
     case SETTING_ALARM_ENABLE:
-        entriesToEdit = 3;
         DisplayCurrentState();
         DisplayAlarmEnable();
         break;
@@ -242,6 +204,7 @@ void HMI::DisplayTime()
 
 void HMI::DisplayTemperature()
 {
+    static const size_t TempStringSize = 15;
     static char tempString[TempStringSize];
     lcd.SetCursor(tempRow, tempCol);
     std::string units = tempSetting.displayString();
@@ -292,15 +255,15 @@ void HMI::UpdateDisplay()
 void HMI::DisplayContrast()
 {
     lcd.SetCursor(altSetnRow, altSetnCol);
-    snprintf(contrastString, contrastStringSize, "Contrast: %3d", contrastSetting.value);
-    lcd.WriteCharacters(contrastString, contrastStringSize - 1);
+    std::string str = contrastSetting.displayString();
+    lcd.WriteString(str);
 }
 
 void HMI::DisplayBacklight()
 {
     lcd.SetCursor(altSetnRow, altSetnCol);
-    snprintf(backlightString, backlightStringSize, "Backlight: %s", LCD_BCKL_COLORS[backlightSettings.value]);
-    lcd.WriteCharacters(backlightString, backlightStringSize - 1);
+    std::string str = backlightSettings.displayString();
+    lcd.WriteString(str);
 }
 
 void HMI::DisplayAlarmSetting()
@@ -403,22 +366,21 @@ void HMI::EditContrast()
 {
     if (UpButtonTakeSemaphore())
     {
-        bool increase = true;
-        contrastSetting.adjust(increase);
+        Input input = Input::UP;
+        contrastSetting.getInput(input);
         DisplayContrast();
     }
     else if (DownButtonTakeSemaphore())
     {
-        bool increase = false;
-        contrastSetting.adjust(increase);
+        Input input = Input::DOWN;
+        contrastSetting.getInput(input);
         DisplayContrast();
     }
     else if (EditButtonTakeSemaphore())
     {
-        entriesToEdit--;
-        if (entriesToEdit == 0)
+        Input input = Input::ENTER;
+        if (contrastSetting.getInput(input))
         {
-            SetContrast(contrastSetting.value);
             displayState = DISPLAYING;
             lcd.ClearRow(3);
             DisplayCurrentState();
@@ -429,26 +391,21 @@ void HMI::EditBackLight()
 {
     if (UpButtonTakeSemaphore())
     {
-        bool increase = true;
-        backlightSettings.adjust(increase);
+        Input input = Input::UP;
+        backlightSettings.getInput(input);
         DisplayBacklight();
     }
     else if (DownButtonTakeSemaphore())
     {
-        bool increase = false;
-        backlightSettings.adjust(increase);
+        Input input = Input::DOWN;
+        backlightSettings.getInput(input);
         DisplayBacklight();
     }
     else if (EditButtonTakeSemaphore())
     {
-        entriesToEdit--;
-        if (entriesToEdit == 0)
+        Input input = Input::ENTER;
+        if (backlightSettings.getInput(input))
         {
-            int index = backlightSettings.value;
-            uint8_t r = backLightValues[index].r;
-            uint8_t g = backLightValues[index].g;
-            uint8_t b = backLightValues[index].b;
-            SetBackLight(r, g, b);
             displayState = DISPLAYING;
             lcd.ClearRow(3);
             DisplayCurrentState();

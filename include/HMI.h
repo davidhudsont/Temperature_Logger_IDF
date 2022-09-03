@@ -27,13 +27,6 @@ struct SETTING
     }
 };
 
-struct RGB
-{
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-};
-
 enum BACKLIGHTCOLORS
 {
     RED,
@@ -79,23 +72,13 @@ private:
     bool hour12_not24;
 
     HMIState displayState = DISPLAYING;
-    int entriesToEdit;
-
-    struct BacklightSetting
-    {
-        SETTING r;
-        SETTING g;
-        SETTING b;
-    };
-
-    RGB backLightValues[COLOR_COUNT];
 
     DateSetting dateSetting;
     TimeSetting timeSetting;
     TemperatureSetting tempSetting;
     SETTING settingMode;
-    SETTING contrastSetting;
-    SETTING backlightSettings;
+    ConstrastSetting contrastSetting;
+    BacklightColorsSetting backlightSettings;
     TimeSetting alarmSetting;
     AlarmEnableSetting alarmEnableSetting;
 
