@@ -348,10 +348,14 @@ BacklightColorsSetting::BacklightColorsSetting()
     Setting red = Setting("RED", 0, 0x00FFFFFF, rgbToInt(255, 0, 0));
     Setting green = Setting("GRN", 0, 0x00FFFFFF, rgbToInt(0, 255, 0));
     Setting blue = Setting("BLU", 0, 0x00FFFFFF, rgbToInt(0, 0, 255));
+    Setting black = Setting("BLK", 0, 0x00FFFFFF, rgbToInt(0, 0, 0));
+    Setting white = Setting("WHT", 0, 0x00FFFFFF, rgbToInt(255, 255, 255));
 
     addSetting(red);
     addSetting(green);
     addSetting(blue);
+    addSetting(black);
+    addSetting(white);
 }
 
 std::string BacklightColorsSetting::displayString()
