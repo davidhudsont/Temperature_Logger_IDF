@@ -42,8 +42,11 @@ public:
     int getSetting(std::string name);
 
 protected:
+    Settings(int maxEntries);
     void addSetting(Setting &setting);
     std::vector<Setting> settingsList;
+    int currentEntry = 0;
+    int maxEntries = 0;
 
 private:
 };

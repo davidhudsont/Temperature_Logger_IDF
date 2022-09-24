@@ -77,3 +77,8 @@ int Settings::getSetting(std::string name)
     }
     return -1;
 }
+
+Settings::Settings(int maxEntries)
+    : maxEntries(maxEntries)
+{
+}

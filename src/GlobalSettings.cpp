@@ -5,6 +5,7 @@
 #include <cmath>
 
 DateSetting::DateSetting()
+    : Settings(3)
 {
     Setting year = Setting("year", 0, 99, 0);
     Setting month = Setting("month", 1, 12, 1);
@@ -17,54 +18,31 @@ DateSetting::DateSetting()
 
 bool DateSetting::getInput(const Input &input)
 {
-    static int entriesToEdit = 3;
     if (input == Input::UP)
     {
-        if (entriesToEdit == 3)
-        {
-            settingsList[0].increment();
-        }
-        else if (entriesToEdit == 2)
-        {
-            settingsList[1].increment();
-        }
-        else if (entriesToEdit == 1)
-        {
-            settingsList[2].increment();
-        }
+        settingsList[currentEntry].increment();
     }
     else if (input == Input::DOWN)
     {
-        if (entriesToEdit == 3)
-        {
-            settingsList[0].decrement();
-        }
-        else if (entriesToEdit == 2)
-        {
-            settingsList[1].decrement();
-        }
-        else if (entriesToEdit == 1)
-        {
-            settingsList[2].decrement();
-        }
+        settingsList[currentEntry].decrement();
     }
     else if (input == Input::ENTER)
     {
-        entriesToEdit--;
-        if (entriesToEdit == 1)
+        currentEntry++;
+        if (currentEntry == maxEntries - 1)
         {
             uint8_t year = settingsList[0].get();
             uint8_t month = settingsList[1].get();
             uint8_t max_value = calculateMaxDayOfMonth(month, year);
             settingsList[2].set_max(max_value);
         }
-        if (entriesToEdit == 0)
+        if (currentEntry == maxEntries)
         {
             uint8_t year = settingsList[0].get();
             uint8_t month = settingsList[1].get();
             uint8_t dayOfMonth = settingsList[2].get();
             SetDate(dayOfMonth, month, year);
-            entriesToEdit = 3;
+            currentEntry = 0;
             return true;
         }
     }
@@ -89,6 +67,7 @@ std::string DateSetting::displayString()
 }
 
 TimeSetting::TimeSetting()
+    : Settings(3)
 {
     Setting hour = Setting("hour", 1, 12, 1);
     Setting minute = Setting("minute", 1, 59, 1);
@@ -101,47 +80,24 @@ TimeSetting::TimeSetting()
 
 bool TimeSetting::getInput(const Input &input)
 {
-    static int entriesToEdit = 3;
     if (input == Input::UP)
     {
-        if (entriesToEdit == 3)
-        {
-            settingsList[0].increment();
-        }
-        else if (entriesToEdit == 2)
-        {
-            settingsList[1].increment();
-        }
-        else if (entriesToEdit == 1)
-        {
-            settingsList[2].increment();
-        }
+        settingsList[currentEntry].increment();
     }
     else if (input == Input::DOWN)
     {
-        if (entriesToEdit == 3)
-        {
-            settingsList[0].decrement();
-        }
-        else if (entriesToEdit == 2)
-        {
-            settingsList[1].decrement();
-        }
-        else if (entriesToEdit == 1)
-        {
-            settingsList[2].decrement();
-        }
+        settingsList[currentEntry].decrement();
     }
     else if (input == Input::ENTER)
     {
-        entriesToEdit--;
-        if (entriesToEdit == 0)
+        currentEntry++;
+        if (currentEntry == maxEntries)
         {
             uint8_t hour = settingsList[0].get();
             uint8_t minute = settingsList[1].get();
             uint8_t amPm = settingsList[2].get();
             SetTime12(hour, minute, amPm);
-            entriesToEdit = 3;
+            currentEntry = 0;
             return true;
         }
     }
@@ -165,6 +121,7 @@ std::string TimeSetting::displayString()
 }
 
 AlarmSetting::AlarmSetting()
+    : Settings(3)
 {
     Setting hour = Setting("hour", 1, 12, 1);
     Setting minute = Setting("minute", 1, 59, 1);
@@ -193,47 +150,24 @@ std::string AlarmSetting::displayString()
 
 bool AlarmSetting::getInput(const Input &input)
 {
-    static int entriesToEdit = 3;
     if (input == Input::UP)
     {
-        if (entriesToEdit == 3)
-        {
-            settingsList[0].increment();
-        }
-        else if (entriesToEdit == 2)
-        {
-            settingsList[1].increment();
-        }
-        else if (entriesToEdit == 1)
-        {
-            settingsList[2].increment();
-        }
+        settingsList[currentEntry].increment();
     }
     else if (input == Input::DOWN)
     {
-        if (entriesToEdit == 3)
-        {
-            settingsList[0].decrement();
-        }
-        else if (entriesToEdit == 2)
-        {
-            settingsList[1].decrement();
-        }
-        else if (entriesToEdit == 1)
-        {
-            settingsList[2].decrement();
-        }
+        settingsList[currentEntry].decrement();
     }
     else if (input == Input::ENTER)
     {
-        entriesToEdit--;
-        if (entriesToEdit == 0)
+        currentEntry++;
+        if (currentEntry == maxEntries)
         {
             uint8_t hour = settingsList[0].get();
             uint8_t minute = settingsList[1].get();
             uint8_t amPm = settingsList[2].get();
             SetAlarmTime12(hour, minute, amPm);
-            entriesToEdit = 3;
+            currentEntry = 0;
             return true;
         }
     }
@@ -241,6 +175,7 @@ bool AlarmSetting::getInput(const Input &input)
 }
 
 AlarmEnableSetting::AlarmEnableSetting()
+    : Settings(1)
 {
     Setting enable = Setting("enable", 0, 1, 0);
     addSetting(enable);
@@ -256,13 +191,30 @@ std::string AlarmEnableSetting::displayString()
 
 bool AlarmEnableSetting::getInput(const Input &input)
 {
-    bool enable = static_cast<bool>(settingsList[0].get());
-    settingsList[0].set(!enable);
-    SetAlarm(!enable);
-    return true;
+    if (input == Input::UP)
+    {
+        settingsList[currentEntry].increment();
+    }
+    else if (input == Input::DOWN)
+    {
+        settingsList[currentEntry].decrement();
+    }
+    else if (input == Input::ENTER)
+    {
+        currentEntry++;
+        if (currentEntry == maxEntries)
+        {
+            uint8_t enable = settingsList[0].get();
+            SetAlarm(enable);
+            currentEntry = 0;
+            return true;
+        }
+    }
+    return false;
 }
 
 TemperatureSetting::TemperatureSetting()
+    : Settings(1)
 {
     Setting units = Setting("units", 0, 1, 0);
     addSetting(units);
@@ -287,12 +239,30 @@ std::string TemperatureSetting::displayString()
 
 bool TemperatureSetting::getInput(const Input &input)
 {
-    bool units = static_cast<bool>(settingsList[0].get());
-    settingsList[0].set(!units);
-    return true;
+    if (input == Input::UP)
+    {
+        settingsList[currentEntry].increment();
+    }
+    else if (input == Input::DOWN)
+    {
+        settingsList[currentEntry].decrement();
+    }
+    else if (input == Input::ENTER)
+    {
+        currentEntry++;
+        if (currentEntry == maxEntries)
+        {
+            uint8_t contrast = settingsList[0].get();
+            SetContrast(contrast);
+            currentEntry = 0;
+            return true;
+        }
+    }
+    return false;
 }
 
 BacklightSetting::BacklightSetting()
+    : Settings(3)
 {
     Setting red = Setting("red", 0, 255, 0);
     Setting green = Setting("green", 0, 255, 0);
@@ -320,6 +290,7 @@ bool BacklightSetting::getInput(const Input &input)
 }
 
 ConstrastSetting::ConstrastSetting()
+    : Settings(1)
 {
     Setting contrast = Setting("constrast", 0, 255, 0);
 
@@ -337,29 +308,22 @@ std::string ConstrastSetting::displayString()
 
 bool ConstrastSetting::getInput(const Input &input)
 {
-    static int entriesToEdit = 1;
     if (input == Input::UP)
     {
-        if (entriesToEdit == 1)
-        {
-            settingsList[2].increment();
-        }
+        settingsList[currentEntry].increment();
     }
     else if (input == Input::DOWN)
     {
-        if (entriesToEdit == 1)
-        {
-            settingsList[2].decrement();
-        }
+        settingsList[currentEntry].decrement();
     }
     else if (input == Input::ENTER)
     {
-        entriesToEdit--;
-        if (entriesToEdit == 0)
+        currentEntry++;
+        if (currentEntry == maxEntries)
         {
             uint8_t contrast = settingsList[0].get();
             SetContrast(contrast);
-            entriesToEdit = 1;
+            currentEntry = 0;
             return true;
         }
     }
@@ -367,6 +331,7 @@ bool ConstrastSetting::getInput(const Input &input)
 }
 
 BacklightColorsSetting::BacklightColorsSetting()
+    : Settings(3)
 {
     auto rgbToInt = [](int r, int g, int b)
     {

@@ -31,6 +31,8 @@ static uint8_t setnCol = 0;
 static uint8_t altSetnRow = 3;
 static uint8_t altSetnCol = 0;
 
+static std::vector<Settings *> settingsList;
+
 // Public
 HMI::HMI()
     : settingMode("settings", 0, (int)SETTINGS_COUNT - 1, 0)
@@ -40,6 +42,8 @@ HMI::HMI()
     lcd.Display();
     lcd.SetContrast(0);
     lcd.SetBackLightFast(125, 125, 125);
+
+    settingsList.push_back(&dateSetting);
 }
 
 void HMI::Reset()
@@ -149,39 +153,9 @@ void HMI::DisplayMode()
 void HMI::DisplaySetting()
 {
     ESP_LOGI("BTN", "Display Mode State: %d", displayState);
-    switch (settingMode.get())
-    {
-    case SETTING_DATE:
-        DisplayCurrentState();
-        lcd.ClearRow(altSetnRow);
-        break;
-    case SETTING_TIME:
-        DisplayCurrentState();
-        lcd.ClearRow(altSetnRow);
-        break;
-    case SETTING_TEMP:
-        DisplayCurrentState();
-        lcd.ClearRow(altSetnRow);
-        break;
-    case SETTING_CONTRAST:
-        DisplayCurrentState();
-        DisplayContrast();
-        break;
-    case SETTING_BACKLIGHT:
-        DisplayCurrentState();
-        DisplayBacklight();
-        break;
-    case SETTING_ALARM:
-        DisplayCurrentState();
-        DisplayAlarmSetting();
-        break;
-    case SETTING_ALARM_ENABLE:
-        DisplayCurrentState();
-        DisplayAlarmEnable();
-        break;
-    default:
-        break;
-    }
+    lcd.SetCursor(altSetnRow, altSetnCol);
+    std::string str = settingsList[0]->displayString();
+    lcd.WriteString(str);
 }
 
 void HMI::DisplayDate()
@@ -273,31 +247,30 @@ void HMI::DisplayAlarmSetting()
 
 void HMI::EditMode()
 {
-    switch (settingMode.get())
+    if (UpButtonTakeSemaphore())
     {
-    case SETTING_DATE:
-        EditingDate();
-        break;
-    case SETTING_TIME:
-        EditingTime();
-        break;
-    case SETTING_TEMP:
-        ChangeTemp();
-        break;
-    case SETTING_CONTRAST:
-        EditContrast();
-        break;
-    case SETTING_BACKLIGHT:
-        EditBackLight();
-        break;
-    case SETTING_ALARM:
-        EditAlarmTime();
-        break;
-    case SETTING_ALARM_ENABLE:
-        EditAlarmEnable();
-        break;
-    default:
-        break;
+        const Input input = Input::UP;
+        settingsList[0]->getInput(input);
+        lcd.SetCursor(altSetnRow, altSetnCol);
+        std::string str = settingsList[0]->displayString();
+        lcd.WriteString(str);
+    }
+    else if (DownButtonTakeSemaphore())
+    {
+        const Input input = Input::DOWN;
+        settingsList[0]->getInput(input);
+        lcd.SetCursor(altSetnRow, altSetnCol);
+        std::string str = settingsList[0]->displayString();
+        lcd.WriteString(str);
+    }
+    else if (EditButtonTakeSemaphore())
+    {
+        const Input input = Input::ENTER;
+        if (dateSetting.getInput(input))
+        {
+            displayState = DISPLAYING;
+            DisplayCurrentState();
+        }
     }
 }
 
