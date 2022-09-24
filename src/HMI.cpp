@@ -6,16 +6,6 @@
 #include "HMI.h"
 #include "DeviceCommands.h"
 
-static char settingNames[SETTINGS_COUNT][5] = {
-    "DATE",
-    "TIME",
-    "TEMP",
-    "CNTR",
-    "BLKT",
-    "ALRM",
-    "ALRE",
-};
-
 static uint8_t timeRow = 0;
 static uint8_t timeCol = 0;
 
@@ -35,7 +25,7 @@ static std::vector<Settings *> settingsList;
 
 // Public
 HMI::HMI()
-    : settingMode("settings", 0, (int)SETTINGS_COUNT - 1, 0)
+    : settingMode("settings", 0, 0, 0)
 {
     lcd.ResetCursor();
     lcd.DisableSystemMessages();
@@ -44,6 +34,13 @@ HMI::HMI()
     lcd.SetBackLightFast(125, 125, 125);
 
     settingsList.push_back(&dateSetting);
+    settingsList.push_back(&timeSetting);
+    settingsList.push_back(&tempSetting);
+    settingsList.push_back(&contrastSetting);
+    settingsList.push_back(&backlightSettings);
+    settingsList.push_back(&alarmSetting);
+    settingsList.push_back(&alarmEnableSetting);
+    settingMode.set_max(settingsList.size() - 1);
 }
 
 void HMI::Reset()
@@ -140,12 +137,14 @@ void HMI::DisplayMode()
     {
         settingMode.increment();
         lcd.ClearRow(altSetnRow);
+        DisplayCurrentState();
         DisplaySetting();
     }
     else if (DownButtonTakeSemaphore())
     {
         settingMode.decrement();
         lcd.ClearRow(altSetnRow);
+        DisplayCurrentState();
         DisplaySetting();
     }
 }
@@ -154,7 +153,8 @@ void HMI::DisplaySetting()
 {
     ESP_LOGI("BTN", "Display Mode State: %d", displayState);
     lcd.SetCursor(altSetnRow, altSetnCol);
-    std::string str = settingsList[0]->displayString();
+    int index = settingMode.get();
+    std::string str = settingsList[index]->displayString();
     lcd.WriteString(str);
 }
 
@@ -212,7 +212,9 @@ void HMI::DisplayCurrentState()
         break;
     }
     lcd.WriteCharacters("SETN: ", 6);
-    lcd.WriteCharacters(settingNames[settingMode.get()], 4);
+    int index = settingMode.get();
+    std::string str = settingsList[index]->getName();
+    lcd.WriteString(str);
 }
 
 void HMI::UpdateDisplay()
@@ -224,204 +226,34 @@ void HMI::UpdateDisplay()
     DisplayCurrentState();
 }
 
-void HMI::DisplayContrast()
-{
-    lcd.SetCursor(altSetnRow, altSetnCol);
-    std::string str = contrastSetting.displayString();
-    lcd.WriteString(str);
-}
-
-void HMI::DisplayBacklight()
-{
-    lcd.SetCursor(altSetnRow, altSetnCol);
-    std::string str = backlightSettings.displayString();
-    lcd.WriteString(str);
-}
-
-void HMI::DisplayAlarmSetting()
-{
-    lcd.SetCursor(altSetnRow, altSetnCol);
-    std::string str = alarmSetting.displayString();
-    lcd.WriteString(str);
-}
-
 void HMI::EditMode()
 {
+    int index = settingMode.get();
     if (UpButtonTakeSemaphore())
     {
         const Input input = Input::UP;
-        settingsList[0]->getInput(input);
+        settingsList[index]->getInput(input);
         lcd.SetCursor(altSetnRow, altSetnCol);
-        std::string str = settingsList[0]->displayString();
+        std::string str = settingsList[index]->displayString();
         lcd.WriteString(str);
+        DisplayCurrentState();
     }
     else if (DownButtonTakeSemaphore())
     {
         const Input input = Input::DOWN;
-        settingsList[0]->getInput(input);
+        settingsList[index]->getInput(input);
         lcd.SetCursor(altSetnRow, altSetnCol);
-        std::string str = settingsList[0]->displayString();
+        std::string str = settingsList[index]->displayString();
         lcd.WriteString(str);
+        DisplayCurrentState();
     }
     else if (EditButtonTakeSemaphore())
     {
         const Input input = Input::ENTER;
-        if (dateSetting.getInput(input))
+        if (settingsList[index]->getInput(input))
         {
             displayState = DISPLAYING;
             DisplayCurrentState();
         }
     }
-}
-
-void HMI::EditingDate()
-{
-    if (UpButtonTakeSemaphore())
-    {
-        const Input input = Input::UP;
-        dateSetting.getInput(input);
-        DisplayDate();
-    }
-    else if (DownButtonTakeSemaphore())
-    {
-        const Input input = Input::DOWN;
-        dateSetting.getInput(input);
-        DisplayDate();
-    }
-    else if (EditButtonTakeSemaphore())
-    {
-        const Input input = Input::ENTER;
-        if (dateSetting.getInput(input))
-        {
-            displayState = DISPLAYING;
-            DisplayCurrentState();
-        }
-    }
-}
-
-void HMI::EditingTime()
-{
-    if (UpButtonTakeSemaphore())
-    {
-        const Input input = Input::UP;
-        timeSetting.getInput(input);
-        DisplayTime();
-    }
-    else if (DownButtonTakeSemaphore())
-    {
-        const Input input = Input::DOWN;
-        timeSetting.getInput(input);
-        DisplayTime();
-    }
-    else if (EditButtonTakeSemaphore())
-    {
-        const Input input = Input::ENTER;
-        if (timeSetting.getInput(input))
-        {
-            displayState = DISPLAYING;
-            DisplayCurrentState();
-        }
-    }
-}
-
-void HMI::ChangeTemp()
-{
-    Input input = Input::ENTER;
-    tempSetting.getInput(input);
-    displayState = DISPLAYING;
-    DisplayTemperature();
-    DisplayCurrentState();
-}
-
-void HMI::EditContrast()
-{
-    if (UpButtonTakeSemaphore())
-    {
-        Input input = Input::UP;
-        contrastSetting.getInput(input);
-        DisplayContrast();
-    }
-    else if (DownButtonTakeSemaphore())
-    {
-        Input input = Input::DOWN;
-        contrastSetting.getInput(input);
-        DisplayContrast();
-    }
-    else if (EditButtonTakeSemaphore())
-    {
-        Input input = Input::ENTER;
-        if (contrastSetting.getInput(input))
-        {
-            displayState = DISPLAYING;
-            lcd.ClearRow(3);
-            DisplayCurrentState();
-        }
-    }
-}
-void HMI::EditBackLight()
-{
-    if (UpButtonTakeSemaphore())
-    {
-        Input input = Input::UP;
-        backlightSettings.getInput(input);
-        DisplayBacklight();
-    }
-    else if (DownButtonTakeSemaphore())
-    {
-        Input input = Input::DOWN;
-        backlightSettings.getInput(input);
-        DisplayBacklight();
-    }
-    else if (EditButtonTakeSemaphore())
-    {
-        Input input = Input::ENTER;
-        if (backlightSettings.getInput(input))
-        {
-            displayState = DISPLAYING;
-            lcd.ClearRow(3);
-            DisplayCurrentState();
-        }
-    }
-}
-
-void HMI::EditAlarmTime()
-{
-    if (UpButtonTakeSemaphore())
-    {
-        Input input = Input::UP;
-        alarmSetting.getInput(input);
-        DisplayAlarmSetting();
-    }
-    else if (DownButtonTakeSemaphore())
-    {
-        Input input = Input::DOWN;
-        alarmSetting.getInput(input);
-        DisplayAlarmSetting();
-    }
-    else if (EditButtonTakeSemaphore())
-    {
-        Input input = Input::ENTER;
-        if (alarmSetting.getInput(input))
-        {
-            displayState = DISPLAYING;
-            lcd.ClearRow(3);
-            DisplayCurrentState();
-        }
-    }
-}
-
-void HMI::DisplayAlarmEnable()
-{
-    lcd.SetCursor(3, 0);
-    std::string str = alarmEnableSetting.displayString();
-    lcd.WriteString(str);
-}
-
-void HMI::EditAlarmEnable()
-{
-    Input input = Input::ENTER;
-    alarmEnableSetting.getInput(input);
-    displayState = DISPLAYING;
-    DisplayAlarmEnable();
-    DisplayCurrentState();
 }

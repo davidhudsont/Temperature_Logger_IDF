@@ -40,6 +40,7 @@ public:
     void addCallback(std::function<void(int)> &func);
     void setSetting(std::string name, int value);
     int getSetting(std::string name);
+    std::string &getName() { return settingsName; }
 
 protected:
     Settings(int maxEntries);
@@ -47,6 +48,7 @@ protected:
     std::vector<Setting> settingsList;
     int currentEntry = 0;
     int maxEntries = 0;
+    std::string settingsName;
 
 private:
 };

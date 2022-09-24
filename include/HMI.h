@@ -46,13 +46,13 @@ private:
 
     HMIState displayState = DISPLAYING;
 
+    Setting settingMode;
     DateSetting dateSetting;
     TimeSetting timeSetting;
     TemperatureSetting tempSetting;
-    Setting settingMode;
     ConstrastSetting contrastSetting;
     BacklightColorsSetting backlightSettings;
-    TimeSetting alarmSetting;
+    AlarmSetting alarmSetting;
     AlarmEnableSetting alarmEnableSetting;
 
     // Display Mode related functions
@@ -62,19 +62,8 @@ private:
     void DisplayTime();
     void DisplayTemperature();
     void DisplayCurrentState();
-    void DisplayContrast();
-    void DisplayBacklight();
-    void DisplayAlarmSetting();
-    void DisplayAlarmEnable();
     void UpdateDisplay();
 
     // Edit Mode related functions
     void EditMode();
-    void EditingDate();
-    void EditingTime();
-    void ChangeTemp();
-    void EditContrast();
-    void EditBackLight();
-    void EditAlarmTime();
-    void EditAlarmEnable();
 };

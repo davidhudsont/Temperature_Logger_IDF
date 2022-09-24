@@ -20,6 +20,7 @@ public:
 
 class AlarmSetting : public Settings
 {
+public:
     AlarmSetting();
     std::string displayString();
     bool getInput(const Input &input);

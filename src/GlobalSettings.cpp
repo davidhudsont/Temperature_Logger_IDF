@@ -10,6 +10,7 @@ DateSetting::DateSetting()
     Setting year = Setting("year", 0, 99, 0);
     Setting month = Setting("month", 1, 12, 1);
     Setting dayOfMonth = Setting("dayOfMonth", 1, 31, 1);
+    settingsName = "DATE";
 
     addSetting(year);
     addSetting(month);
@@ -72,6 +73,7 @@ TimeSetting::TimeSetting()
     Setting hour = Setting("hour", 1, 12, 1);
     Setting minute = Setting("minute", 1, 59, 1);
     Setting amPm = Setting("amPm", 0, 1, 0);
+    settingsName = "TIME";
 
     addSetting(hour);
     addSetting(minute);
@@ -126,6 +128,7 @@ AlarmSetting::AlarmSetting()
     Setting hour = Setting("hour", 1, 12, 1);
     Setting minute = Setting("minute", 1, 59, 1);
     Setting amPm = Setting("amPm", 0, 1, 0);
+    settingsName = "ALRM";
 
     addSetting(hour);
     addSetting(minute);
@@ -178,6 +181,7 @@ AlarmEnableSetting::AlarmEnableSetting()
     : Settings(1)
 {
     Setting enable = Setting("enable", 0, 1, 0);
+    settingsName = "ALRE";
     addSetting(enable);
 }
 
@@ -217,6 +221,7 @@ TemperatureSetting::TemperatureSetting()
     : Settings(1)
 {
     Setting units = Setting("units", 0, 1, 0);
+    settingsName = "TEMP";
     addSetting(units);
 }
 
@@ -252,8 +257,6 @@ bool TemperatureSetting::getInput(const Input &input)
         currentEntry++;
         if (currentEntry == maxEntries)
         {
-            uint8_t contrast = settingsList[0].get();
-            SetContrast(contrast);
             currentEntry = 0;
             return true;
         }
@@ -293,6 +296,7 @@ ConstrastSetting::ConstrastSetting()
     : Settings(1)
 {
     Setting contrast = Setting("constrast", 0, 255, 0);
+    settingsName = "CNTR";
 
     addSetting(contrast);
 }
@@ -339,6 +343,7 @@ BacklightColorsSetting::BacklightColorsSetting()
         color = (r << 16) | (g << 8) | b;
         return color;
     };
+    settingsName = "BLKT";
 
     Setting red = Setting("RED", 0, 0x00FFFFFF, rgbToInt(255, 0, 0));
     Setting green = Setting("GRN", 0, 0x00FFFFFF, rgbToInt(0, 255, 0));
