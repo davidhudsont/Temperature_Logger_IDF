@@ -18,6 +18,7 @@ public:
     void SetFrequency(uint32_t freq_hz);
     void SetDutyCycle(uint32_t duty_cycle);
     void SetDutyCyclePercentage(uint32_t duty_cycle_percentage);
+    void PlayAlarmTone();
 
 private:
     bool is_timer_started;

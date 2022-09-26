@@ -9,6 +9,8 @@
 
 // User Headers
 #include "Speaker.h"
+#include "Tones.h"
+#include "Utilities.h"
 
 constexpr ledc_timer_t LEDC_TIMER = LEDC_TIMER_0;
 constexpr ledc_mode_t LEDC_MODE = LEDC_LOW_SPEED_MODE;
@@ -75,14 +77,14 @@ AlarmSpeaker::AlarmSpeaker()
 
     speaker_semaphore = xSemaphoreCreateBinary();
 
-    const esp_timer_create_args_t timer_config = {
-        .callback = &periodic_cb,
-        .arg = (void *)0,
-        .dispatch_method = (esp_timer_dispatch_t)0,
-        .name = "Periodic",
-    };
+    // const esp_timer_create_args_t timer_config = {
+    //     .callback = &periodic_cb,
+    //     .arg = (void *)0,
+    //     .dispatch_method = (esp_timer_dispatch_t)0,
+    //     .name = "Periodic",
+    // };
 
-    ESP_ERROR_CHECK(esp_timer_create(&timer_config, &periodic_timer));
+    // ESP_ERROR_CHECK(esp_timer_create(&timer_config, &periodic_timer));
     pause_speaker();
 }
 
@@ -112,26 +114,43 @@ void AlarmSpeaker::SetDutyCyclePercentage(uint32_t duty_cycle_percentage)
 
 void AlarmSpeaker::StartAlarm()
 {
-    if (!is_timer_started)
-    {
-        ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 1000000));
-        resume_speaker();
-        is_timer_started = true;
-    }
+    // if (!is_timer_started)
+    // {
+    //     ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 1000000));
+    //     resume_speaker();
+    //     is_timer_started = true;
+    // }
+    is_timer_started = true;
 }
 
 void AlarmSpeaker::StopAlarm()
 {
-    if (is_timer_started)
-    {
-        ESP_ERROR_CHECK(esp_timer_stop(periodic_timer));
-        pause_speaker();
-        is_timer_started = false;
-    }
+    // if (is_timer_started)
+    // {
+    //     ESP_ERROR_CHECK(esp_timer_stop(periodic_timer));
+    //     pause_speaker();
+    //     is_timer_started = false;
+    // }
+    is_timer_started = false;
+    pause_speaker();
 }
 
 void AlarmSpeaker::SetFrequency(uint32_t freq_hz)
 {
     if (freq_hz <= LEDC_FREQUENCY)
         ESP_ERROR_CHECK(ledc_set_freq(LEDC_MODE, LEDC_TIMER, freq_hz));
+}
+
+void AlarmSpeaker::PlayAlarmTone()
+{
+    if (is_timer_started)
+    {
+        for (auto tone : simpleTone)
+        {
+            pause_speaker();
+            SetFrequency(tone.note);
+            resume_speaker();
+            delay_ms(tone.duration);
+        }
+    }
 }
