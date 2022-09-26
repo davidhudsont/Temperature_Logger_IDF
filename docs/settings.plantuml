@@ -1,0 +1,33 @@
+@startuml settings
+
+class Setting {
+    +Setting(int min, int max)
+    +void set(int value);
+    +void increment();
+    +void decrement();
+    +int get()
+    -int value
+    -int max
+    -int min
+    -std::string name
+}
+
+enum Input {
+    UP
+    DOWN
+    ENTER
+    BACK
+}
+
+class Settings {
+    +void get_input(const Input& input)
+    +std::string displayString();
+    -void addSetting(std::string name, Setting& setting)
+    -std::vector<Setting> settingsList
+}
+
+
+Setting "many" --* Settings
+
+
+@enduml

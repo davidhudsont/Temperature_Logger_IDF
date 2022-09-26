@@ -3,45 +3,12 @@
 // User Headers
 #include "LCD.h"
 #include "DateTime.h"
+#include "GlobalSettings.h"
 
 enum HMIState
 {
     DISPLAYING,
     EDITING
-};
-
-struct SETTING
-{
-    int max_value = 0;
-    int min_value = 0;
-    int value = 0;
-
-    void adjust(bool increase)
-    {
-        value = increase ? value + 1 : value - 1;
-        if (value > max_value)
-            value = min_value;
-        else if (value < min_value)
-            value = max_value;
-    }
-};
-
-struct RGB
-{
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-};
-
-enum BACKLIGHTCOLORS
-{
-    RED,
-    GREEN,
-    BLUE,
-    LOW_BRIGHT,
-    MED_BRIGHT,
-    FULL_BRIGHT,
-    COLOR_COUNT,
 };
 
 enum HMISettings
@@ -52,6 +19,7 @@ enum HMISettings
     SETTING_CONTRAST,
     SETTING_BACKLIGHT,
     SETTING_ALARM,
+    SETTING_ALARM_ENABLE,
     SETTINGS_COUNT,
 };
 
@@ -77,63 +45,25 @@ private:
     bool hour12_not24;
 
     HMIState displayState = DISPLAYING;
-    int entriesToEdit;
 
-    struct DateSetting
-    {
-        SETTING month;
-        SETTING dayOfMonth;
-        SETTING year;
-    };
-
-    struct TimeSetting
-    {
-        SETTING hour;
-        SETTING minute;
-        SETTING PM_notAM;
-    };
-
-    struct BacklightSetting
-    {
-        SETTING r;
-        SETTING g;
-        SETTING b;
-    };
-
-    struct AlarmSetting
-    {
-        SETTING hour;
-        SETTING minute;
-        SETTING PM_notAM;
-    };
-
-    RGB backLightValues[COLOR_COUNT];
-
+    Setting settingMode;
     DateSetting dateSetting;
     TimeSetting timeSetting;
-    SETTING tempSetting;
-    SETTING settingMode;
-    SETTING contrastSetting;
-    SETTING backlightSetting;
+    TemperatureSetting tempSetting;
+    ConstrastSetting contrastSetting;
+    BacklightColorsSetting backlightSettings;
     AlarmSetting alarmSetting;
+    AlarmEnableSetting alarmEnableSetting;
 
     // Display Mode related functions
     void DisplayMode();
+    void DisplaySetting();
     void DisplayDate();
     void DisplayTime();
     void DisplayTemperature();
     void DisplayCurrentState();
-    void DisplayContrast();
-    void DisplayBacklight();
-    void DisplayAlarmSetting();
     void UpdateDisplay();
 
     // Edit Mode related functions
     void EditMode();
-    void EditingDate();
-    void EditingTime();
-    void ChangeTemp();
-    void EditContrast();
-    void EditBackLight();
-    void EditAlarmTime();
 };

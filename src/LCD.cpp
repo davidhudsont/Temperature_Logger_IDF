@@ -38,7 +38,7 @@ void LCD::EndTransmit()
 LCD::LCD()
     : uart(9600, UART2_TX_PIN_NUM, UART2_RX_PIN_NUM, UART_NUM_2)
 {
-    uart.ToggleRTS();
+    // uart.ToggleRTS();
 
     delay(20);
 
@@ -79,6 +79,11 @@ void LCD::SetCursor(uint8_t row, uint8_t col)
         col = 19;
 
     SpecialCommand(LCD_SETDDRAMADDR | (col + row_offsets[row]));
+}
+
+void LCD::WriteString(std::string &str)
+{
+    WriteCharacters(str.c_str(), (uint32_t)str.size());
 }
 
 void LCD::WriteCharacters(const char *str, uint32_t len)
@@ -227,7 +232,7 @@ void LCD::SpecialCommand(uint8_t command)
     WriteBurst(commands, 2);
     EndTransmit();
 
-    delay(50);
+    delay(75);
 }
 
 void LCD::SpecialCommand(uint8_t command, uint8_t count)
@@ -241,7 +246,7 @@ void LCD::SpecialCommand(uint8_t command, uint8_t count)
     }
     EndTransmit();
 
-    delay(50);
+    delay(75);
 }
 
 void LCD::DisableSystemMessages()
@@ -250,7 +255,7 @@ void LCD::DisableSystemMessages()
     Write(SETTING_COMMAND);                // Send special command character
     Write(DISABLE_SYSTEM_MESSAGE_DISPLAY); // Send the set '.' character
     EndTransmit();                         // Stop transmission
-    delay(10);
+    delay(20);
 }
 
 void LCD::ResetCursor()
@@ -261,7 +266,7 @@ void LCD::ResetCursor()
     WriteBurst(commands, 2);
     EndTransmit();
 
-    delay(50);
+    delay(75);
 }
 
 void LCD::ClearRow(uint8_t row)
