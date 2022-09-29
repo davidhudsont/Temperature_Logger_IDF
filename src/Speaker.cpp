@@ -6,6 +6,7 @@
 #include "freertos/semphr.h"
 #include "driver/ledc.h"
 #include "driver/gpio.h"
+#include "esp_log.h"
 
 // User Headers
 #include "Speaker.h"
@@ -36,17 +37,8 @@ static void resume_speaker()
 
 static void periodic_cb(void *param)
 {
-    static bool sound_on = true;
-    if (sound_on)
-    {
-        pause_speaker();
-        sound_on = false;
-    }
-    else
-    {
-        resume_speaker();
-        sound_on = true;
-    }
+    static BaseType_t xHigherPriorityTaskWoken;
+    xSemaphoreGiveFromISR(speaker_semaphore, &xHigherPriorityTaskWoken);
 }
 
 AlarmSpeaker::AlarmSpeaker()
@@ -77,14 +69,14 @@ AlarmSpeaker::AlarmSpeaker()
 
     speaker_semaphore = xSemaphoreCreateBinary();
 
-    // const esp_timer_create_args_t timer_config = {
-    //     .callback = &periodic_cb,
-    //     .arg = (void *)0,
-    //     .dispatch_method = (esp_timer_dispatch_t)0,
-    //     .name = "Periodic",
-    // };
+    const esp_timer_create_args_t timer_config = {
+        .callback = &periodic_cb,
+        .arg = (void *)0,
+        .dispatch_method = ESP_TIMER_TASK,
+        .name = "Periodic",
+    };
 
-    // ESP_ERROR_CHECK(esp_timer_create(&timer_config, &periodic_timer));
+    ESP_ERROR_CHECK(esp_timer_create(&timer_config, &periodic_timer));
     pause_speaker();
 }
 
@@ -120,6 +112,7 @@ void AlarmSpeaker::StartAlarm()
     //     resume_speaker();
     //     is_timer_started = true;
     // }
+    xSemaphoreGive(speaker_semaphore);
     is_timer_started = true;
 }
 
@@ -133,6 +126,7 @@ void AlarmSpeaker::StopAlarm()
     // }
     is_timer_started = false;
     pause_speaker();
+    esp_timer_stop(periodic_timer);
 }
 
 void AlarmSpeaker::SetFrequency(uint32_t freq_hz)
@@ -143,14 +137,23 @@ void AlarmSpeaker::SetFrequency(uint32_t freq_hz)
 
 void AlarmSpeaker::PlayAlarmTone()
 {
+
     if (is_timer_started)
     {
-        for (auto tone : simpleTone)
+        if (xSemaphoreTake(speaker_semaphore, 0))
         {
+            static size_t count = 0;
+            if (count >= simpleTone.size())
+            {
+                count = 0;
+            }
+            Tone tone = simpleTone[count];
             pause_speaker();
             SetFrequency(tone.note);
             resume_speaker();
-            delay_ms(tone.duration);
+            uint64_t timeout_us = tone.duration * 1000;
+            ESP_ERROR_CHECK(esp_timer_start_once(periodic_timer, timeout_us));
+            count++;
         }
     }
 }
