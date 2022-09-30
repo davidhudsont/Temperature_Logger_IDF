@@ -25,16 +25,6 @@ constexpr int MAXDUTYCYCLE = 65535;
 
 static SemaphoreHandle_t speaker_semaphore;
 
-static void pause_speaker()
-{
-    ledc_timer_pause(LEDC_MODE, LEDC_TIMER);
-}
-
-static void resume_speaker()
-{
-    ledc_timer_resume(LEDC_MODE, LEDC_TIMER);
-}
-
 static void periodic_cb(void *param)
 {
     static BaseType_t xHigherPriorityTaskWoken;
@@ -42,8 +32,7 @@ static void periodic_cb(void *param)
 }
 
 AlarmSpeaker::AlarmSpeaker()
-    : is_timer_started(false),
-      pin(PIN_NUM_SPEAKER)
+    : pin(PIN_NUM_SPEAKER)
 {
     // Prepare and then apply the LEDC PWM timer configuration
     ledc_timer_config_t ledc_timer;
@@ -77,7 +66,28 @@ AlarmSpeaker::AlarmSpeaker()
     };
 
     ESP_ERROR_CHECK(esp_timer_create(&timer_config, &periodic_timer));
-    pause_speaker();
+    PauseSpeaker();
+}
+
+void AlarmSpeaker::PauseSpeaker()
+{
+    ledc_timer_pause(LEDC_MODE, LEDC_TIMER);
+}
+
+void AlarmSpeaker::ResumeSpeaker()
+{
+    ledc_timer_resume(LEDC_MODE, LEDC_TIMER);
+}
+
+void AlarmSpeaker::StartAlarm()
+{
+    xSemaphoreGive(speaker_semaphore);
+}
+
+void AlarmSpeaker::StopAlarm()
+{
+    PauseSpeaker();
+    esp_timer_stop(periodic_timer);
 }
 
 void AlarmSpeaker::SetDutyCycle(uint32_t duty_cycle)
@@ -104,31 +114,6 @@ void AlarmSpeaker::SetDutyCyclePercentage(uint32_t duty_cycle_percentage)
     ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
 }
 
-void AlarmSpeaker::StartAlarm()
-{
-    // if (!is_timer_started)
-    // {
-    //     ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 1000000));
-    //     resume_speaker();
-    //     is_timer_started = true;
-    // }
-    xSemaphoreGive(speaker_semaphore);
-    is_timer_started = true;
-}
-
-void AlarmSpeaker::StopAlarm()
-{
-    // if (is_timer_started)
-    // {
-    //     ESP_ERROR_CHECK(esp_timer_stop(periodic_timer));
-    //     pause_speaker();
-    //     is_timer_started = false;
-    // }
-    is_timer_started = false;
-    pause_speaker();
-    esp_timer_stop(periodic_timer);
-}
-
 void AlarmSpeaker::SetFrequency(uint32_t freq_hz)
 {
     if (freq_hz <= LEDC_FREQUENCY)
@@ -137,23 +122,19 @@ void AlarmSpeaker::SetFrequency(uint32_t freq_hz)
 
 void AlarmSpeaker::PlayAlarmTone()
 {
-
-    if (is_timer_started)
+    if (xSemaphoreTake(speaker_semaphore, 0))
     {
-        if (xSemaphoreTake(speaker_semaphore, 0))
+        static size_t count = 0;
+        if (count >= simpleTone.size())
         {
-            static size_t count = 0;
-            if (count >= simpleTone.size())
-            {
-                count = 0;
-            }
-            Tone tone = simpleTone[count];
-            pause_speaker();
-            SetFrequency(tone.note);
-            resume_speaker();
-            uint64_t timeout_us = tone.duration * 1000;
-            ESP_ERROR_CHECK(esp_timer_start_once(periodic_timer, timeout_us));
-            count++;
+            count = 0;
         }
+        Tone tone = simpleTone[count];
+        PauseSpeaker();
+        SetFrequency(tone.note);
+        ResumeSpeaker();
+        uint64_t timeout_us = tone.duration * 1000;
+        ESP_ERROR_CHECK(esp_timer_start_once(periodic_timer, timeout_us));
+        count++;
     }
 }

@@ -13,15 +13,16 @@ class AlarmSpeaker
 {
 public:
     AlarmSpeaker();
+    void PauseSpeaker();
+    void ResumeSpeaker();
     void StartAlarm();
     void StopAlarm();
-    void SetFrequency(uint32_t freq_hz);
     void SetDutyCycle(uint32_t duty_cycle);
     void SetDutyCyclePercentage(uint32_t duty_cycle_percentage);
+    void SetFrequency(uint32_t freq_hz);
     void PlayAlarmTone();
 
 private:
-    bool is_timer_started;
     esp_timer_handle_t periodic_timer;
     gpio_num_t pin;
 };
