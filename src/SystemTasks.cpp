@@ -44,6 +44,14 @@ static void CreateSemaphores(void)
     lcd_semiphore = xSemaphoreCreateBinary();
 }
 
+static bool update_lcd {false};
+void set_update_lcd(bool update)
+{
+    xSemaphoreGive(lcd_semiphore);
+    update_lcd = update;
+    xSemaphoreTake(lcd_semiphore, 0);
+}
+
 /**
  * @brief Delays a task for the passed
  *        in parameter time_ms in milliseconds
@@ -144,7 +152,7 @@ static void rtc_task(void *pvParameter)
                 rtc.ReadDateTime();
                 dateTime = rtc.GetDateTime();
                 ReadTemperature(false);
-                xSemaphoreGive(lcd_semiphore);
+                set_update_lcd(true);
             }
         }
 
@@ -227,7 +235,7 @@ static void rtc_task(void *pvParameter)
             default:
                 break;
             }
-            xSemaphoreGive(lcd_semiphore);
+            set_update_lcd(true);
         }
     }
 }
@@ -289,7 +297,7 @@ static void tmp102_task(void *pvParameter)
             default:
                 break;
             }
-            xSemaphoreGive(lcd_semiphore);
+            set_update_lcd(true);
         }
     }
 }
@@ -343,14 +351,19 @@ static void hmi_task(void *pvParameter)
 
     ReadDateTime();
 
+    // Display contents on startup.
+    set_update_lcd(true);
+
     while (1)
     {
 
-        if (xSemaphoreTake(lcd_semiphore, 0) && hmi.GetCurrentState() == DISPLAYING)
+        if (update_lcd && hmi.GetCurrentState() == DISPLAYING)
         {
+            ESP_LOGI("HMI", "Displaying Contents");
             hmi.SetDisplayDateTime(dateTime);
             hmi.SetDisplayTemperature(temperatureF, temperatureC);
             UpdateDisplay();
+            set_update_lcd(false);
         }
         hmi.Process();
     }
