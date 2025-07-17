@@ -13,7 +13,7 @@ static uint8_t dateRow = 0;
 static uint8_t dateCol = 10;
 
 static uint8_t tempRow = 1;
-static uint8_t tempCol = 12;
+static uint8_t tempCol = 0;
 
 static uint8_t setnRow = 2;
 static uint8_t setnCol = 0;
@@ -176,27 +176,31 @@ void HMI::DisplayTime()
 
 void HMI::DisplayTemperature()
 {
+    static const size_t TempStringSize2 = 3;
+    constexpr uint8_t DEGREE_SYMBOL = 223;
+    static char tempString2[TempStringSize2];
+    snprintf(tempString2, TempStringSize2, "%cC", DEGREE_SYMBOL);
+    std::string celcius_unit = std::string(tempString2, 2);
+    snprintf(tempString2, TempStringSize2, "%cF", DEGREE_SYMBOL);
+    std::string fahrenheit_unit = std::string(tempString2, 2);
+
     static const size_t TempStringSize = 15;
     static char tempString[TempStringSize];
+
     lcd.SetCursor(tempRow, tempCol);
-    std::string units = tempSetting.displayString();
-    if (tempSetting.getSetting("units"))
-    {
-        if (temperatureF > 100)
-            snprintf(tempString, TempStringSize, "%3.2f", temperatureF);
-        else
-            snprintf(tempString, TempStringSize, "%2.3f", temperatureF);
-        std::string temperature = std::string(tempString, 5);
-        std::string result = temperature + units;
-        lcd.WriteString(result);
-    }
+    // Fahrenheit
+    if (temperatureF > 100)
+        snprintf(tempString, TempStringSize, "%3.2f", temperatureF);
     else
-    {
-        snprintf(tempString, TempStringSize, "%2.3f", temperatureC);
-        std::string temperature = std::string(tempString, 5);
-        std::string result = temperature + units;
-        lcd.WriteString(result);
-    }
+        snprintf(tempString, TempStringSize, "%2.3f", temperatureF);
+    std::string f = std::string(tempString, 5) + fahrenheit_unit;
+    // Celcius
+    snprintf(tempString, TempStringSize, "%2.3f", temperatureC);
+    std::string c = std::string(tempString, 5) + celcius_unit;
+
+    std::string temperatures = f + "/" + c;
+
+    lcd.WriteString(temperatures);
 }
 
 void HMI::DisplayCurrentState()
