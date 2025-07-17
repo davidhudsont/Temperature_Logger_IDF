@@ -79,6 +79,7 @@ void HMI::SetDisplayDateTime(DATE_TIME &dateTime)
     timeSetting.setSetting("hour", dateTime.hour);
     timeSetting.setSetting("minute", dateTime.minute);
     timeSetting.setSetting("amPm", dateTime.PM_notAM);
+    timeSetting.setSetting("hour12_not24", dateTime.hour12_not24);
     hour12_not24 = dateTime.hour12_not24;
 }
 

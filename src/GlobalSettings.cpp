@@ -73,11 +73,13 @@ TimeSetting::TimeSetting()
     Setting hour = Setting("hour", 1, 12, 1);
     Setting minute = Setting("minute", 1, 59, 1);
     Setting amPm = Setting("amPm", 0, 1, 0);
+    Setting hour12_not24 = Setting("hour12_not24", 0, 1, 0);
     settingsName = "TIME";
 
     addSetting(hour);
     addSetting(minute);
     addSetting(amPm);
+    addSetting(hour12_not24);
 }
 
 bool TimeSetting::getInput(const Input &input)
@@ -114,12 +116,23 @@ std::string TimeSetting::displayString()
     uint8_t hour = settingsList[0].get();
     uint8_t minute = settingsList[1].get();
     uint8_t amPm = settingsList[2].get();
+    uint8_t hour12_not24 = settingsList[3].get();
 
-    snprintf(timeString, timeStringSize, "%02d:%02d %s",
-             hour,
-             minute,
-             amPm ? "PM" : "AM");
-    return std::string(timeString, 8);
+    if (hour12_not24)
+    {
+        snprintf(timeString, timeStringSize, "%02d:%02d %s",
+                 hour,
+                 minute,
+                 amPm ? "PM" : "AM");
+        return std::string(timeString, 8);
+    }
+    else
+    {
+        snprintf(timeString, timeStringSize, "%02d:%02d",
+                 hour,
+                 minute);
+        return std::string(timeString, 5);
+    }
 }
 
 AlarmSetting::AlarmSetting()
