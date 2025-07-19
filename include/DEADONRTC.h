@@ -35,6 +35,8 @@ class RTCDS3234
 public:
     RTCDS3234();
 
+    bool GetAlarmStatus();
+
     /**
      * @brief Read the current data and time from the RTC.
      */

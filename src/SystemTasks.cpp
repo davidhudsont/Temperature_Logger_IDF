@@ -136,7 +136,7 @@ static void rtc_task(void *pvParameter)
     while (1)
     {
         // Evaluate Alarm Interrupts
-        if (GetInterruptSemiphore())
+        if (rtc.GetAlarmStatus())
         {
             bool alarm1_flag = rtc.ReadAlarm1Flag();
             bool alarm2_flag = rtc.ReadAlarm2Flag();

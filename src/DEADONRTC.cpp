@@ -10,12 +10,8 @@
 #include "DEADONRTC_Registers.h"
 #include "DEADONRTC.h"
 
-SemaphoreHandle_t semiphore;
-
-int GetInterruptSemiphore()
-{
-    return xSemaphoreTake(semiphore, 0);
-}
+static SemaphoreHandle_t semiphore;
+static bool s_is_alarm_set{ false };
 
 /**
  * @brief Convert a Binary Coded Decimal number
@@ -49,6 +45,19 @@ RTCDS3234::RTCDS3234()
       hour12_not24(false), PM_notAM(false), century(false)
 {
     memset(&raw_time, 0, sizeof(uint8_t));
+}
+
+bool RTCDS3234::GetAlarmStatus()
+{
+    bool ret{ false };
+    xSemaphoreTake(semiphore, 0);
+    if (s_is_alarm_set)
+    {
+        ret = true;
+        s_is_alarm_set = false;
+    }
+    xSemaphoreGive(semiphore);
+    return ret;
 }
 
 void RTCDS3234::ReadDateTime()
@@ -457,6 +466,8 @@ static void IRAM_ATTR alert_isr_handler(void *arg)
 {
     static BaseType_t xHigherPriorityTaskWoken;
     xSemaphoreGiveFromISR(semiphore, &xHigherPriorityTaskWoken);
+    s_is_alarm_set = true;
+    xSemaphoreTakeFromISR(semiphore, &xHigherPriorityTaskWoken);
 }
 
 void RTCDS3234::ISRInitialize()
